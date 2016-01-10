@@ -1,0 +1,27 @@
+#!/usr/bin/env python
+
+# Import lexer libraries
+from src import *
+# For command line arguments
+import sys
+
+def printTokenFreq(lexer):
+    for i in lexer.getAllTokens():
+	print i
+
+if __name__ == "__main__":
+
+    myLexer = LEXER.Lexer()
+    myLexer.build()
+
+    argLen = len(sys.argv)
+    if argLen < 2:
+	print "Please provide file for lexing"
+    else:
+	filePtr = open(str(sys.argv[1]), 'r')
+	myLexer.takeInput(filePtr.read())
+	printTokenFreq(myLexer)
+
+
+    
+
