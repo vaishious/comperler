@@ -19,7 +19,10 @@ class Lexer(object): # Inheriting from object provides extra functionality
     'NEXT', 'LAST', 'CONTINUE', 'REDO', 'GOTO',
 
     # Function Keywords
-    'NOT', 'PRINT', 'PRINTF', 'MY'
+    'NOT', 'PRINT', 'PRINTF', 'MY',
+
+    # Miscellaneous Keywords
+    'SUB'
     )
 
     # Dictionary of keywords
@@ -30,6 +33,9 @@ class Lexer(object): # Inheriting from object provides extra functionality
 
        # Comments
        'SINGLINECOMM', 'MULTILINECOMM',
+
+       # String Literals
+       'SINGQUOTSTR', 'DOUBQUOTSTR',
 
        # Computational elements
        'NUMBER', 'VARIABLE', 'ID',
@@ -56,10 +62,17 @@ class Lexer(object): # Inheriting from object provides extra functionality
        # Various Syntax elements
        'LPAREN', 'RPAREN',
        'LBLOCK', 'RBLOCK',
-       'SEMICOLON'
+       'LBRACKET', 'RBRACKET',
+       'SEMICOLON', 'COLON',
+       'COMMA'
     ) + keywords
 
     t_SINGLINECOMM = r'\#.*'
+
+    # String Literals
+    # Needs verification
+    t_SINGQUOTSTR = r'\'([^\\]|(\\[\s\S]))*?\''
+    t_DOUBQUOTSTR = r'\"([^\\]|(\\[\s\S]))*?\"'
 
     # Variables (Let's work with this for now)
     # Adding these as functions as we can play with priority
@@ -139,8 +152,11 @@ class Lexer(object): # Inheriting from object provides extra functionality
     t_RPAREN    = r'\)'
     t_LBLOCK    = r'\{'
     t_RBLOCK    = r'\}'
+    t_LBRACKET	= r'\['
+    t_RBRACKET	= r'\]'
     t_SEMICOLON = r';'
-
+    t_COLON	= r':'
+    t_COMMA	= r','
 
     # Define a rule so we can track line numbers
     def t_newline(self, t):
