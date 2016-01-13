@@ -53,7 +53,8 @@ class Lexer(object): # Inheriting from object provides extra functionality
     # Variables (Let's work with this for now)
     # Adding these as functions as we can play with priority
     def t_VARIABLE(self, t):
-	r'[$@%][a-zA-Z_][a-zA-Z0-9_]*'
+	r'[$@%][ ]*[a-zA-Z_][a-zA-Z0-9_]*'
+	t.value = t.value.replace(' ', '')
 	return t
 
     # IDs (Again, let's work with this for now)
