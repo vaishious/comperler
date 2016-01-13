@@ -3,8 +3,6 @@ import ply.lex as lex
 class Lexer(object): # Inheriting from object provides extra functionality
 
     # Calculator template for our Perl Parser
-    # Building this as a class should be better right? Will help us in 
-    # structuring the code properly into separate modules
 
     # List of keywords
     keywords = (
@@ -25,14 +23,17 @@ class Lexer(object): # Inheriting from object provides extra functionality
     )
 
     # Dictionary of keywords
-    keywords_dict = dict(zip(map(lambda x:x.lower(),keywords),keywords))
+    reserved = dict(zip(map(lambda x:x.lower(), keywords), keywords))
 
     # List of token names.   This is always required
     tokens = (
-       'NUMBER',
+       'NUMBER', 'VARIABLE', 'ID',
 
+       # Arithmetic Operators
        'PLUS', 'MINUS', 'TIMES', 'DIVIDE', 'MODULUS', 'EXPONENT',
        'BOR', 'BAND', 'BNOT', 'BXOR', 'LSHIFT', 'RSHIFT',
+
+       # Relational Operators
        'LT', 'GT', 'LE', 'GE', 'EQ', 'NE', 'CMP',
 
        # Assignment Operators
@@ -46,21 +47,39 @@ class Lexer(object): # Inheriting from object provides extra functionality
 
        'LPAREN',
        'RPAREN',
+       'SEMICOLON'
     ) + keywords
 
+    # Variables (Let's work with this for now)
+    # Adding these as functions as we can play with priority
+    def t_VARIABLE(self, t):
+	r'[$@%][a-zA-Z_][a-zA-Z0-9_]*'
+	return t
+
+    # IDs (Again, let's work with this for now)
+    def t_ID(self, t):
+	r'[a-zA-Z_][a-zA-Z0-9_]*'
+	t.type = self.reserved.get(t.value, 'ID') # Look for keywords
+	return t
+
+    def t_NUMBER(self, t):
+        r'\d+'
+        t.value = int(t.value)    
+        return t
+
     # Arithmetic Operators
-    t_PLUS    = r'\+'
-    t_MINUS   = r'-'
-    t_TIMES   = r'\*'
-    t_DIVIDE  = r'/'
-    t_MODULUS = r'%'
-    t_EXPONENT = r'\*\*'
+    t_PLUS      = r'\+'
+    t_MINUS     = r'-'
+    t_TIMES     = r'\*'
+    t_DIVIDE    = r'/'
+    t_MODULUS   = r'%'
+    t_EXPONENT  = r'\*\*'
 
     # Bitwise Operators
-    t_BOR = r'\|'
-    t_BAND = r'&'
-    t_BNOT = r'~'
-    t_BXOR = r'\^'
+    t_BOR    = r'\|'
+    t_BAND   = r'&'
+    t_BNOT   = r'~'
+    t_BXOR   = r'\^'
     t_LSHIFT = r'<<'
     t_RSHIFT = r'>>'
 
@@ -88,22 +107,17 @@ class Lexer(object): # Inheriting from object provides extra functionality
     t_OREQUAL     = r'\|='
 
     # Miscellaneous Operators
-    t_DOT = r'\.'
-    t_REPEAT = r'x'	    ## Warning: Clashes with ID??
-    t_RANGE = r'\.\.'
-    t_INC = r'\+\+'
-    t_DEC = r'--'
-    t_ARROW = r'->'
+    t_DOT 	= r'\.'
+    t_REPEAT    = r'x'	    ## Warning: Clashes with ID??
+    t_RANGE     = r'\.\.'
+    t_INC       = r'\+\+'
+    t_DEC       = r'--'
+    t_ARROW     = r'->'
 
-    t_LPAREN  = r'\('
-    t_RPAREN  = r'\)'
+    t_LPAREN    = r'\('
+    t_RPAREN    = r'\)'
+    t_SEMICOLON = r';'
 
-    # A regular expression rule with some action code
-    # Note addition of self parameter since we're in a class
-    def t_NUMBER(self, t):
-        r'\d+'
-        t.value = int(t.value)    
-        return t
 
     # Define a rule so we can track line numbers
     def t_newline(self, t):
@@ -119,7 +133,7 @@ class Lexer(object): # Inheriting from object provides extra functionality
         t.lexer.skip(1)
 
     # Build the lexer
-    def build(self,**kwargs):
+    def build(self, **kwargs):
         self.lexer = lex.lex(module=self, **kwargs)
 
     # Sample helper functions for our main driver
