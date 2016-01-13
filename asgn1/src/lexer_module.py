@@ -6,20 +6,20 @@ class Lexer(object): # Inheriting from object provides extra functionality
 
     # List of keywords
     keywords = (
-	# Logical Operator Keywords
-	'AND', 'OR',
+    # Logical Operator Keywords
+    'AND', 'OR',
 
-	# Branch Keywords
-	'IF', 'ELSE', 'ELSIF', 'UNLESS', 'SWITCH',
+    # Branch Keywords
+    'IF', 'ELSE', 'ELSIF', 'UNLESS', 'SWITCH',
 
-	# Loop Keywords
-	'WHILE', 'UNTIL', 'FOR', 'FOREACH', 'DO',
+    # Loop Keywords
+    'WHILE', 'UNTIL', 'FOR', 'FOREACH', 'DO',
 
-	# Loop Control Statement Keywords
-	'NEXT', 'LAST', 'CONTINUE', 'REDO', 'GOTO',
+    # Loop Control Statement Keywords
+    'NEXT', 'LAST', 'CONTINUE', 'REDO', 'GOTO',
 
-	# Function Keywords
-	'NOT', 'PRINT', 'PRINTF', 'MY'
+    # Function Keywords
+    'NOT', 'PRINT', 'PRINTF', 'MY'
     )
 
     # Dictionary of keywords
@@ -53,15 +53,15 @@ class Lexer(object): # Inheriting from object provides extra functionality
     # Variables (Let's work with this for now)
     # Adding these as functions as we can play with priority
     def t_VARIABLE(self, t):
-	r'[$@%][ ]*[a-zA-Z_][a-zA-Z0-9_]*'
-	t.value = t.value.replace(' ', '')
-	return t
+        r'[$@%][ ]*[a-zA-Z_][a-zA-Z0-9_]*'
+        t.value = t.value.replace(' ', '')
+        return t
 
     # IDs (Again, let's work with this for now)
     def t_ID(self, t):
-	r'[a-zA-Z_][a-zA-Z0-9_]*'
-	t.type = self.reserved.get(t.value, 'ID') # Look for keywords
-	return t
+        r'[a-zA-Z_][a-zA-Z0-9_]*'
+        t.type = self.reserved.get(t.value, 'ID') # Look for keywords
+        return t
 
     def t_NUMBER(self, t):
         r'\d+'
@@ -108,8 +108,8 @@ class Lexer(object): # Inheriting from object provides extra functionality
     t_OREQUAL     = r'\|='
 
     # Miscellaneous Operators
-    t_DOT 	= r'\.'
-    t_REPEAT    = r'x'	    ## Warning: Clashes with ID??
+    t_DOT       = r'\.'
+    t_REPEAT    = r'x'        ## Warning: Clashes with ID??
     t_RANGE     = r'\.\.'
     t_INC       = r'\+\+'
     t_DEC       = r'--'
@@ -141,33 +141,33 @@ class Lexer(object): # Inheriting from object provides extra functionality
 
     # Pass input for lexing
     def takeInput(self, data):
-	self.lexer.input(data)
+        self.lexer.input(data)
 
     # Get single token
     def getToken(self):
-	return self.lexer.token()
+        return self.lexer.token()
 
     # Get all tokens at once
     def getAllTokens(self):
-	return [tok for tok in self.lexer]
+        return [tok for tok in self.lexer]
 
     def prettyPrintTokenFreq(self):
-	occurDict  = {}
-	lexemeDict = {}
+        occurDict  = {}
+        lexemeDict = {}
 
-	for tok in self.lexer:
-	    lexemeDict[tok.type] = lexemeDict.get(tok.type, []) + [tok.value]
-	    occurDict[tok.type] = occurDict.get(tok.type, 0) + 1;
-	    
-	# Heading
-	print '#'*45
-	print '{:<20} | {:<12} | {}'.format("Token", "Occurences", "Lexemes")
-	print '#'*45
+        for tok in self.lexer:
+            lexemeDict[tok.type] = lexemeDict.get(tok.type, []) + [tok.value]
+            occurDict[tok.type] = occurDict.get(tok.type, 0) + 1;
+        
+        # Heading
+        print '#'*45
+        print '{:<20} | {:<12} | {}'.format("Token", "Occurences", "Lexemes")
+        print '#'*45
 
-	lexemeDict = {i : list(set(lexemeDict[i])) for i in lexemeDict}
-	for tok in lexemeDict:
-	    lexemeList = lexemeDict[tok]
-	    print '{:<20} | {:<12} | {}'.format(str(tok), str(occurDict[tok]), lexemeList[0])
-	    for j in xrange(1, len(lexemeList)):
-		print '{:<20} | {:<12} | {}'.format("", "",  lexemeList[j])
-	    print '-'*45
+        lexemeDict = {i : list(set(lexemeDict[i])) for i in lexemeDict}
+        for tok in lexemeDict:
+            lexemeList = lexemeDict[tok]
+            print '{:<20} | {:<12} | {}'.format(str(tok), str(occurDict[tok]), lexemeList[0])
+            for j in xrange(1, len(lexemeList)):
+                print '{:<20} | {:<12} | {}'.format("", "",  lexemeList[j])
+                print '-'*45
