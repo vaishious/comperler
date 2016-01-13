@@ -5,9 +5,6 @@ from src import *
 # For command line arguments
 import sys
 
-def printTokenFreq(lexer):
-    for i in lexer.getAllTokens():
-	print i
 
 if __name__ == "__main__":
 
@@ -20,7 +17,7 @@ if __name__ == "__main__":
     else:
 	filePtr = open(str(sys.argv[1]), 'r')
 	myLexer.takeInput(filePtr.read())
-	printTokenFreq(myLexer)
+	myLexer.prettyPrintTokenFreq()
 
 
     

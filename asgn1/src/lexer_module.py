@@ -150,3 +150,23 @@ class Lexer(object): # Inheriting from object provides extra functionality
     def getAllTokens(self):
 	return [tok for tok in self.lexer]
 
+    def prettyPrintTokenFreq(self):
+	occurDict  = {}
+	lexemeDict = {}
+
+	for tok in self.lexer:
+	    lexemeDict[tok.type] = lexemeDict.get(tok.type, []) + [tok.value]
+	    occurDict[tok.type] = occurDict.get(tok.type, 0) + 1;
+	    
+	# Heading
+	print '#'*45
+	print '{:<20} | {:<12} | {}'.format("Token", "Occurences", "Lexemes")
+	print '#'*45
+
+	lexemeDict = {i : list(set(lexemeDict[i])) for i in lexemeDict}
+	for tok in lexemeDict:
+	    lexemeList = lexemeDict[tok]
+	    print '{:<20} | {:<12} | {}'.format(str(tok), str(occurDict[tok]), lexemeList[0])
+	    for j in xrange(1, len(lexemeList)):
+		print '{:<20} | {:<12} | {}'.format("", "",  lexemeList[j])
+	    print '-'*45
