@@ -6,12 +6,33 @@ class Lexer(object): # Inheriting from object provides extra functionality
     # Building this as a class should be better right? Will help us in 
     # structuring the code properly into separate modules
 
+    # List of keywords
+    keywords = (
+	# Logical Operator Keywords
+	'AND', 'OR',
+
+	# Branch Keywords
+	'IF', 'ELSE', 'ELSIF', 'UNLESS', 'SWITCH',
+
+	# Loop Keywords
+	'WHILE', 'UNTIL', 'FOR', 'FOREACH', 'DO',
+
+	# Loop Control Statement Keywords
+	'NEXT', 'LAST', 'CONTINUE', 'REDO', 'GOTO',
+
+	# Function Keywords
+	'NOT', 'PRINT', 'PRINTF', 'MY'
+    )
+
+    # Dictionary of keywords
+    keywords_dict = dict(zip(map(lambda x:x.lower(),keywords),keywords))
+
     # List of token names.   This is always required
     tokens = (
        'NUMBER',
 
        'PLUS', 'MINUS', 'TIMES', 'DIVIDE', 'MODULUS', 'EXPONENT',
-       'OR', 'AND', 'NOT', 'XOR', 'LSHIFT', 'RSHIFT',
+       'BOR', 'BAND', 'BNOT', 'BXOR', 'LSHIFT', 'RSHIFT',
        'LT', 'GT', 'LE', 'GE', 'EQ', 'NE', 'CMP',
 
        # Assignment Operators
@@ -25,7 +46,7 @@ class Lexer(object): # Inheriting from object provides extra functionality
 
        'LPAREN',
        'RPAREN',
-    )
+    ) + keywords
 
     # Arithmetic Operators
     t_PLUS    = r'\+'
@@ -36,10 +57,10 @@ class Lexer(object): # Inheriting from object provides extra functionality
     t_EXPONENT = r'\*\*'
 
     # Bitwise Operators
-    t_OR = r'\|'
-    t_AND = r'&'
-    t_NOT = r'~'
-    t_XOR = r'\^'
+    t_BOR = r'\|'
+    t_BAND = r'&'
+    t_BNOT = r'~'
+    t_BXOR = r'\^'
     t_LSHIFT = r'<<'
     t_RSHIFT = r'>>'
 
@@ -115,4 +136,3 @@ class Lexer(object): # Inheriting from object provides extra functionality
     def getAllTokens(self):
 	return [tok for tok in self.lexer]
 
-    
