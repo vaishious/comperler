@@ -27,6 +27,11 @@ class Lexer(object): # Inheriting from object provides extra functionality
 
     # List of token names.   This is always required
     tokens = (
+
+       # Comments
+       'SINGLINECOMM', 'MULTILINECOMM',
+
+       # Computational elements
        'NUMBER', 'VARIABLE', 'ID',
 
        # Arithmetic Operators
@@ -35,6 +40,9 @@ class Lexer(object): # Inheriting from object provides extra functionality
 
        # Relational Operators
        'LT', 'GT', 'LE', 'GE', 'EQ', 'NE', 'CMP',
+
+       # String Relational Operators
+       'STRLT', 'STRGT', 'STRLE', 'STRGE', 'STREQ', 'STRNE', 'STRCMP',
 
        # Assignment Operators
        'EQUALS', 'TIMESEQUAL', 'DIVEQUAL', 'MODEQUAL',
@@ -45,10 +53,13 @@ class Lexer(object): # Inheriting from object provides extra functionality
        # Miscellaneous Operators
        'DOT', 'REPEAT', 'RANGE', 'INC', 'DEC', 'ARROW',
 
-       'LPAREN',
-       'RPAREN',
+       # Various Syntax elements
+       'LPAREN', 'RPAREN',
+       'LBLOCK', 'RBLOCK',
        'SEMICOLON'
     ) + keywords
+
+    t_SINGLINECOMM = r'\#.*'
 
     # Variables (Let's work with this for now)
     # Adding these as functions as we can play with priority
@@ -93,6 +104,15 @@ class Lexer(object): # Inheriting from object provides extra functionality
     t_NE  = r'!='
     t_CMP = r'<=>'
 
+    # String Equality Operators
+    t_STRLT  = r'lt'
+    t_STRGT  = r'gt'
+    t_STRLE  = r'le'
+    t_STRGE  = r'ge'
+    t_STREQ  = r'eq'
+    t_STRNE  = r'ne'
+    t_STRCMP = r'cmp'
+
     # Assignment Operators
     t_EQUALS      = r'='
     t_PLUSEQUAL   = r'\+='
@@ -117,6 +137,8 @@ class Lexer(object): # Inheriting from object provides extra functionality
 
     t_LPAREN    = r'\('
     t_RPAREN    = r'\)'
+    t_LBLOCK    = r'\{'
+    t_RBLOCK    = r'\}'
     t_SEMICOLON = r';'
 
 
