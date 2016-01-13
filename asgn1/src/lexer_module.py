@@ -192,4 +192,4 @@ class Lexer(object): # Inheriting from object provides extra functionality
             print '{:<20} | {:<12} | {}'.format(str(tok), str(occurDict[tok]), lexemeList[0])
             for j in xrange(1, len(lexemeList)):
                 print '{:<20} | {:<12} | {}'.format("", "",  lexemeList[j])
-                print '-'*45
+	    print '-'*45
