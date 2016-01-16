@@ -1,4 +1,5 @@
 import ply.lex as lex
+import sys
 
 class Lexer(object): # Inheriting from object provides extra functionality
 
@@ -25,8 +26,19 @@ class Lexer(object): # Inheriting from object provides extra functionality
     'SUB'
     )
 
+    # String relational operators
+    # Let's pass them as separate tokens. If they are used as functions we can resolve that in the parser.
+    # This brings more clarity
+
+    string_relops = (
+       # String Relational Operators
+       'STRLT', 'STRGT', 'STRLE', 'STRGE', 'STREQ', 'STRNE', 'STRCMP',
+       )
+
+
     # Dictionary of keywords
     reserved = dict(zip(map(lambda x:x.lower(), keywords), keywords))
+    reserved_relops = dict(zip(map(lambda x:x[3:].lower(), string_relops), string_relops))
 
     # List of token names.   This is always required
     tokens = (
@@ -47,9 +59,6 @@ class Lexer(object): # Inheriting from object provides extra functionality
        # Relational Operators
        'LT', 'GT', 'LE', 'GE', 'EQ', 'NE', 'CMP',
 
-       # String Relational Operators
-       'STRLT', 'STRGT', 'STRLE', 'STRGE', 'STREQ', 'STRNE', 'STRCMP',
-
        # Assignment Operators
        'EQUALS', 'TIMESEQUAL', 'DIVEQUAL', 'MODEQUAL',
        'PLUSEQUAL', 'MINUSEQUAL',
@@ -65,7 +74,7 @@ class Lexer(object): # Inheriting from object provides extra functionality
        'LBRACKET', 'RBRACKET',
        'SEMICOLON', 'COLON',
        'COMMA'
-    ) + keywords
+    ) + keywords + string_relops
 
     t_SINGLINECOMM = r'\#.*'
 
@@ -85,6 +94,10 @@ class Lexer(object): # Inheriting from object provides extra functionality
     def t_ID(self, t):
         r'[a-zA-Z_][a-zA-Z0-9_]*'
         t.type = self.reserved.get(t.value, 'ID') # Look for keywords
+        
+        if t.type == 'ID':                        # Look for operator matches
+            t.type = self.reserved_relops.get(t.value, 'ID') # Look for keywords
+
         return t
 
     def t_NUMBER(self, t):
@@ -168,8 +181,8 @@ class Lexer(object): # Inheriting from object provides extra functionality
 
     # Error handling rule
     def t_error(self, t):
-        print("Illegal character '%s'" % t.value[0])
-        t.lexer.skip(1)
+        print("Illegal character '%s' at line %d" % (t.value[0], t.lexer.lineno))
+        sys.exit(1) # Exit without traceback
 
     # Build the lexer
     def build(self, **kwargs):

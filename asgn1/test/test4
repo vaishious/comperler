@@ -1,0 +1,15 @@
+#!/usr/local/bin/perl
+ 
+$a = 10;
+@b = (25, 45, 47);
+!$c = "abcd";
+$d = "abcde";
+
+# while loop execution
+while( $a < 20 ){
+   printf "Value of a: $a\n";
+   $a = $a + 1;
+   if ($c gt $d) {
+      print $c;
+  } 
+}
