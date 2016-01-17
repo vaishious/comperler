@@ -4,6 +4,10 @@ $a = 10;
 @b = (25, 45, 47);
 $c = "abcd";
 $d = "abcde";
+$e = \@b;
+$f = \@$e;
+@g = @$e;
+printf "\$e: $e, \$f: $f\n";
 
 # while loop execution
 while( $a < 20 ){

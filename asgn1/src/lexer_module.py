@@ -69,6 +69,7 @@ class Lexer(object): # Inheriting from object provides extra functionality
        'DOT', 'REPEAT', 'RANGE', 'INC', 'DEC', 'ARROW',
 
        # Various Syntax elements
+       'REFERENCE', 'DEREFERENCE',
        'LPAREN', 'RPAREN',
        'LBLOCK', 'RBLOCK',
        'LBRACKET', 'RBRACKET',
@@ -83,16 +84,34 @@ class Lexer(object): # Inheriting from object provides extra functionality
     t_SINGQUOTSTR = r'\'([^\\]|(\\[\s\S]))*?\''
     t_DOUBQUOTSTR = r'\"([^\\]|(\\[\s\S]))*?\"'
 
+    # Tokens which are passed to functions
+    identifier  = r'[a-zA-Z_][a-zA-Z0-9_]*'
+    variable    = r'[$@%][ ]*' + identifier
+    dereference = r'[$@%][$ ]*' + identifier
+    reference   = r'[\\][ ]*' + dereference
+
     # Variables (Let's work with this for now)
     # Adding these as functions as we can play with priority
+    @lex.TOKEN(variable)
     def t_VARIABLE(self, t):
-        r'[$@%][ ]*[a-zA-Z_][a-zA-Z0-9_]*'
         t.value = t.value.replace(' ', '')
         return t
 
+    # Relative priority of REFERENCE and DEREFERENCE doesn't matter
+    @lex.TOKEN(reference)
+    def t_REFERENCE(self, t):
+        t.value = t.value.replace(' ','')
+        return t
+
+    # Priority of DEREFERENCE must be lower than that of VARIABLE
+    @lex.TOKEN(dereference)
+    def t_DEREFERENCE(self, t):
+        t.value = t.value.replace(' ','')
+        return t
+
     # IDs (Again, let's work with this for now)
+    @lex.TOKEN(identifier)
     def t_ID(self, t):
-        r'[a-zA-Z_][a-zA-Z0-9_]*'
         t.type = self.reserved.get(t.value, 'ID') # Look for keywords
         
         if t.type == 'ID':                        # Look for operator matches
