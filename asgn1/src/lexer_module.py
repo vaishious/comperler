@@ -77,7 +77,6 @@ class Lexer(object): # Inheriting from object provides extra functionality
        'COMMA'
     ) + keywords + string_relops
 
-    t_SINGLINECOMM = r'\#.*'
 
     # String Literals
     # Needs verification
@@ -123,6 +122,10 @@ class Lexer(object): # Inheriting from object provides extra functionality
         r'\d+'
         t.value = int(t.value)    
         return t
+
+    def t_SINGLELINECOMM(self, t):
+        r'\#.*'
+        pass
 
     # Arithmetic Operators
     t_PLUS      = r'\+'
