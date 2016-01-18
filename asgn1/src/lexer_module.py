@@ -82,6 +82,10 @@ class Lexer(object): # Inheriting from object provides extra functionality
     variable    = r'[$@%][ ]*' + identifier
     dereference = r'[$@%][$ ]*' + identifier
     reference   = r'[\\][ ]*' + dereference
+    octal       = r'0[0-7]+'
+    hexadecimal = r'0[xX][0-9a-fA-F]+'
+    binary      = r'0[bB][01]+'
+    number      = r'\d+'
 
     # Variables (Let's work with this for now)
     # Adding these as functions as we can play with priority
@@ -115,23 +119,23 @@ class Lexer(object): # Inheriting from object provides extra functionality
 
         return t
 
+    @lex.TOKEN(octal)
     def t_OCTAL(self, t):
-        r'0[0-7]+'
         t.value = int(t.value, 8)
         return t
 
+    @lex.TOKEN(hexadecimal)
     def t_HEXADECIMAL(self, t):
-        r'0[xX][0-9a-fA-F]+'
         t.value = int(t.value, 16)
         return t
 
+    @lex.TOKEN(binary)
     def t_BINARY(self, t):
-        r'0[bB][01]+'
         t.value = int(t.value, 2)
         return t
 
+    @lex.TOKEN(number)
     def t_NUMBER(self, t):
-        r'\d+'
         t.value = int(t.value)    
         return t
 
