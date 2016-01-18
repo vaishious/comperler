@@ -1,1 +1,2 @@
 print "4"x 4;
+(3 > 2) ? print "Hello" : print "World";
