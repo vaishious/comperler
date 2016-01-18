@@ -1,2 +1,6 @@
-print "4"x 4;
+print "4"x4;
 (3 > 2) ? print "Hello" : print "World";
+print 0x617F;
+print 0614;
+print 0b10101;
+print 1244;

@@ -50,14 +50,14 @@ class Lexer(object): # Inheriting from object provides extra functionality
        'SINGQUOTSTR', 'DOUBQUOTSTR',
 
        # Computational elements
-       'NUMBER', 'VARIABLE', 'ID',
+       'NUMBER', 'HEXADECIMAL', 'BINARY', 'OCTAL', 'VARIABLE', 'ID',
 
        # Arithmetic Operators
        'PLUS', 'MINUS', 'TIMES', 'DIVIDE', 'MODULUS', 'EXPONENT',
        'BOR', 'BAND', 'BNOT', 'BXOR', 'LSHIFT', 'RSHIFT',
 
        # Relational Operators
-       'LT', 'GT', 'LE', 'GE', 'EQ', 'NE', 'CMP',
+       'LT', 'GT', 'LE', 'GE', 'EQ', 'NE', 'CMP', 'TERNARY_CONDOP',
 
        # Assignment Operators
        'EQUALS', 'TIMESEQUAL', 'DIVEQUAL', 'MODEQUAL',
@@ -76,12 +76,6 @@ class Lexer(object): # Inheriting from object provides extra functionality
        'SEMICOLON', 'COLON',
        'COMMA'
     ) + keywords + string_relops
-
-
-    # String Literals
-    # Needs verification
-    t_SINGQUOTSTR = r'\'([^\\]|(\\[\s\S]))*?\''
-    t_DOUBQUOTSTR = r'\"([^\\]|(\\[\s\S]))*?\"'
 
     # Tokens which are passed to functions
     identifier  = r'[a-zA-Z_][a-zA-Z0-9_]*'
@@ -116,6 +110,24 @@ class Lexer(object): # Inheriting from object provides extra functionality
         if t.type == 'ID':                        # Look for operator matches
             t.type = self.reserved_relops.get(t.value, 'ID') # Look for keywords
 
+        # Check if it can be REPEAT.
+        t.type = 'REPEAT' if t.value == 'x' else t.type
+
+        return t
+
+    def t_OCTAL(self, t):
+        r'0[0-7]+'
+        t.value = int(t.value, 8)
+        return t
+
+    def t_HEXADECIMAL(self, t):
+        r'0[xX][0-9a-fA-F]+'
+        t.value = int(t.value, 16)
+        return t
+
+    def t_BINARY(self, t):
+        r'0[bB][01]+'
+        t.value = int(t.value, 2)
         return t
 
     def t_NUMBER(self, t):
@@ -127,71 +139,75 @@ class Lexer(object): # Inheriting from object provides extra functionality
         r'\#.*'
         pass
 
+    # String Literals
+    t_SINGQUOTSTR = r'\'([^\\]|(\\[\s\S]))*?\''
+    t_DOUBQUOTSTR = r'\"([^\\]|(\\[\s\S]))*?\"'
+
     # Arithmetic Operators
-    t_PLUS      = r'\+'
-    t_MINUS     = r'-'
-    t_TIMES     = r'\*'
-    t_DIVIDE    = r'/'
-    t_MODULUS   = r'%'
-    t_EXPONENT  = r'\*\*'
+    t_PLUS           = r'\+'
+    t_MINUS          = r'-'
+    t_TIMES          = r'\*'
+    t_DIVIDE         = r'/'
+    t_MODULUS        = r'%'
+    t_EXPONENT       = r'\*\*'
 
     # Bitwise Operators
-    t_BOR    = r'\|'
-    t_BAND   = r'&'
-    t_BNOT   = r'~'
-    t_BXOR   = r'\^'
-    t_LSHIFT = r'<<'
-    t_RSHIFT = r'>>'
+    t_BOR            = r'\|'
+    t_BAND           = r'&'
+    t_BNOT           = r'~'
+    t_BXOR           = r'\^'
+    t_LSHIFT         = r'<<'
+    t_RSHIFT         = r'>>'
 
     # Equality Operators
-    t_LT  = r'<'
-    t_GT  = r'>'
-    t_LE  = r'<='
-    t_GE  = r'>='
-    t_EQ  = r'=='
-    t_NE  = r'!='
-    t_CMP = r'<=>'
+    t_LT             = r'<'
+    t_GT             = r'>'
+    t_LE             = r'<='
+    t_GE             = r'>='
+    t_EQ             = r'=='
+    t_NE             = r'!='
+    t_CMP            = r'<=>'
+    t_TERNARY_CONDOP = r'\?'
 
     # String Equality Operators
-    t_STRLT  = r'lt'
-    t_STRGT  = r'gt'
-    t_STRLE  = r'le'
-    t_STRGE  = r'ge'
-    t_STREQ  = r'eq'
-    t_STRNE  = r'ne'
-    t_STRCMP = r'cmp'
+    t_STRLT          = r'lt'
+    t_STRGT          = r'gt'
+    t_STRLE          = r'le'
+    t_STRGE          = r'ge'
+    t_STREQ          = r'eq'
+    t_STRNE          = r'ne'
+    t_STRCMP         = r'cmp'
 
     # Assignment Operators
-    t_EQUALS      = r'='
-    t_PLUSEQUAL   = r'\+='
-    t_MINUSEQUAL  = r'-='
-    t_TIMESEQUAL  = r'\*='
-    t_DIVEQUAL    = r'/='
-    t_MODEQUAL    = r'%='
-    t_EXPEQUAL    = r'\*\*='
-    t_LSHIFTEQUAL = r'<<='
-    t_RSHIFTEQUAL = r'>>='
-    t_ANDEQUAL    = r'&='
-    t_XOREQUAL    = r'\^='
-    t_OREQUAL     = r'\|='
+    t_EQUALS         = r'='
+    t_PLUSEQUAL      = r'\+='
+    t_MINUSEQUAL     = r'-='
+    t_TIMESEQUAL     = r'\*='
+    t_DIVEQUAL       = r'/='
+    t_MODEQUAL       = r'%='
+    t_EXPEQUAL       = r'\*\*='
+    t_LSHIFTEQUAL    = r'<<='
+    t_RSHIFTEQUAL    = r'>>='
+    t_ANDEQUAL       = r'&='
+    t_XOREQUAL       = r'\^='
+    t_OREQUAL        = r'\|='
 
     # Miscellaneous Operators
-    t_DOT       = r'\.'
-    t_REPEAT    = r'x'        ## Warning: Clashes with ID??
-    t_RANGE     = r'\.\.'
-    t_INC       = r'\+\+'
-    t_DEC       = r'--'
-    t_ARROW     = r'->'
+    t_DOT            = r'\.'
+    t_RANGE          = r'\.\.'
+    t_INC            = r'\+\+'
+    t_DEC            = r'--'
+    t_ARROW          = r'->'
 
-    t_LPAREN    = r'\('
-    t_RPAREN    = r'\)'
-    t_LBLOCK    = r'\{'
-    t_RBLOCK    = r'\}'
-    t_LBRACKET	= r'\['
-    t_RBRACKET	= r'\]'
-    t_SEMICOLON = r';'
-    t_COLON	= r':'
-    t_COMMA	= r','
+    t_LPAREN         = r'\('
+    t_RPAREN         = r'\)'
+    t_LBLOCK         = r'\{'
+    t_RBLOCK         = r'\}'
+    t_LBRACKET	     = r'\['
+    t_RBRACKET	     = r'\]'
+    t_SEMICOLON      = r';'
+    t_COLON	     = r':'
+    t_COMMA	     = r','
 
     # Define a rule so we can track line numbers
     def t_newline(self, t):
