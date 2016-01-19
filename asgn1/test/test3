@@ -1,3 +1,4 @@
+#!/usr/bin/perl
 # Arrays and hashes convert to each other, an array being taken as a list
 # of key, value pairs in order, a hash being flattend to such an array.
 # Key order of the hash will be arbitrary.

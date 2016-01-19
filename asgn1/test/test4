@@ -1,3 +1,4 @@
+#!/usr/bin/perl
 sub parg {
     my($a, $b, $c) = @ _;
 

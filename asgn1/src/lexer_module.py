@@ -23,7 +23,7 @@ class Lexer(object): # Inheriting from object provides extra functionality
     'NOT', 'PRINT', 'PRINTF', 'MY',
 
     # Miscellaneous Keywords
-    'SUB'
+    'SUB', 'RETURN'
     )
 
     # String relational operators
@@ -74,7 +74,7 @@ class Lexer(object): # Inheriting from object provides extra functionality
        'LBLOCK', 'RBLOCK',
        'LBRACKET', 'RBRACKET',
        'SEMICOLON', 'COLON',
-       'COMMA'
+       'COMMA', 'FATCOMMA'
     ) + keywords + string_relops
 
     # Tokens which are passed to functions
@@ -212,6 +212,7 @@ class Lexer(object): # Inheriting from object provides extra functionality
     t_SEMICOLON      = r';'
     t_COLON	     = r':'
     t_COMMA	     = r','
+    t_FATCOMMA	     = r'=>'
 
     # Define a rule so we can track line numbers
     def t_newline(self, t):
