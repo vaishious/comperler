@@ -3,8 +3,6 @@ import sys
 
 class Lexer(object): # Inheriting from object provides extra functionality
 
-    # Calculator template for our Perl Parser
-
     # List of keywords
     keywords = (
     # Logical Operator Keywords
@@ -21,6 +19,7 @@ class Lexer(object): # Inheriting from object provides extra functionality
 
     # Function Keywords
     'NOT', 'PRINT', 'PRINTF', 'MY',
+    'KEYS', 'VALUES', 'EXISTS', 'DELETE',
 
     # Miscellaneous Keywords
     'SUB', 'RETURN'
@@ -66,7 +65,7 @@ class Lexer(object): # Inheriting from object provides extra functionality
        'OREQUAL', 'EXPEQUAL',
 
        # Miscellaneous Operators
-       'DOT', 'REPEAT', 'RANGE', 'INC', 'DEC', 'ARROW',
+       'DOT', 'REPEAT', 'RANGE', 'INC', 'DEC', 'ARROW', 'HASHARROW',
 
        # Various Syntax elements
        'REFERENCE', 'DEREFERENCE',
@@ -74,7 +73,7 @@ class Lexer(object): # Inheriting from object provides extra functionality
        'LBLOCK', 'RBLOCK',
        'LBRACKET', 'RBRACKET',
        'SEMICOLON', 'COLON',
-       'COMMA', 'FATCOMMA'
+       'COMMA'
     ) + keywords + string_relops
 
     # Tokens which are passed to functions
@@ -202,6 +201,7 @@ class Lexer(object): # Inheriting from object provides extra functionality
     t_INC            = r'\+\+'
     t_DEC            = r'--'
     t_ARROW          = r'->'
+    t_HASHARROW      = r'=>'
 
     t_LPAREN         = r'\('
     t_RPAREN         = r'\)'
@@ -212,7 +212,6 @@ class Lexer(object): # Inheriting from object provides extra functionality
     t_SEMICOLON      = r';'
     t_COLON	     = r':'
     t_COMMA	     = r','
-    t_FATCOMMA	     = r'=>'
 
     # Define a rule so we can track line numbers
     def t_newline(self, t):
