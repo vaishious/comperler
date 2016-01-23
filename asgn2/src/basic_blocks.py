@@ -18,6 +18,8 @@ class BasicBlock(object):
         This class holds an array of instructions corresponding to a single basic block.
 
         Member Variables :
+
+                * bbNum            : Basic Block Number
                 
                 * instructions     : The actual sequence of instructions corresponding to the basic block.
 
@@ -30,8 +32,10 @@ class BasicBlock(object):
                 TODO: Add more stuff as and how we need it.
     """
 
-    def __init__(self, instructions=[]):
-        self.instructions = instructions
+    def __init__(self, bbNum=0, instructions=[]):
+
+        self.bbNum        = bbNum
+        self.instructions = instructions[:]
 
     def AddInstruction(self, instr):
         """ Add instructions incrementally. Will help in the basic block algorithm """
@@ -39,3 +43,11 @@ class BasicBlock(object):
         DEBUG.Assert(type(instr) == INSTRUCTION.Instr3AC, "Input is not of instr3AC type")
 
         self.instructions += [instr]
+
+    def IsEmpty(self):
+        return len(self.instructions) == 0
+
+    def PrettyPrint(self):
+        print "BASIC BLOCK #" + str(self.bbNum)
+        for instr in self.instructions:
+            instr.PrettyPrint()

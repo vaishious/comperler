@@ -188,6 +188,13 @@ class Instr3AC(object):
                 self.inp2   = str(inpTuple[5])
 
 
-    def isTarget(self): 
+    def IsTarget(self): 
         """ Is this branch a jump target or a label? """
         return self.isTarget
+
+    def GetTarget(self):
+        """ Return line ID of the jump target if any """
+        return self.jmpTarget
+
+    def PrettyPrint(self):
+        print self.inpTuple
