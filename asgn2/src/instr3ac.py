@@ -18,14 +18,14 @@ class InstrType(object):
     ASSIGN, IFGOTO, GOTO, CALL, RETURN, PRINT, LABEL, NOP = range(8)
 
     typeMap = { 
-                "="      : ASSIGN,        "assign" : ASSIGN,
-                "ifgoto" : IFGOTO,
-                "goto"   : GOTO,          "jmp"    : GOTO,
-                "call"   : CALL,
-                "ret"    : RETURN,        "return" : RETURN,
-                "print"  : PRINT,         "printf" : PRINT,
-                "label"  : LABEL,         "Label"  : LABEL,
-                "nop"    : NOP,           ""       : NOP
+                "="      : ASSIGN,        "assign" : ASSIGN,       "ASSIGN"   : ASSIGN,
+                "ifgoto" : IFGOTO,                                 "IFGOTO"   : IFGOTO,
+                "goto"   : GOTO,          "jmp"    : GOTO,         "GOTO"     : GOTO, 
+                "call"   : CALL,                                   "CALL"     : CALL,
+                "ret"    : RETURN,        "return" : RETURN,       "RETURN"   : RETURN,       "RET" : RETURN,
+                "print"  : PRINT,         "printf" : PRINT,        "PRINT"    : PRINT,
+                "label"  : LABEL,         "Label"  : LABEL,        "LABEL"    : LABEL,
+                "nop"    : NOP,           ""       : NOP,          "NOP"      : NOP
               }
 
     def __init__(self, inpType):
@@ -104,6 +104,12 @@ class Instr3AC(object):
 
         * Line ID          : The line id of this instruction 
 
+        * Jump Label       : Label to jump to in case of "call"
+
+        * Label            : Label associated with this instruction
+
+        * Is Target        : Is this a jump target for another instruction?
+
     """
 
     def __init__(self, inpTuple):
@@ -117,6 +123,9 @@ class Instr3AC(object):
         self.inp2      = ""
         self.lineID    = 0
         self.jmpTarget = None
+        self.jmpLabel  = None
+        self.label     = None
+        self.isTarget  = False
 
         # Set line id
         self.lineID    = int(inpTuple[0])                    # Value error raised if input is not an integer
@@ -139,17 +148,22 @@ class Instr3AC(object):
         elif self.instrType.is_CALL():
             # Line Number, Call, Label
             DEBUG.Assert(len(inpTuple) == 3, "Expected 3-tuple for call")
-            self.jmpTarget  = str(inpTuple[2])               
+            self.jmpLabel  = str(inpTuple[2])               
 
         elif self.instrType.is_RETURN():
             # Line Number, Return
             DEBUG.Assert(len(inpTuple) == 2, "Expected 2-tuple for return")
 
-        elif self.instrType.is_PRINT() or self.instrType.is_LABEL():
+        elif self.instrType.is_PRINT():
             # Line Number, Print, Input                                
+            DEBUG.Assert(len(inpTuple) == 3, "Expected 3-tuple for print")
+            self.inp1 = str(inpTuple[2])
+            
+        elif self.instrType.is_LABEL():
             # Line Number, Label, LabelName
             DEBUG.Assert(len(inpTuple) == 3, "Expected 3-tuple for label") 
-            self.inp1 = str(inpTuple[2])
+            self.label    = str(inpTuple[2])
+            self.isTarget = True
 
         elif self.instrType.is_ASSIGN():                 
             # Line Number, =, OP, dest, inp1, inp2                 
@@ -172,3 +186,8 @@ class Instr3AC(object):
                 self.dest   = str(inpTuple[3])
                 self.inp1   = str(inpTuple[4])
                 self.inp2   = str(inpTuple[5])
+
+
+    def isTarget(self): 
+        """ Is this branch a jump target or a label? """
+        return self.isTarget
