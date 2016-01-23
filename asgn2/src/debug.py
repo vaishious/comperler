@@ -10,6 +10,13 @@ Purpose : * All exceptions are defined here.
 # List of Imports Begin
 # List of Imports End
 
+# Assert function to be used across the project
+
+def Assert(condition, msg=""):
+    # Could add more fancy stuff later. Just a wrapper for now
+    assert condition, msg
+
+
 # Definitions of the exception classes
 
 # Three-Address-Code Exceptions
