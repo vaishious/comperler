@@ -101,6 +101,38 @@ void *getValue(Hash *hashPtr,char *key)
 	return 0;
 }
 
+void PrintInt(signed int outNum) {
+    asm("
+            move $a0, %[Input]
+            li   $v0, 1
+            syscall
+        "
+        :
+        : [Input] "r" (outNum));
+}
+
+void PrintString(char *stringPtr) {
+    asm("
+            move $a0, %[Input]
+            li   $v0, 4
+            syscall
+        "
+        :
+        : [Input] "r" (stringPtr)
+
+       );
+}
+
+void PrintChar(char outChar) {
+    asm("
+            move $a0, %[Input]
+            li   $v0, 11
+            syscall
+        "
+        :
+        : [Input] "r" (outChar));
+}
+
 int main()
 {
 	Hash *hashPtr = initHash();
@@ -133,5 +165,20 @@ int main()
 	addElement(hashPtr,s,(void *)u);
 	addElement(hashPtr,t,(void *)s);
 	addElement(hashPtr,u,(void *)t);
+	PrintString("Number of elements in the hash is: ");
+	PrintInt(hashPtr->length);
+	PrintChar('\n');
+	PrintString(u);
+	PrintString(" => ");
+	PrintString((char *)getValue(hashPtr,u));
+	PrintChar('\n');
+	PrintString(s);
+	PrintString(" => ");
+	PrintString((char *)getValue(hashPtr,s));
+	PrintChar('\n');
+	PrintString(t);
+	PrintString(" => ");
+	PrintString((char *)getValue(hashPtr,t));
+	PrintChar('\n');
 	return 0;
 }
