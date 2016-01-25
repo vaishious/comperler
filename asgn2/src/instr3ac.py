@@ -84,6 +84,37 @@ class OperationType(object):
     def is_EQ(self)     : return self.opType == OperationType.EQ
     def is_NONE(self)   : return self.opType == OperationType.NONE
 
+
+class Entity(object):
+    """ Used to represent the variables/numbers/strings used in the instruction """
+
+    # Enum for storing the types
+    VARIABLE, STRING, NUMBER, NONE = range(4)
+
+    def __init__(self, inpString):
+        self.inpString = inpString
+        self.entity = None
+        self.value  = None
+
+        if inpString == "":
+            self.entity = Entity.NONE
+
+        elif inpString.isdigit(): # Is a number
+            self.entity = Entity.NUMBER
+            self.value  = int(inpString)
+
+        elif inpString.isalnum(): # Is a variable
+            self.entity = Entity.VARIABLE
+
+        else:
+            self.entity = Entity.STRING
+
+    def is_NUMBER(self)   : return self.entity == Entity.NUMBER
+    def is_VARIABLE(self) : return self.entity == Entity.VARIABLE
+    def is_STRING(self)   : return self.entity == Entity.STRING
+    def is_NONE(self)     : return self.entity == Entity.NONE
+
+
 class Instr3AC(object):
     """ 
         An object of this class represents a single instruction in 3AC format
@@ -118,9 +149,9 @@ class Instr3AC(object):
         # Initialize everything to default values
         self.instrType = InstrType("") 
         self.opType    = OperationType("")
-        self.dest      = ""
-        self.inp1      = ""
-        self.inp2      = ""
+        self.dest      = Entity("")
+        self.inp1      = Entity("")
+        self.inp2      = Entity("")
         self.lineID    = 0
         self.jmpTarget = None
         self.jmpLabel  = None
@@ -136,8 +167,8 @@ class Instr3AC(object):
             # Line Number, IFGOTO, OP, inp1, inp2, Target
             DEBUG.Assert(len(inpTuple) == 6, "Expected 6-tuple for ifgoto") 
             self.opType     =  OperationType(str(inpTuple[2]))
-            self.inp1       =  str(inpTuple[3])
-            self.inp2       =  str(inpTuple[4])
+            self.inp1       =  Entity(str(inpTuple[3]))
+            self.inp2       =  Entity(str(inpTuple[4]))
             self.jmpTarget  =  int(inpTuple[5])
 
         elif self.instrType.is_GOTO():
@@ -157,7 +188,7 @@ class Instr3AC(object):
         elif self.instrType.is_PRINT():
             # Line Number, Print, Input                                
             DEBUG.Assert(len(inpTuple) == 3, "Expected 3-tuple for print")
-            self.inp1 = str(inpTuple[2])
+            self.inp1 = Entity(str(inpTuple[2]))
             
         elif self.instrType.is_LABEL():
             # Line Number, Label, LabelName
@@ -173,19 +204,21 @@ class Instr3AC(object):
             DEBUG.Assert(len(inpTuple) <= 6, "Expected 4/5/6-tuple for assign")          
 
             if len(inpTuple) == 4:
-                self.dest   = str(inpTuple[2])
-                self.inp1   = str(inpTuple[3])
+                self.dest   = Entity(str(inpTuple[2]))
+                self.inp1   = Entity(str(inpTuple[3]))
 
             elif len(inpTuple) == 5:
                 self.opType = OperationType(str(inpTuple[2]))
-                self.dest   = str(inpTuple[3])
-                self.inp1   = str(inpTuple[4])
+                self.dest   = Entity(str(inpTuple[3]))
+                self.inp1   = Entity(str(inpTuple[4]))
 
             else:
                 self.opType = OperationType(str(inpTuple[2]))
-                self.dest   = str(inpTuple[3])
-                self.inp1   = str(inpTuple[4])
-                self.inp2   = str(inpTuple[5])
+                self.dest   = Entity(str(inpTuple[3]))
+                self.inp1   = Entity(str(inpTuple[4]))
+                self.inp2   = Entity(str(inpTuple[5]))
+
+            DEBUG.Assert(self.dest.is_VARIABLE(), "LHS of an ASSIGN has to be a variable")
 
 
     def IsTarget(self): 
