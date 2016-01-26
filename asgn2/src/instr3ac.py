@@ -103,11 +103,11 @@ class Entity(object):
             self.entity = Entity.NUMBER
             self.value  = int(inpString)
 
-        elif inpString.isalnum(): # Is a variable
-            self.entity = Entity.VARIABLE
+        elif (inpString[0] == "\"" and inpString[-1] == "\"") or (inpString[0] == "\'" and inpString[-1] == "\'"): # Is a string
+            self.entity = Entity.STRING
 
         else:
-            self.entity = Entity.STRING
+            self.entity = Entity.VARIABLE
 
     def is_NUMBER(self)   : return self.entity == Entity.NUMBER
     def is_VARIABLE(self) : return self.entity == Entity.VARIABLE
