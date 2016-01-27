@@ -7,6 +7,7 @@ Purpose : * Class used to represent an individual instruction in 3AC format
 """
 
 # List of Imports Begin
+import re               # For checking type of variable
 import debug as DEBUG
 # List of Imports End
 
@@ -89,30 +90,68 @@ class Entity(object):
     """ Used to represent the variables/numbers/strings used in the instruction """
 
     # Enum for storing the types
-    VARIABLE, STRING, NUMBER, NONE = range(4)
+    SCALAR_VARIABLE, HASH_VARIABLE, ARRAY_VARIABLE, STRING, NUMBER, NONE = range(6)
+
+    # Rules for identifying each one
+    singleQuoteString = r'\'([^\\]|(\\[\s\S]))*?\''
+    doubleQuoteString = r'\"([^\\]|(\\[\s\S]))*?\"'
+    string            = r'(' + singleQuoteString + r'|' + doubleQuoteString + r')'
+    number            = r'\d+'
+    identifier        = r'[a-zA-Z_][a-zA-Z0-9_]*'
+    arrayAccess       = identifier + r'\[' + number + r'\]'
+    hashAccessNumber  = identifier + r'\{' + number + r'\}'
+    hashAccessString  = identifier + r'\{' + string + '\}'
+
+    reString         = re.compile(r'^' + string + r'$')
+    reNumber         = re.compile(r'^' + number + r'$')
+    reScalar         = re.compile(r'^' + identifier + r'$')
+    reArray          = re.compile(r'^' + arrayAccess + r'$')
+    reHashNum        = re.compile(r'^' + hashAccessNumber + r'$')
+    reHashString     = re.compile(r'^' + hashAccessString + r'$')
 
     def __init__(self, inpString):
         self.inpString = inpString
         self.entity = None
         self.value  = None
+        self.key    = None
 
         if inpString == "":
             self.entity = Entity.NONE
 
-        elif inpString.isdigit(): # Is a number
+        elif Entity.reNumber.match(inpString): # Is a number
             self.entity = Entity.NUMBER
             self.value  = int(inpString)
 
-        elif (inpString[0] == "\"" and inpString[-1] == "\"") or (inpString[0] == "\'" and inpString[-1] == "\'"): # Is a string
+        elif Entity.reString.match(inpString): # Is a string
             self.entity = Entity.STRING
+            self.value  = repr(inpString)[1:-1]
+
+        elif Entity.reScalar.match(inpString): # Is a scalar
+            self.entity = Entity.SCALAR_VARIABLE
+            self.value  = repr(inpString)[1:-1]
+
+        elif Entity.reArray.match(inpString):  # Is an array
+            self.entity = Entity.ARRAY_VARIABLE
+            self.value  = repr(inpString[:inpString.find('[')])[1:-1]
+            self.key    = Entity(repr(inpString[inpString.find('[')+1:-1])[1:-1])
+
+        elif Entity.reHashNum.match(inpString) or Entity.reHashString.match(inpString): # Is a hashmap
+            self.entity = Entity.HASH_VARIABLE
+            self.value  = repr(inpString[:inpString.find('{')])[1:-1]
+            self.key    = Entity(repr(inpString[inpString.find('{')+1:-1])[1:-1])
 
         else:
-            self.entity = Entity.VARIABLE
+            raise DEBUG.InputError3AC(inpString, "Failed to recognize entity")
 
-    def is_NUMBER(self)   : return self.entity == Entity.NUMBER
-    def is_VARIABLE(self) : return self.entity == Entity.VARIABLE
-    def is_STRING(self)   : return self.entity == Entity.STRING
-    def is_NONE(self)     : return self.entity == Entity.NONE
+    def is_NUMBER(self)          : return self.entity == Entity.NUMBER
+    def is_SCALAR_VARIABLE(self) : return self.entity == Entity.SCALAR_VARIABLE
+    def is_ARRAY_VARIABLE(self)  : return self.entity == Entity.ARRAY_VARIABLE
+    def is_HASH_VARIABLE(self)   : return self.entity == Entity.HASH_VARIABLE
+    def is_STRING(self)          : return self.entity == Entity.STRING
+    def is_NONE(self)            : return self.entity == Entity.NONE
+    def is_VARIABLE(self)        : return (self.entity == Entity.SCALAR_VARIABLE or
+                                           self.entity == Entity.HASH_VARIABLE or
+                                           self.entity == Entity.ARRAY_VARIABLE)
 
 
 class Instr3AC(object):
