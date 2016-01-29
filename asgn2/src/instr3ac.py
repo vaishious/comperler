@@ -4,12 +4,15 @@ MODULE  : instr3ac.py
 
 Purpose : * Class used to represent an individual instruction in 3AC format 
 
+Import Acronym : INSTRUCTION
+
 """
 
 # List of Imports Begin
 import re               # For checking type of variable
 import debug as DEBUG
 import global_objects as G
+import registers as REG
 # List of Imports End
 
 
@@ -284,7 +287,7 @@ class Instr3AC(object):
 
             DEBUG.Assert(self.dest.is_VARIABLE(), "LHS of an ASSIGN has to be a variable")
             self.dest.Allocate()
-
+            
 
     def IsTarget(self): 
         """ Is this branch a jump target or a label? """

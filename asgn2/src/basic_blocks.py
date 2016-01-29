@@ -5,6 +5,9 @@ MODULE  : basic_blocks
 Purpose : * Class used to represent a basic block. Will be an array of instructions.
           * All required algorithms such as register allocation etc. will be a part of this 
             class
+
+Import Acronym : BB
+
 """
 
 # List of Imports Begin

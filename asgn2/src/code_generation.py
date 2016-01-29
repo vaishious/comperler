@@ -95,6 +95,7 @@ class CodeGenerator(object):
             bb.PrettyPrint()
 
     def BuildCode(self):
+        G.AsmText.WriteHeader()
         G.AsmData.GenerateDataRegion()
         G.AsmText.WriteToFile()
 

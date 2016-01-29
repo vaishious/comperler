@@ -5,6 +5,8 @@ MODULE  : debug.py
 Purpose : * All exceptions are defined here.
           * Any debugging/logging functions are defined here.
 
+Import Acronym : DEBUG
+
 """
 
 # List of Imports Begin
