@@ -9,24 +9,34 @@ Purpose : * Class used to represent an individual instruction in 3AC format
 # List of Imports Begin
 import re               # For checking type of variable
 import debug as DEBUG
+import global_objects as G
 # List of Imports End
 
 
 class InstrType(object):
-    """ Instruction Types : ASSIGN, IFGOTO, GOTO, CALL, RETURN, PRINT, NOP, LABEL """ # Add more afterwards
+    """ 
+        Instruction Types : 
+    
+        Straightforward : ASSIGN, IFGOTO, GOTO, CALL, RETURN, PRINT, NOP, LABEL
+
+        Custom          : Declare - Will be used to fix sizes of the arrays
+
+    """
+
 
     # Enum for holding these values
-    ASSIGN, IFGOTO, GOTO, CALL, RETURN, PRINT, LABEL, NOP = range(8)
+    ASSIGN, IFGOTO, GOTO, CALL, RETURN, PRINT, LABEL, DECLARE, NOP = range(9)
 
     typeMap = { 
-                "="      : ASSIGN,        "assign" : ASSIGN,       "ASSIGN"   : ASSIGN,
-                "ifgoto" : IFGOTO,                                 "IFGOTO"   : IFGOTO,
-                "goto"   : GOTO,          "jmp"    : GOTO,         "GOTO"     : GOTO, 
-                "call"   : CALL,                                   "CALL"     : CALL,
-                "ret"    : RETURN,        "return" : RETURN,       "RETURN"   : RETURN,       "RET" : RETURN,
-                "print"  : PRINT,         "printf" : PRINT,        "PRINT"    : PRINT,
-                "label"  : LABEL,         "Label"  : LABEL,        "LABEL"    : LABEL,
-                "nop"    : NOP,           ""       : NOP,          "NOP"      : NOP
+                "="       : ASSIGN,        "assign" : ASSIGN,       "ASSIGN"   : ASSIGN,
+                "ifgoto"  : IFGOTO,                                 "IFGOTO"   : IFGOTO,
+                "goto"    : GOTO,          "jmp"    : GOTO,         "GOTO"     : GOTO, 
+                "call"    : CALL,                                   "CALL"     : CALL,
+                "ret"     : RETURN,        "return" : RETURN,       "RETURN"   : RETURN,       "RET" : RETURN,
+                "print"   : PRINT,         "printf" : PRINT,        "PRINT"    : PRINT,
+                "label"   : LABEL,         "Label"  : LABEL,        "LABEL"    : LABEL,
+                "declare" : DECLARE,       "decl"   : DECLARE,      "DECLARE"  : DECLARE,
+                "nop"     : NOP,           ""       : NOP,          "NOP"      : NOP
               }
 
     def __init__(self, inpType):
@@ -44,6 +54,7 @@ class InstrType(object):
     def is_RETURN(self) : return self.instrType == InstrType.RETURN
     def is_PRINT(self)  : return self.instrType == InstrType.PRINT
     def is_LABEL(self)  : return self.instrType == InstrType.LABEL
+    def is_DECLARE(self)  : return self.instrType == InstrType.DECLARE
     def is_NOP(self)    : return self.instrType == InstrType.NOP
 
 
@@ -153,6 +164,14 @@ class Entity(object):
                                            self.entity == Entity.HASH_VARIABLE or
                                            self.entity == Entity.ARRAY_VARIABLE)
 
+    def Allocate(self):
+        """ Allocate itself memory in the global region """
+        if self.is_SCALAR_VARIABLE():
+            G.AsmData.Allocate32(self)
+
+        elif self.is_ARRAY_VARIABLE():
+            G.AsmData.AllocateArray(self)
+
 
 class Instr3AC(object):
     """ 
@@ -235,6 +254,12 @@ class Instr3AC(object):
             self.label    = str(inpTuple[2])
             self.isTarget = True
 
+        elif self.instrType.is_DECLARE():
+            # Line Number, Declare, Input                                
+            DEBUG.Assert(len(inpTuple) == 3, "Expected 3-tuple for declare")
+            self.inp1 = Entity(str(inpTuple[2]))
+            self.inp1.Allocate()
+
         elif self.instrType.is_ASSIGN():                 
             # Line Number, =, OP, dest, inp1, inp2                 
             # Line Number, =, dest, inp1             
@@ -258,6 +283,7 @@ class Instr3AC(object):
                 self.inp2   = Entity(str(inpTuple[5]))
 
             DEBUG.Assert(self.dest.is_VARIABLE(), "LHS of an ASSIGN has to be a variable")
+            self.dest.Allocate()
 
 
     def IsTarget(self): 

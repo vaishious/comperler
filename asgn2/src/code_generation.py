@@ -11,6 +11,8 @@ Purpose : * Class for parsing the text and launching the basic block algorithm.
 import debug as DEBUG
 import instr3ac as INSTRUCTION
 import basic_blocks as BB
+import mips_assembly as ASM
+import global_objects as G
 # List of Imports End
 
 
@@ -28,7 +30,7 @@ class CodeGenerator(object):
         
     """
 
-    def __init__(self, text):
+    def __init__(self, text, fileName):
         text = text.split('\n')
         text = [i.lstrip().rstrip() for i in text if i != '']
         text = [i.replace('\t', '') for i in text]
@@ -36,6 +38,10 @@ class CodeGenerator(object):
         self.instructions = []
         self.basicBlocks  = []
         self.targets      = set([])
+
+        # Build Global Objects
+        G.AsmText = ASM.TextRegion(fileName)
+        G.AsmData = ASM.DataRegion()
 
         # Create an instance of the instruction class for each line
         for line in text:
@@ -87,4 +93,8 @@ class CodeGenerator(object):
     def PrintBasicBlocks(self):
         for bb in self.basicBlocks:
             bb.PrettyPrint()
+
+    def BuildCode(self):
+        G.AsmData.GenerateDataRegion()
+        G.AsmText.WriteToFile()
 
