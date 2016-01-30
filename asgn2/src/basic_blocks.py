@@ -94,17 +94,14 @@ class SymbolTable(object):
         self.symTable[varName][1] = nextUse
 
 
-def SymSetLive(symTable, varName, isLive=True):
+def SymSetProperties(symTable, varNames, properties):
     """ Creates a copy and then modifies it. This is because we need a separate table for every instruction """
 
     symCopy = copy.deepcopy(symTable)
-    symCopy.SetLive(varName, isLive)
 
-def SymSetNextUse(symTable, varName, nextUse):
-    """ Creates a copy and then modifies it. This is because we need a separate table for every instruction """
-
-    symCopy = copy.deepcopy(symTable)
-    symCopy.SetNextUse(varName, nextUse)
+    for (idx, varName) in enumerate(varNames):
+        symCopy.SetLive(varName, properties[idx][0])
+        symCopy.SetNextUse(varName, properties[idx][1])
 
 
 class RegAddrDescriptor(object):
@@ -119,10 +116,47 @@ class RegAddrDescriptor(object):
         # Since everything is global, all of them reside in memory
         # MAP : <var_name> -> (in_memory? , in_register?)
 
-        self.addrMap = {sym:[True, False] for sym in initial_symbols}
+        self.addrMap = {sym:[True, None] for sym in initial_symbols}
 
         # All registers assumed to be empty initially
         # @ means no variable
 
         self.regMap  = {reg : "@" for reg in self.regs}
 
+    def IsInRegister(self, varName):
+        if type(varName) == INSTRUCTION.Entity:
+            DEBUG.Assert(varName.is_VARIABLE(), "Entity is not a variable")
+            varName = varName.value
+
+        return not self.addrMap[varName][1]
+
+    def GetRegister(self, varName):
+        if type(varName) == INSTRUCTION.Entity:
+            DEBUG.Assert(varName.is_VARIABLE(), "Entity is not a variable")
+            varName = varName.value
+
+        return self.addrMap[varName][1]
+
+    def IsInMemory(self, varName):
+        """ Is latest value in memory? """
+
+        if type(varName) == INSTRUCTION.Entity:
+            DEBUG.Assert(varName.is_VARIABLE(), "Entity is not a variable")
+            varName = varName.value
+        
+        return self.addrMap[varName][0]
+
+    def SetInMemory(self, varName, inMemory=True):
+        if type(varName) == INSTRUCTION.Entity:
+            DEBUG.Assert(varName.is_VARIABLE(), "Entity is not a variable")
+            varName = varName.value
+        
+        self.addrMap[varName][0] = inMemory
+
+    def SetRegister(self, varName, reg):
+        if type(varName) == INSTRUCTION.Entity:
+            DEBUG.Assert(varName.is_VARIABLE(), "Entity is not a variable")
+            varName = varName.value
+        
+        self.addrMap[varName][1] = reg
+        self.regMap[reg] = varName

@@ -165,11 +165,11 @@ class Register(object):
 
     def LoadVar(self):
         codeLoad  = G.INDENT + "lw %s, %s($gp)"%(self, GetVarAddr(self.var))
-        G.AsmText.AddText(codeLoad)
+        return codeLoad
 
     def WriteBackVar(self):
         codeStore = G.INDENT + "sw %s, %s($gp)"%(self, GetVarAddr(self.var))
-        G.AsmText.AddText(codeStore)
+        return codeStore
 
     def AllocateVar(self, var):
         DEBUG.Assert(type(var) == INSTRUCTION.Entity, "Type of var in AllocateVar in Register should be Entity")
