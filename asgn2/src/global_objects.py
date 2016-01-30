@@ -19,3 +19,9 @@ StackSpaceRequired = 0
 
 # Indent to be used for the code
 INDENT = " "*4
+
+# While translating every instruction, these are the relevant tables that are required
+# They need to be loaded for every instruction to be translated. These are kept global 
+# so as to ease their usage by different modules
+CurrRegAddrTable = None
+CurrSymbolTable  = None

@@ -130,7 +130,6 @@ class Entity(object):
         self.entity = None
         self.value  = None
         self.key    = None
-        self.reg    = None
 
         if inpString == "":
             self.entity = Entity.NONE
@@ -179,17 +178,13 @@ class Entity(object):
         elif self.is_ARRAY_VARIABLE():
             G.AsmData.AllocateArray(self)
 
-    def AllocateRegister(self, reg):
-        """ Allocate the current entity to the given register """
-        DEBUG.Assert(type(reg) == ASM.Register, "Argument to AllocateRegister() should be ASM.Register")
+    def IsRegisterAllocated(self):
+        """ Reads the current reg-address descriptor and returns a boolean value """
+        return True
 
-        self.reg = reg
-
-    def GetReg(self):
-        return self.reg
-
-    def IsRegAllocated(self):
-        return self.reg != None
+    def GetCurrReg(self):
+        """ Reads the current reg-address descriptor and returns the relevant register """
+        return 0
 
     def CopyToRegister(self, reg):
         """ 
@@ -205,8 +200,8 @@ class Entity(object):
             return G.INDENT + "la %s, %s\n"%(reg, ASM.GetStrAddr(self))
 
         if self.is_SCALAR_VARIABLE():
-            if self.IsRegAllocated():
-                return G.INDENT + "move %s %s\n"%(reg, self.reg)
+            if self.IsRegisterAllocated():
+                return G.INDENT + "move %s %s\n"%(reg, self.GetCurrReg())
             else:
                 return G.INDENT + "lw %s, %s\n"%(reg, ASM.GetVarAddr(self))
 
@@ -216,14 +211,32 @@ class Entity(object):
             we use sw directly. Otherwise we copy it to $v0 and then use sw. Specifically used in parameter assignments.
         """
 
-        if self.IsRegAllocated():
-            return G.INDENT + "sw %s, %s\n"%(self.reg, mem)
+        if self.IsRegisterAllocated():
+            return G.INDENT + "sw %s, %s\n"%(self.GetCurrReg(), mem)
 
         codeSegment = self.CopyToRegister(REG.v0)
         codeSegment += G.INDENT + "sw %s, %s\n"%(REG.v0, mem)
 
         return codeSegment
 
+    def ReturnSymbols(self):
+
+        if self.is_SCALAR_VARIABLE():
+            return [str(self.value)]
+
+        elif self.is_ARRAY_VARIABLE() or self.is_HASH_VARIABLE():
+            ret = [str(self.value)]
+            currEntity = self.key
+            while (currEntity.is_ARRAY_VARIABLE() or currEntity.is_HASH_VARIABLE()):
+                currEntity = currEntity.key
+
+            if currEntity.is_SCALAR_VARIABLE():
+                ret += [str(currEntity.value)]
+
+            return ret
+
+        else:
+            return []
 
 class Instr3AC(object):
     """ 
@@ -302,7 +315,6 @@ class Instr3AC(object):
             # Line Number, Print, Inputs                                
             DEBUG.Assert(len(inpTuple) >= 3, "Expected atleast a 3-tuple for print")
             self.PrintArgs = map(Entity, map(str, inpTuple[2:]))
-            LIB.Translate__Printf(self.PrintArgs)
             
         elif self.instrType.is_LABEL():
             # Line Number, Label, LabelName
@@ -352,3 +364,11 @@ class Instr3AC(object):
 
     def PrettyPrint(self):
         print self.inpTuple
+
+    def ReturnSymbols(self):
+        ret = self.dest.ReturnSymbols() + self.inp1.ReturnSymbols() + self.inp2.ReturnSymbols()
+        for arg in self.PrintArgs:
+            ret += arg.ReturnSymbols()
+
+        return set(ret)
+
