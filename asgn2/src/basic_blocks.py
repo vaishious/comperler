@@ -61,6 +61,17 @@ class BasicBlock(object):
 
     def Translate(self):
         self.ComputeSymbolTables()
+        bbRegAddrDescriptor = RegAddrDescriptor(self.symbols)
+
+        # Set global pointers
+        G.CurrRegAddrTable = bbRegAddrDescriptor
+
+        for instr in self.instructions:
+
+            # Set global pointers
+            G.CurrSymbolTable = instr.symTable
+
+            # TODO : Actual Translation
 
     def PrettyPrint(self):
         print "BASIC BLOCK #" + str(self.bbNum)
