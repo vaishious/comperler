@@ -18,6 +18,7 @@ zero = ASM.Register("zero")
 
 # These registers contain the Returned Value of a subroutine
 # If the value is 1 word only $v0 is significant.
+# Compilers also use these as temporary registers for transferring/loading immediate values
 
 v0   = ASM.Register("v0")
 v1   = ASM.Register("v1")
@@ -81,3 +82,7 @@ fp   = ASM.Register("fp")
 # Return address in a subroutine call
 
 ra   = ASM.Register("ra")
+
+# Group argument registers together for easy access
+
+argRegs = [a0, a1, a2, a3]

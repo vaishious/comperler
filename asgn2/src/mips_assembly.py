@@ -24,6 +24,14 @@ def GetVarAddr(variable):
     else:
         return "$V_" + str(variable)
 
+def GetStrAddr(variable):
+    """ Get address of a string as $STR_(stringNum) """
+    if type(variable) == INSTRUCTION.Entity:
+        return "$STR_" + G.AsmData.GetStringLabel(str(variable.value))
+    else:
+        return "$STR_" + G.AsmData.GetStringLabel(str(variable))
+
+
 class DataRegion(object):
     """
         Member Variables :
@@ -152,12 +160,15 @@ class Register(object):
         self.var      =  None
         self.empty    =  True
 
+    def __str__(self):
+        return "$%s"%(self.regName)
+
     def LoadVar(self):
-        codeLoad  = "lw $%s, %s($gp)"%(self.regName, GetVarAddr(self.var))
+        codeLoad  = G.INDENT + "lw %s, %s($gp)"%(self, GetVarAddr(self.var))
         G.AsmText.AddText(codeLoad)
 
     def WriteBackVar(self):
-        codeStore = "sw $%s, %s($gp)"%(self.regName, GetVarAddr(self.var))
+        codeStore = G.INDENT + "sw %s, %s($gp)"%(self, GetVarAddr(self.var))
         G.AsmText.AddText(codeStore)
 
     def AllocateVar(self, var):

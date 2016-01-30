@@ -13,6 +13,8 @@ import re               # For checking type of variable
 import debug as DEBUG
 import global_objects as G
 import registers as REG
+import library as LIB
+import mips_assembly as ASM
 # List of Imports End
 
 
@@ -128,6 +130,7 @@ class Entity(object):
         self.entity = None
         self.value  = None
         self.key    = None
+        self.reg    = None
 
         if inpString == "":
             self.entity = Entity.NONE
@@ -138,7 +141,7 @@ class Entity(object):
 
         elif Entity.reString.match(inpString): # Is a string
             self.entity = Entity.STRING
-            self.value  = repr(inpString)[1:-1]
+            self.value  = repr(inpString)[2:-2]
             G.AsmData.AllocateString(self)
 
         elif Entity.reScalar.match(inpString): # Is a scalar
@@ -168,13 +171,58 @@ class Entity(object):
                                            self.entity == Entity.HASH_VARIABLE or
                                            self.entity == Entity.ARRAY_VARIABLE)
 
-    def Allocate(self):
+    def AllocateGlobalMemory(self):
         """ Allocate itself memory in the global region """
         if self.is_SCALAR_VARIABLE():
             G.AsmData.Allocate32(self)
 
         elif self.is_ARRAY_VARIABLE():
             G.AsmData.AllocateArray(self)
+
+    def AllocateRegister(self, reg):
+        """ Allocate the current entity to the given register """
+        DEBUG.Assert(type(reg) == ASM.Register, "Argument to AllocateRegister() should be ASM.Register")
+
+        self.reg = reg
+
+    def GetReg(self):
+        return self.reg
+
+    def IsRegAllocated(self):
+        return self.reg != None
+
+    def CopyToRegister(self, reg):
+        """ 
+            Copies its value to the given register. If it has been allocated to a register, it uses the move instruction.
+            If not, it uses the lw instruction in case it is a scalar/array variable. If it is a number, it uses "li".
+            If it is a string, it will use "la". This is used specially for parameter assignments for functions
+        """
+
+        if self.is_NUMBER():
+            return G.INDENT + "li %s, %s\n"%(reg, str(self.value))
+
+        if self.is_STRING():
+            return G.INDENT + "la %s, %s\n"%(reg, ASM.GetStrAddr(self))
+
+        if self.is_SCALAR_VARIABLE():
+            if self.IsRegAllocated():
+                return G.INDENT + "move %s %s\n"%(reg, self.reg)
+            else:
+                return G.INDENT + "lw %s, %s\n"%(reg, ASM.GetVarAddr(self))
+
+    def CopyToMemory(self, mem):
+        """
+            Copies the value at the given memory location. Instructions used are straightforward. In case it is allocated, 
+            we use sw directly. Otherwise we copy it to $v0 and then use sw. Specifically used in parameter assignments.
+        """
+
+        if self.IsRegAllocated():
+            return G.INDENT + "sw %s, %s\n"%(self.reg, mem)
+
+        codeSegment = self.CopyToRegister(REG.v0)
+        codeSegment += G.INDENT + "sw %s, %s\n"%(REG.v0, mem)
+
+        return codeSegment
 
 
 class Instr3AC(object):
@@ -192,6 +240,8 @@ class Instr3AC(object):
         * Inp1             : Input 1 for the operation
 
         * Inp2             : Input 2 for the operation. May be omitted
+
+        * PrintArgs        : Store the arguments to Print. Deviation from 3-addr code. Cannot be used for any other instruction
 
         * Jump Target      : Line ID to jump to in case the type is GOTO or IFGOTO
 
@@ -214,6 +264,7 @@ class Instr3AC(object):
         self.dest      = Entity("")
         self.inp1      = Entity("")
         self.inp2      = Entity("")
+        self.PrintArgs = []
         self.lineID    = 0
         self.jmpTarget = None
         self.jmpLabel  = None
@@ -248,9 +299,10 @@ class Instr3AC(object):
             DEBUG.Assert(len(inpTuple) == 2, "Expected 2-tuple for return")
 
         elif self.instrType.is_PRINT():
-            # Line Number, Print, Input                                
-            DEBUG.Assert(len(inpTuple) == 3, "Expected 3-tuple for print")
-            self.inp1 = Entity(str(inpTuple[2]))
+            # Line Number, Print, Inputs                                
+            DEBUG.Assert(len(inpTuple) >= 3, "Expected atleast a 3-tuple for print")
+            self.PrintArgs = map(Entity, map(str, inpTuple[2:]))
+            LIB.Translate__Printf(self.PrintArgs)
             
         elif self.instrType.is_LABEL():
             # Line Number, Label, LabelName
@@ -262,7 +314,7 @@ class Instr3AC(object):
             # Line Number, Declare, Input                                
             DEBUG.Assert(len(inpTuple) == 3, "Expected 3-tuple for declare")
             self.inp1 = Entity(str(inpTuple[2]))
-            self.inp1.Allocate()
+            self.inp1.AllocateGlobalMemory()
 
         elif self.instrType.is_ASSIGN():                 
             # Line Number, =, OP, dest, inp1, inp2                 
@@ -287,7 +339,7 @@ class Instr3AC(object):
                 self.inp2   = Entity(str(inpTuple[5]))
 
             DEBUG.Assert(self.dest.is_VARIABLE(), "LHS of an ASSIGN has to be a variable")
-            self.dest.Allocate()
+            self.dest.AllocateGlobalMemory()
             
 
     def IsTarget(self): 

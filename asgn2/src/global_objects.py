@@ -11,3 +11,11 @@ Import Acronym : G
 
 AsmData = None
 AsmText = None
+
+# For library functions like printf, we'll need to put arguments on the stack
+# For that we need to allocate some space beforehand. This variable just keeps
+# track of it
+StackSpaceRequired = 0
+
+# Indent to be used for the code
+INDENT = " "*4
