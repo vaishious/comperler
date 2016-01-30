@@ -73,3 +73,44 @@ void ReadString(char *buffer, unsigned int length) {
         :
         : [BufferAddr] "r" (buffer), [Length] "r" (length));
 }
+
+void Printf(char *formatSpecifier, ...) {
+
+    // Very inefficient implementation. System call for every character. 
+    // Enough for this assignment. Will optimize during the final project compilation
+
+    // va_start
+    char *argPtr = (char *)(&formatSpecifier) + sizeof(char *);
+
+    int argInt;
+
+    char argChar;
+    char *argStr;
+
+    while((*formatSpecifier) != '\0') {
+        if ((*formatSpecifier) == '%') {
+            formatSpecifier++;
+
+            if ((*formatSpecifier) == 'd') {
+                argInt = *((int *)argPtr);
+                PrintInt(argInt);
+                argPtr += sizeof(int);
+            } else if ((*formatSpecifier) == 's') {
+                argStr = *((char **) argPtr);
+                PrintString(argStr);
+                argPtr += sizeof(char *);
+            } else if ((*formatSpecifier) == 'c') {
+                argChar = *((char *) argPtr);
+                PrintChar(argChar);
+                argPtr += sizeof(char);
+            } else {
+                return;
+            }
+
+        } else {
+            PrintChar((*formatSpecifier));
+        }
+
+        formatSpecifier++;
+    }
+}

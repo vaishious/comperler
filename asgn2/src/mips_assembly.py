@@ -16,6 +16,14 @@ import debug as DEBUG
 import global_objects as G
 # List of Imports End
 
+def GetVarAddr(variable):
+    """ Get address of a variable as $V_(var_name) """
+    if type(variable) == INSTRUCTION.Entity:
+        return "$V_" + str(variable.value)
+
+    else:
+        return "$V_" + str(variable)
+
 class DataRegion(object):
     """
         Member Variables :
@@ -24,17 +32,25 @@ class DataRegion(object):
 
                 ArraySet                         : A set containing the array variables declared so far
 
+                StringSet                        : A set containing all the static strings defined so far
+
         Member Functions :
 
                 Allocate32(var a)                : Allocate 4 bytes for the given variable "a" (using .word)
 
                 AllocateArray(var arr, var size) : Allocate an array of "size" bytes for given variable arr (using .space)
 
+                AllocateString(string)           : Allocate space for the given string
+
+                GetStringLabel(string)           : Return label associated with the given static string
+
     """
 
     def __init__(self):
-        self.varSet   = set([])
-        self.arraySet = {}
+        self.varSet    = set([])
+        self.arraySet  = {}
+        self.stringSet = {}
+        self.stringCnt = 0
 
 
     def Allocate32(self, varEntity):
@@ -55,16 +71,35 @@ class DataRegion(object):
 
         self.arraySet[arrEntity.value] = arrEntity.key.value
 
+    def AllocateString(self, strEntity):
+        DEBUG.Assert(type(strEntity) == INSTRUCTION.Entity, "Type for AllocateString in Data-Region is not Entity")
+        DEBUG.Assert(strEntity.is_STRING(), "Only string variables allowed for AllocateString in Data-Region")
+
+        self.stringSet[strEntity.value] = str(self.stringCnt)
+        self.stringCnt += 1
+
+    def GetStringLabel(self, string):
+        return self.stringSet[string]
+
     def GenerateDataRegion(self):
         """ Uses the global object AsmText to write its data to """
 
         dataText = ".data\n"
 
+        dataText += "# VARIABLES\n"
         for var32 in self.varSet:
-            dataText += "%s : .word 0\n"%(str(var32))
+            dataText += ".align 2\n"
+            dataText += "$V_%s : .word 0\n\n"%(str(var32))
 
+        dataText += "\n# ARRAYS\n"
         for (arr, size) in self.arraySet.items():
-            dataText += "%s : .space %d\n"%(str(arr), 4*size)
+            dataText += ".align 2\n"
+            dataText += "$A_%s : .space %d\n\n"%(str(arr), 4*size)
+
+        dataText += "\n# STRINGS\n"
+        for (string, label) in self.stringSet.items():
+            dataText += ".align 2\n"
+            dataText += "$STR_%s : .asciiz \"%s\"\n"%(label, string)
 
         print dataText
 
@@ -118,11 +153,11 @@ class Register(object):
         self.empty    =  True
 
     def LoadVar(self):
-        codeLoad  = "lw $%s, %s($gp)"%(self.regName, str(self.var.value))
+        codeLoad  = "lw $%s, %s($gp)"%(self.regName, GetVarAddr(self.var))
         G.AsmText.AddText(codeLoad)
 
     def WriteBackVar(self):
-        codeStore = "sw $%s, %s($gp)"%(self.regName, str(self.var.value))
+        codeStore = "sw $%s, %s($gp)"%(self.regName, GetVarAddr(self.var))
         G.AsmText.AddText(codeStore)
 
     def AllocateVar(self, var):

@@ -1,7 +1,7 @@
 1, =, a, 2
 2, =, b, 7
 11, declare, arr[40]
-3, =, +, a, a, b
+3, =, +, a, a, "Hello World"
 4, ifgoto, leq, a, 50, 2
 5, call, foo
 6, ret
