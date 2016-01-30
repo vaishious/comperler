@@ -13,7 +13,7 @@ if __name__ == "__main__":
 	filePtr = open(str(sys.argv[1]), 'r')
         codeGen = CodeGenerator(filePtr.read(), str(sys.argv[1]))
         codeGen.GenBasicBlocks()
-        codeGen.PrintBasicBlocks()
+        #codeGen.PrintBasicBlocks()
         codeGen.BuildCode()
 
 

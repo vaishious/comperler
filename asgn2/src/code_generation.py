@@ -49,7 +49,7 @@ class CodeGenerator(object):
             instrTuple = [i.lstrip().rstrip() for i in instrTuple]
             self.instructions += [INSTRUCTION.Instr3AC(instrTuple)]
 
-            self.instructions[-1].PrettyPrint()
+            #self.instructions[-1].PrettyPrint()
 
             gotoTarget = self.instructions[-1].GetTarget()
             if gotoTarget:
@@ -95,6 +95,9 @@ class CodeGenerator(object):
             bb.PrettyPrint()
 
     def BuildCode(self):
+        for bb in self.basicBlocks:
+            bb.Translate()
+
         G.AsmText.WriteHeader()
         G.AsmData.GenerateDataRegion()
         G.AsmText.WriteToFile()

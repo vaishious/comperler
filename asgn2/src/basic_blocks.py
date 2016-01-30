@@ -31,11 +31,6 @@ class BasicBlock(object):
 
                 TODO: Add more stuff as and how we need it.
 
-        Member Functions : 
-
-                * RegisterAllocate : Perform register allocation for this block
-
-                TODO: Add more stuff as and how we need it.
     """
 
     def __init__(self, bbNum=0, instructions=[]):
@@ -58,6 +53,14 @@ class BasicBlock(object):
     def ComputeSymbolTables(self):
         """ Compute live ranges and next-use using a backward scan """
         symTable = SymbolTable(self.symbols)
+
+        for revInstr in reversed(self.instructions):
+            revInstr.UpdateAndAttachSymbolTable(symTable)
+            #revInstr.PrettyPrint()
+            #revInstr.symTable.PrettyPrint()
+
+    def Translate(self):
+        self.ComputeSymbolTables()
 
     def PrettyPrint(self):
         print "BASIC BLOCK #" + str(self.bbNum)
@@ -93,15 +96,23 @@ class SymbolTable(object):
 
         self.symTable[varName][1] = nextUse
 
+    def PrettyPrint(self):
+        """ For debugging purposes """
 
-def SymSetProperties(symTable, varNames, properties):
+        for (sym, prop) in self.symTable.items():
+            print sym, " : ", prop
+
+
+def SymSetProperties(symTable, newProperties):
     """ Creates a copy and then modifies it. This is because we need a separate table for every instruction """
 
     symCopy = copy.deepcopy(symTable)
 
-    for (idx, varName) in enumerate(varNames):
-        symCopy.SetLive(varName, properties[idx][0])
-        symCopy.SetNextUse(varName, properties[idx][1])
+    for (varName, properties) in newProperties.items():
+        symCopy.SetLive(varName, properties[0])
+        symCopy.SetNextUse(varName, properties[1])
+
+    return symCopy
 
 
 class RegAddrDescriptor(object):

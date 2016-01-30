@@ -15,6 +15,7 @@ import global_objects as G
 import registers as REG
 import library as LIB
 import mips_assembly as ASM
+import basic_blocks as BB
 # List of Imports End
 
 
@@ -266,6 +267,9 @@ class Instr3AC(object):
 
         * Is Target        : Is this a jump target for another instruction?
 
+        * SymTable         : Local symbol table holding info on liveness and next-use 
+                             assigned by the basic-block for register allocation
+
     """
 
     def __init__(self, inpTuple):
@@ -283,6 +287,7 @@ class Instr3AC(object):
         self.jmpLabel  = None
         self.label     = None
         self.isTarget  = False
+        self.symTable  = None
 
         # Set line id
         self.lineID    = int(inpTuple[0])                    # Value error raised if input is not an integer
@@ -371,4 +376,37 @@ class Instr3AC(object):
             ret += arg.ReturnSymbols()
 
         return set(ret)
+
+    def UpdateAndAttachSymbolTable(self, oldTable):
+        """ Set new liveness and next-use parameters """
+
+        symbols = list(self.ReturnSymbols())
+        if len(symbols) == 0:
+            self.symTable = oldTable
+            return
+
+        newProperties = {sym:[False, -1] for sym in symbols}
+
+        outSymbol = self.dest.value
+
+        if self.dest.is_VARIABLE():
+            newProperties[outSymbol] = [False, -1]
+
+        # Rest of the symbols count as a "use"
+        for sym in symbols:
+            if sym == outSymbol:
+                continue
+
+            newProperties[sym] = [True, self.lineID]
+
+        # Check if the outSymbol is used as an input as well
+        if self.dest.is_VARIABLE():
+            if (self.inp1.value == outSymbol or 
+                self.inp2.value == outSymbol or 
+                outSymbol in [i.value for i in self.PrintArgs]):
+
+                newProperties[outSymbol] = [True, self.lineID] 
+
+
+        self.symTable = BB.SymSetProperties(oldTable, newProperties)
 
