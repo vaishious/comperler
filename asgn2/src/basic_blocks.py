@@ -83,7 +83,10 @@ class BasicBlock(object):
                 # if it is a branch target
                 G.AsmText.AddText("L_%d:"%(instr.lineID))
 
-            if instr.instrType.is_GOTO():
+            if instr.instrType.is_DECLARE():
+                pass
+
+            elif instr.instrType.is_GOTO():
                 G.CurrRegAddrTable.DumpDirtyVars()
                 G.AsmText.AddText(G.INDENT + "j L_%d"%(instr.jmpTarget))
 
