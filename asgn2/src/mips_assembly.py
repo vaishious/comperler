@@ -160,9 +160,6 @@ class Register(object):
     def __str__(self):
         return "$%s"%(self.regName)
 
-    def __repr__(self):
-        return "$%s"%(self.regName)
-
     def LoadImmediate(self, num):
         codeLoad = G.INDENT + "li %s, %s\n"%(self, str(num))
         return codeLoad

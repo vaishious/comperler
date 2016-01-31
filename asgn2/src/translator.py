@@ -13,8 +13,8 @@ import instr3ac as INSTRUCTION
 import registers as REG
 import global_objects as G
 import translator as TRANS
+import library as LIB
 # List of Imports End
-
 
 def Translate(instr):
     if instr.instrType.is_DECLARE():
@@ -88,6 +88,10 @@ def Translate_IFGOTO(instr):
     
     DEBUG.Assert(instr.opType.opType in cmp_ops,"Invalid operator for IFGOTO.")
 
+    # If operands are strings
+    if StrTranslate_IFGOTO(instr):
+        return
+
     # Instead of separately handling the cases in which one or both of
     # the operands is a number, load both operands into registers and 
     # operate only on the registers.
@@ -111,3 +115,19 @@ def Translate_IFGOTO(instr):
     elif instr.opType.is_GEQ():
         G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(reg1, reg1, reg2))
         G.AsmText.AddText(G.INDENT + "beq %s, %s, L_%d"%(reg1, REG.zero, instr.jmpTarget))
+
+def StrTranslate_IFGOTO(instr):
+        if instr.inp1.is_STRING() and instr.inp2.is_STRING():
+            LIB.Translate_StrCmp(instr.inp1,instr.inp2)
+            if instr.opType.is_EQ():
+                G.AsmText.AddText(G.INDENT + "beqz $v0, L_%d"%(instr.jmpTarget))
+            elif instr.opType.is_GEQ():
+                G.AsmText.AddText(G.INDENT + "bgez $v0, L_%d"%(instr.jmpTarget))
+            elif instr.opType.is_LEQ():
+                G.AsmText.AddText(G.INDENT + "blez $v0, L_%d"%(instr.jmpTarget))
+            elif instr.opType.is_LT():
+                G.AsmText.AddText(G.INDENT + "bgtz $v0, L_%d"%(instr.jmpTarget))
+            elif instr.opType.is_GT():
+                G.AsmText.AddText(G.INDENT + "bltz $v0, L_%d"%(instr.jmpTarget))
+            return True
+        return False

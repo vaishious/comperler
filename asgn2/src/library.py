@@ -38,4 +38,18 @@ def Translate__Printf(parameters):
     G.AsmText.AddText(codeSegment)
 
 
+def Translate_StrCmp(str1, str2):
+    """ Custom version of strCmp can be found in hashlib.c in the lib/ folder """
 
+    DEBUG.Assert(str1.is_STRING(), "First argument of StrCmp has to be a string")
+    DEBUG.Assert(str2.is_STRING(), "Second argument of StrCmp has to be a string")
+
+    G.StackSpaceRequired = max(G.StackSpaceRequired, 4*2)
+
+    codeSegment = ""
+
+    codeSegment+= str1.CopyToRegister(REG.argRegs[0])
+    codeSegment+= str2.CopyToRegister(REG.argRegs[1])
+
+    codeSegment += G.INDENT + "jal strCmp\n"
+    G.AsmText.AddText(codeSegment)
