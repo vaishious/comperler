@@ -94,7 +94,22 @@ class BasicBlock(object):
             elif instr.IsTarget():
                 # Add a label L_<line_no> for each line in the input
                 # if it is a branch target
-                G.AsmText.AddText("L_%s:"%(str(instr.lineID)))
+                G.AsmText.AddText("L_%d:"%(instr.lineID))
+
+            if instr.instrType.is_DECLARE():
+                pass
+
+            elif instr.instrType.is_GOTO():
+                G.CurrRegAddrTable.DumpDirtyVars()
+                G.AsmText.AddText(G.INDENT + "j L_%d"%(instr.jmpTarget))
+
+            elif instr.instrType.is_CALL():
+                G.CurrRegAddrTable.DumpDirtyVars()
+                G.AsmText.AddText(G.INDENT + "jal %s"%(instr.jmpLabel))
+
+            elif instr.instrType.is_RETURN():
+                G.CurrRegAddrTable.DumpDirtyVars()
+                G.AsmText.AddText(G.INDENT + "jr $ra")
 
     def PrettyPrint(self):
         print "BASIC BLOCK #" + str(self.bbNum)
@@ -437,3 +452,11 @@ class RegAddrDescriptor(object):
                 print str(reg), " : ", var, "  ",
 
         print ""
+
+    def DumpDirtyVars(self):
+        # Will be called when exiting a basic block
+        # Writes values of dirty registers to memory
+
+        for (var,value) in self.addrMap.iteritems():
+            if not value[0]:
+                G.AsmText.AddText(value[1].SpillVar(var))
