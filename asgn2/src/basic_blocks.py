@@ -78,8 +78,9 @@ class BasicBlock(object):
             if instr.instrType.is_LABEL():
                 G.AsmText.AddText("%s:"%(instr.label))
 
-            else:
+            elif instr.IsTarget():
                 # Add a label L_<line_no> for each line in the input
+                # if it is a branch target
                 G.AsmText.AddText("L_%s:"%(str(instr.lineID)))
 
     def PrettyPrint(self):
