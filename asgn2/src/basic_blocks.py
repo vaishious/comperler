@@ -81,6 +81,14 @@ class BasicBlock(object):
             else:
                 G.NextSymbolTable = self.finalSymTable
 
+            # Add the necessary labels before doing register allocation
+            if instr.instrType.is_LABEL():
+                G.AsmText.AddText("%s:"%(instr.label))
+            elif instr.IsTarget():
+                # Add a label L_<line_no> for each line in the input
+                # if it is a branch target
+                G.AsmText.AddText("L_%d:"%(instr.lineID))
+
             # Perform register allocation
             regAllocCode = self.RegisterAllocate()
             if regAllocCode:

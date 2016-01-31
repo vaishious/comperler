@@ -141,6 +141,8 @@ class Register(object):
 
         Member Functions :
 
+                LoadImmediate()   :     Produce code for load the immediate value into the register
+
                 LoadVar()         :     Produce code for loading the given variable into the register
 
                 SpillVar()        :     Spill the contents of the register. Uses the G.AsmText to write code
@@ -160,6 +162,10 @@ class Register(object):
 
     def __repr__(self):
         return "$%s"%(self.regName)
+
+    def LoadImmediate(self, num):
+        codeLoad = G.INDENT + "li %s, %s\n"%(self, str(num))
+        return codeLoad
 
     def LoadVar(self, var):
         codeLoad  = G.INDENT + "lw %s, %s($gp)\n"%(self, GetVarAddr(var))

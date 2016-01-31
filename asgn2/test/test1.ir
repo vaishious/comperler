@@ -3,6 +3,10 @@
 11, declare, arr[40]
 3, =, +, a, a, "Hello World"
 4, ifgoto, leq, a, 50, 2
+10, ifgoto, eq, a, b, 14
+12, ifgoto, geq, b, 292, 13
+13, ifgoto, lt, a, b, 12
+14, ifgoto, gt, 275, a, 10
 5, call, foo
 6, ret
 7, label, foo
