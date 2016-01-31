@@ -239,7 +239,6 @@ class RegAddrDescriptor(object):
         # Will be called when exiting a basic block
         # Writes values of dirty registers to memory
 
-        for reg in self.regs:
-            regVars = self.regMap[reg]
-            if (len(regVars) > 0) and (not IsInMemory(regVars[-1])):
-                G.AsmText.AddText(reg.SpillVar(regVars[-1]))
+        for (var,value) in self.addrMap.iteritems():
+            if not value[0]:
+                G.AsmText.AddText(value[1].SpillVar(var))
