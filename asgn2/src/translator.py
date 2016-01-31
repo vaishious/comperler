@@ -16,7 +16,7 @@ import translator as TRANS
 # List of Imports End
 
 
-def Translate(instr)
+def Translate(instr):
     if instr.instrType.is_LABEL():
         G.AsmText.AddText("%s:"%(instr.label))
 

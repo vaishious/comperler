@@ -142,11 +142,12 @@ class BasicBlock(object):
                 G.CurrRegAddrTable.RemoveDestVarFromRegisters(varName)
 
                 # if it is a copy operation, simply allocate the register allocated to the input
-                inpVarName = G.CurrInstruction.inp1.value
-                reg =  G.CurrRegAddrTable.GetAllocatedRegister(inpVarName)
-                G.CurrRegAddrTable.SetRegister(varName, reg)
-                G.AllocMap[varName] = reg
-                return codeSegment
+                if (G.CurrInstruction.inp1.is_VARIABLE()):
+                    inpVarName = G.CurrInstruction.inp1.value
+                    reg =  G.CurrRegAddrTable.GetAllocatedRegister(inpVarName)
+                    G.CurrRegAddrTable.SetRegister(varName, reg)
+                    G.AllocMap[varName] = reg
+                    return codeSegment
 
 
             if not (G.CurrRegAddrTable.IsInRegisterSafe(varName)):
@@ -223,8 +224,8 @@ class BasicBlock(object):
                     G.CurrRegAddrTable.SetRegister(varName, currReg)
                     codeSegment += currReg.LoadVar(varName)
 
-        reg = G.CurrRegAddrTable.GetAllocatedRegister(varName)
-        G.AllocMap[varName] = reg
+            reg = G.CurrRegAddrTable.GetAllocatedRegister(varName)
+            G.AllocMap[varName] = reg
 
         return codeSegment
 
