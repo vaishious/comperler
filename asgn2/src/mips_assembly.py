@@ -158,25 +158,61 @@ class Register(object):
     def __str__(self):
         return "$%s"%(self.regName)
 
+    def __repr__(self):
+        return "$%s"%(self.regName)
+
     def LoadVar(self, var):
-        codeLoad  = G.INDENT + "lw %s, %s($gp)"%(self, GetVarAddr(var))
+        codeLoad  = G.INDENT + "lw %s, %s($gp)\n"%(self, GetVarAddr(var))
         return codeLoad
 
     def SpillVar(self, var):
-        codeStore = G.INDENT + "sw %s, %s($gp)"%(self, GetVarAddr(var))
+        codeStore = G.INDENT + "sw %s, %s($gp)\n"%(self, GetVarAddr(var))
         return codeStore
 
-    def Score(self):
+    def Score(self, targetVar, isInputVar=True, ):
         """ Use the current global reg-addr descriptor to calculate scores """
+
+        if type(targetVar) == INSTRUCTION.Entity:
+            DEBUG.Assert(targetVar.is_VARIABLE(), "Entity is not a variable")
+            targetVar = targetVar.value
+
 
         regVars = G.CurrRegAddrTable.GetVars(self)
         DEBUG.Assert(regVars != [] , "%s is empty. Why are we calculating the score?"%self)
 
         score = 0
+        codeSegment = ""
+        removeSet = []
 
         for var in regVars:
-            if G.CurrRegAddrTable.IsElsewhere(var, self.regName):
-                # Continue. No store necessary
+            if var == targetVar:
                 continue
+
+            removeSet += [var]
+
+            if not G.CurrSymbolTable.IsLive(var):
+                if not G.CurrRegAddrTable.IsElsewhere(var, self.regName):
+
+                    # Variables are global. We need to write it back
+                    codeSegment += self.SpillVar(var)
+                    score += 1
+
+                continue
+
+            elif G.CurrRegAddrTable.IsElsewhere(var, self.regName):
+                # One load in the future as it is live
+                score += 1
+                continue
+
+            else: 
+                # It is both live and only in the register. We have to store it and load it in the future too
+                codeSegment += self.SpillVar(var)
+                score += 2
+
+
+        return score, codeSegment, removeSet
+
+
+
 
 

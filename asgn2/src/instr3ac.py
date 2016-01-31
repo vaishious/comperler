@@ -411,4 +411,3 @@ class Instr3AC(object):
 
 
         self.symTable = BB.SymSetProperties(oldTable, newProperties)
-

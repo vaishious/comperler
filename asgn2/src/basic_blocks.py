@@ -55,11 +55,11 @@ class BasicBlock(object):
     def ComputeSymbolTables(self):
         """ Compute live ranges and next-use using a backward scan """
         symTable = SymbolTable(self.symbols)
+        self.finalSymTable = symTable
 
         for revInstr in reversed(self.instructions):
             revInstr.UpdateAndAttachSymbolTable(symTable)
-            #revInstr.PrettyPrint()
-            #revInstr.symTable.PrettyPrint()
+            symTable = revInstr.symTable
 
     def Translate(self):
         self.ComputeSymbolTables()
@@ -68,10 +68,23 @@ class BasicBlock(object):
         # Set global pointers
         G.CurrRegAddrTable = bbRegAddrDescriptor
 
-        for instr in self.instructions:
+        for (idx, instr) in enumerate(self.instructions):
 
             # Set global pointers
             G.CurrSymbolTable = instr.symTable
+            G.CurrInstruction = instr
+            G.AllocMap = {}
+            instr.PrettyPrint()
+
+            if idx != len(self.instructions) - 1:
+                G.NextSymbolTable = self.instructions[idx + 1].symTable
+            else:
+                G.NextSymbolTable = self.finalSymTable
+
+            # Perform register allocation
+            regAllocCode = self.RegisterAllocate()
+            if regAllocCode:
+                G.AsmText.AddText(regAllocCode)
 
             # TODO : Actual Translation
 
@@ -87,6 +100,138 @@ class BasicBlock(object):
         print "BASIC BLOCK #" + str(self.bbNum)
         for instr in self.instructions:
             instr.PrettyPrint()
+
+    def RegisterAllocate(self):
+        """ Perform register allocation for the current instruction """
+
+        codeSegment = ""
+        alreadyAllocatedRegs = []
+
+        # Take care of inputs first
+        for entity in [G.CurrInstruction.inp1, G.CurrInstruction.inp2]:
+            if entity.is_VARIABLE():
+                varName = entity.value
+
+                if not G.CurrRegAddrTable.IsInRegister(varName):
+                    # If it's already in a register, there is nothing to do
+
+                    for (reg, alloc) in G.CurrRegAddrTable.regMap.items():
+                        if not alloc: # Empty, we can use this
+                            G.CurrRegAddrTable.SetRegister(varName, reg)
+                            codeSegment += reg.LoadVar(varName)
+                            break
+                    else:
+
+                        currReg, currCodeSegment = G.CurrRegAddrTable.FindBestRegister(varName, alreadyAllocatedRegs)
+
+                        codeSegment += currCodeSegment 
+                        G.CurrRegAddrTable.ClearRegister(currReg)
+
+                        # Load value into the register
+                        G.CurrRegAddrTable.SetRegister(varName, currReg)
+                        codeSegment += currReg.LoadVar(varName)
+
+                reg = G.CurrRegAddrTable.GetAllocatedRegister(varName)
+                G.AllocMap[varName] = reg
+                alreadyAllocatedRegs += [reg.regName]
+
+        # Now take care of out variable if any
+        if G.CurrInstruction.dest.is_VARIABLE():
+            varName = G.CurrInstruction.dest.value
+
+            # We assume value is going to change
+            G.CurrRegAddrTable.SetInMemory(varName, inMemory=False)
+
+            if G.CurrInstruction.isCopy:
+                # Remove it from any existing registers
+                G.CurrRegAddrTable.RemoveDestVarFromRegisters(varName)
+
+                # if it is a copy operation, simply allocate the register allocated to the input
+                inpVarName = G.CurrInstruction.inp1.value
+                reg =  G.CurrRegAddrTable.GetAllocatedRegister(inpVarName)
+                G.CurrRegAddrTable.SetRegister(varName, reg)
+                G.AllocMap[varName] = reg
+                return codeSegment
+
+
+            if not (G.CurrRegAddrTable.IsInRegisterSafe(varName)):
+                # Otherwise we use the already allocated register
+                # We now look for a register
+
+                if G.CurrInstruction.inp1.is_VARIABLE():
+                    inpVarName = G.CurrInstruction.inp1.value
+                    if SafeToReuse(inpVarName):
+                        # Remove it from any existing registers
+                        G.CurrRegAddrTable.RemoveDestVarFromRegisters(varName)
+
+                        # Use the same register
+                        reg =  G.CurrRegAddrTable.GetAllocatedRegister(inpVarName)
+                        G.CurrRegAddrTable.ClearRegister(reg)
+                        G.CurrRegAddrTable.SetRegister(varName, reg)
+                        G.AllocMap[varName] = reg
+                        return codeSegment
+
+                if G.CurrInstruction.inp2.is_VARIABLE():
+                    inpVarName = G.CurrInstruction.inp2.value
+                    if SafeToReuse(inpVarName):
+                        # Remove it from any existing registers
+                        G.CurrRegAddrTable.RemoveDestVarFromRegisters(varName)
+
+                        # Use the same register
+                        reg =  G.CurrRegAddrTable.GetAllocatedRegister(inpVarName)
+                        G.CurrRegAddrTable.ClearRegister(reg)
+                        G.CurrRegAddrTable.SetRegister(varName, G.CurrRegAddrTable.GetAllocatedRegister(inpVarName))
+                        G.AllocMap[varName] = reg
+                        return codeSegment
+
+                # Look for a fresh register                    
+                varName = G.CurrInstruction.dest.value
+                for (reg, alloc) in G.CurrRegAddrTable.regMap.items():
+                    if not alloc: # Empty, we can use this
+                        # Remove it from any existing registers
+                        G.CurrRegAddrTable.RemoveDestVarFromRegisters(varName)
+
+                        G.CurrRegAddrTable.SetRegister(varName, reg)
+                        codeSegment += reg.LoadVar(varName)
+                        break
+                else:
+                    # All registers are full, need to select the cheapest one.
+                    if G.CurrRegAddrTable.IsInRegister(varName):
+                        reg = G.CurrRegAddrTable.GetAllocatedRegister(varName)
+                        currReg, currCodeSegment = G.CurrRegAddrTable.FindBestRegister(varName, alreadyAllocatedRegs, alreadyLoadedReg=reg)
+                    else:
+                        currReg, currCodeSegment = G.CurrRegAddrTable.FindBestRegister(varName, alreadyAllocatedRegs)
+
+
+                    #print varName, str(currReg)
+                    codeSegment += currCodeSegment 
+
+                     
+                    # Load value into the register
+                    if G.CurrRegAddrTable.IsInRegister(varName):
+                        reg = G.CurrRegAddrTable.GetAllocatedRegister(varName)
+
+                        # Remove it from any existing registers
+                        G.CurrRegAddrTable.RemoveDestVarFromRegisters(varName)
+                        G.CurrRegAddrTable.ClearRegister(currReg)
+
+                        if reg.regName == currReg.regName:
+                            # No need to load it again
+                            G.CurrRegAddrTable.SetRegister(varName, currReg)
+                            G.AllocMap[varName] = reg
+                            return codeSegment
+                    else:
+                        G.CurrRegAddrTable.ClearRegister(currReg)
+                        # Remove it from any existing registers
+                        G.CurrRegAddrTable.RemoveDestVarFromRegisters(varName)
+
+                    G.CurrRegAddrTable.SetRegister(varName, currReg)
+                    codeSegment += currReg.LoadVar(varName)
+
+        reg = G.CurrRegAddrTable.GetAllocatedRegister(varName)
+        G.AllocMap[varName] = reg
+
+        return codeSegment
 
 
 class SymbolTable(object):
@@ -117,6 +262,21 @@ class SymbolTable(object):
 
         self.symTable[varName][1] = nextUse
 
+    def GetNextUse(self, varName):
+        if type(varName) == INSTRUCTION.Entity:
+            DEBUG.Assert(varName.is_VARIABLE(), "Entity is not a variable")
+            varName = varName.value
+
+        return self.symTable[varName][1]
+
+
+    def IsLive(self, varName):
+        if type(varName) == INSTRUCTION.Entity:
+            DEBUG.Assert(varName.is_VARIABLE(), "Entity is not a variable")
+            varName = varName.value
+
+        return self.symTable[varName][0] and (self.symTable[varName][1] != -1)
+
     def PrettyPrint(self):
         """ For debugging purposes """
 
@@ -127,7 +287,8 @@ class SymbolTable(object):
 def SymSetProperties(symTable, newProperties):
     """ Creates a copy and then modifies it. This is because we need a separate table for every instruction """
 
-    symCopy = copy.deepcopy(symTable)
+    symCopy = SymbolTable([])
+    symCopy.symTable = {sym:value[:] for (sym, value) in symTable.symTable.items()}
 
     for (varName, properties) in newProperties.items():
         symCopy.SetLive(varName, properties[0])
@@ -135,6 +296,9 @@ def SymSetProperties(symTable, newProperties):
 
     return symCopy
 
+def SafeToReuse(varName):
+    # Assumes a register has been allocated to varName
+    return (not G.NextSymbolTable.IsLive(varName)) and (G.CurrRegAddrTable.IsInMemory(varName))
 
 class RegAddrDescriptor(object):
     """ 
@@ -143,7 +307,8 @@ class RegAddrDescriptor(object):
 
     def __init__(self, initial_symbols):
         self.symbols = initial_symbols
-        self.regs = REG.tmpRegs + REG.savedRegs # Can be changed if we want to use less/more
+        #self.regs = REG.tmpRegs + REG.savedRegs # Can be changed if we want to use less/more
+        self.regs = [REG.t0, REG.t1, REG.t2]
 
         # Since everything is global, all of them reside in memory
         # MAP : <var_name> -> (in_memory? , in_register?)
@@ -159,33 +324,24 @@ class RegAddrDescriptor(object):
             DEBUG.Assert(varName.is_VARIABLE(), "Entity is not a variable")
             varName = varName.value
 
-        return not self.addrMap[varName][1]
+        return (self.addrMap[varName][1] != None)
 
-    def IsElsewhere(self, varName, regName):
-        return IsInMemory(varName) or (self.addrMap[varName][1].regName != regName):
-
-    def GetVars(self, reg):
-        return regMap[reg]
-
-    def GetReg(self, varName):
-        """ To be used for register allocation """
-
+    def IsInRegisterSafe(self, varName):
         if type(varName) == INSTRUCTION.Entity:
             DEBUG.Assert(varName.is_VARIABLE(), "Entity is not a variable")
             varName = varName.value
 
-        if self.IsInRegister(varName):
-            # Already in a register, nothing to do
-            return
+        reg = self.addrMap[varName][1]
+        if reg == None:
+            return False
+        
+        return len(self.regMap[reg]) == 1
 
-        for (reg, alloc) in self.regMap.items():
-            if not alloc: # Empty, we can use this
-                self.regMap[reg] += [varName]
-                return
+    def IsElsewhere(self, varName, regName):
+        return self.IsInMemory(varName) or (self.addrMap[varName][1].regName != regName)
 
-        # All registers are full, need to select the cheapest one.
-
-
+    def GetVars(self, reg):
+        return self.regMap[reg]
 
     def GetAllocatedRegister(self, varName):
         """ To be used after register allocation has been performed """
@@ -205,12 +361,21 @@ class RegAddrDescriptor(object):
         
         return self.addrMap[varName][0]
 
-    def SetInMemory(self, varName, inMemory=True):
+    def SetInMemory(self, varName, inMemory=True, knockOffRegister=False):
         if type(varName) == INSTRUCTION.Entity:
             DEBUG.Assert(varName.is_VARIABLE(), "Entity is not a variable")
             varName = varName.value
         
         self.addrMap[varName][0] = inMemory
+        if knockOffRegister:
+            self.addrMap[varName][1] = None
+
+    def SpillRegister(self, varName):
+        if type(varName) == INSTRUCTION.Entity:
+            DEBUG.Assert(varName.is_VARIABLE(), "Entity is not a variable")
+            varName = varName.value
+        
+        self.addrMap[varName][1] = None
 
     def SetRegister(self, varName, reg):
         if type(varName) == INSTRUCTION.Entity:
@@ -219,3 +384,56 @@ class RegAddrDescriptor(object):
         
         self.addrMap[varName][1] = reg
         self.regMap[reg] += [varName]
+
+    def ClearRegister(self, reg):
+        self.regMap[reg] = []
+
+    def RemoveDestVarFromRegisters(self, varName):
+        if type(varName) == INSTRUCTION.Entity:
+            DEBUG.Assert(varName.is_VARIABLE(), "Entity is not a variable")
+            varName = varName.value
+
+        for reg in self.regMap:
+            if len(self.regMap[reg]) > 1:
+                try:
+                    self.regMap[reg].remove(varName)
+                    self.addrMap[varName][1] = None
+                except:
+                    pass
+
+    def FindBestRegister(self, varName, alreadyAllocatedRegs, alreadyLoadedReg=None):
+        # All registers are full, need to select the cheapest one.
+        currMinScore = 10
+        currReg = None
+        currCodeSegment = ""
+        currRemoveSet = []
+
+        for reg in self.regs:
+            if reg.regName in alreadyAllocatedRegs:
+                # Shouldn't disturb previous allocations. Wouldn't make any sense
+                continue
+
+            score, regCodeSeg, regRemoveSet = reg.Score(varName)
+            if alreadyLoadedReg != None:
+                if alreadyLoadedReg.regName == reg.regName:
+                    # Wouldn't need to an extra load
+                    score -= 1
+
+            if score < currMinScore:
+                currMinScore = score
+                currReg = reg
+                currCodeSegment = regCodeSeg
+                currRemoveSet = regRemoveSet[:]
+
+        for removeVar in currRemoveSet:
+            # Update Register-Address-Table 
+            self.SetInMemory(removeVar, knockOffRegister=True)
+
+        return currReg, currCodeSegment
+
+    def PrettyPrintRegisters(self):
+        for (reg, var) in self.regMap.items():
+            if var:
+                print str(reg), " : ", var, "  ",
+
+        print ""

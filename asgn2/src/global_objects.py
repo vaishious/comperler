@@ -25,3 +25,9 @@ INDENT = " "*4
 # so as to ease their usage by different modules
 CurrRegAddrTable = None
 CurrSymbolTable  = None
+CurrInstruction  = None
+NextSymbolTable  = None
+
+# This map provides an easier interface to see the register allocation for the current
+# instruction
+AllocMap = {}
