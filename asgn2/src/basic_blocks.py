@@ -13,6 +13,8 @@ Import Acronym : BB
 # List of Imports Begin
 import debug as DEBUG
 import instr3ac as INSTRUCTION
+import registers as REG
+import global_objects as G
 import copy
 # List of Imports End
 
@@ -72,6 +74,13 @@ class BasicBlock(object):
             G.CurrSymbolTable = instr.symTable
 
             # TODO : Actual Translation
+
+            if instr.instrType.is_LABEL():
+                G.AsmText.AddText("%s:"%(instr.label))
+
+            else:
+                # Add a label L_<line_no> for each line in the input
+                G.AsmText.AddText("L_%s:"%(str(instr.lineID)))
 
     def PrettyPrint(self):
         print "BASIC BLOCK #" + str(self.bbNum)
