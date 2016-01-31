@@ -158,9 +158,6 @@ class Register(object):
     def __str__(self):
         return "$%s"%(self.regName)
 
-    def __repr__(self):
-        return "$%s"%(self.regName)
-
     def LoadVar(self, var):
         codeLoad  = G.INDENT + "lw %s, %s($gp)\n"%(self, GetVarAddr(var))
         return codeLoad
