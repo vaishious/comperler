@@ -141,9 +141,8 @@ class RegAddrDescriptor(object):
         self.addrMap = {sym:[True, None] for sym in initial_symbols}
 
         # All registers assumed to be empty initially
-        # @ means no variable
 
-        self.regMap  = {reg : "@" for reg in self.regs}
+        self.regMap  = {reg : [] for reg in self.regs}
 
     def IsInRegister(self, varName):
         if type(varName) == INSTRUCTION.Entity:
@@ -152,7 +151,35 @@ class RegAddrDescriptor(object):
 
         return not self.addrMap[varName][1]
 
-    def GetRegister(self, varName):
+    def IsElsewhere(self, varName, regName):
+        return IsInMemory(varName) or (self.addrMap[varName][1].regName != regName):
+
+    def GetVars(self, reg):
+        return regMap[reg]
+
+    def GetReg(self, varName):
+        """ To be used for register allocation """
+
+        if type(varName) == INSTRUCTION.Entity:
+            DEBUG.Assert(varName.is_VARIABLE(), "Entity is not a variable")
+            varName = varName.value
+
+        if self.IsInRegister(varName):
+            # Already in a register, nothing to do
+            return
+
+        for (reg, alloc) in self.regMap.items():
+            if not alloc: # Empty, we can use this
+                self.regMap[reg] += [varName]
+                return
+
+        # All registers are full, need to select the cheapest one.
+
+
+
+    def GetAllocatedRegister(self, varName):
+        """ To be used after register allocation has been performed """
+
         if type(varName) == INSTRUCTION.Entity:
             DEBUG.Assert(varName.is_VARIABLE(), "Entity is not a variable")
             varName = varName.value
@@ -181,4 +208,4 @@ class RegAddrDescriptor(object):
             varName = varName.value
         
         self.addrMap[varName][1] = reg
-        self.regMap[reg] = varName
+        self.regMap[reg] += [varName]

@@ -288,6 +288,7 @@ class Instr3AC(object):
         self.label     = None
         self.isTarget  = False
         self.symTable  = None
+        self.isCopy    = False # Is it of the form x = y
 
         # Set line id
         self.lineID    = int(inpTuple[0])                    # Value error raised if input is not an integer
@@ -343,6 +344,7 @@ class Instr3AC(object):
             if len(inpTuple) == 4:
                 self.dest   = Entity(str(inpTuple[2]))
                 self.inp1   = Entity(str(inpTuple[3]))
+                self.isCopy = True
 
             elif len(inpTuple) == 5:
                 self.opType = OperationType(str(inpTuple[2]))

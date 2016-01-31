@@ -139,50 +139,44 @@ class Register(object):
                 
                 regName           :     The name of the register
 
-                var               :     The variable that has been allocated to this register
-
-                empty             :     Whether this register is empty or not
-
         Member Functions :
 
-                AllocateVar(var)  :     Allocate a variable to this register and load the contents.
-                                        Uses the G.AsmText to write code
+                LoadVar()         :     Produce code for loading the given variable into the register
 
                 SpillVar()        :     Spill the contents of the register. Uses the G.AsmText to write code
 
-                IsEmpty()         :     Obvious
+                Score()           :     The amount of store operations we'll need to perform in order to write back
+                                        the supplied variables
+
 
     """
 
     def __init__(self, regName):
 
         self.regName  =  str(regName)
-        self.var      =  None
-        self.empty    =  True
 
     def __str__(self):
         return "$%s"%(self.regName)
 
-    def LoadVar(self):
-        codeLoad  = G.INDENT + "lw %s, %s($gp)"%(self, GetVarAddr(self.var))
+    def LoadVar(self, var):
+        codeLoad  = G.INDENT + "lw %s, %s($gp)"%(self, GetVarAddr(var))
         return codeLoad
 
-    def WriteBackVar(self):
-        codeStore = G.INDENT + "sw %s, %s($gp)"%(self, GetVarAddr(self.var))
+    def SpillVar(self, var):
+        codeStore = G.INDENT + "sw %s, %s($gp)"%(self, GetVarAddr(var))
         return codeStore
 
-    def AllocateVar(self, var):
-        DEBUG.Assert(type(var) == INSTRUCTION.Entity, "Type of var in AllocateVar in Register should be Entity")
+    def Score(self):
+        """ Use the current global reg-addr descriptor to calculate scores """
 
-        self.var   = var
-        self.empty = False
-        self.LoadVar()
+        regVars = G.CurrRegAddrTable.GetVars(self)
+        DEBUG.Assert(regVars != [] , "%s is empty. Why are we calculating the score?"%self)
 
-    def SpillVar(self):
-        self.WriteBackVar()
+        score = 0
 
-        self.var = None
-        self.empty = True
+        for var in regVars:
+            if G.CurrRegAddrTable.IsElsewhere(var, self.regName):
+                # Continue. No store necessary
+                continue
 
-    def IsEmpty(self):
-        return self.empty
+
