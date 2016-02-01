@@ -43,7 +43,7 @@ def SetupRegister(inp, regComp):
     # Setup the input in a register, using regComp, if required
 
     reg = None
-    if inp.is_VARIABLE():
+    if inp.is_SCALAR_VARIABLE():
         # This variable has already been loaded into a register,
         # as register allocation has been done for this instruction
         reg = G.AllocMap[inp.value]

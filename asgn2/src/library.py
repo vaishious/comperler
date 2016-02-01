@@ -16,7 +16,7 @@ import global_objects as G
 import debug as DEBUG
 # List of Imports End
 
-def Translate__Printf(parameters):
+def Translate_Printf(parameters):
     """ Custom version of Printf can be found in iolib.c in the lib/ folder """
 
     formatString = parameters[0]
