@@ -19,6 +19,7 @@ nytprof.out
 *.bs
 /_eumm/
 *.swp
+*tags
 
 #Python stuff
 
