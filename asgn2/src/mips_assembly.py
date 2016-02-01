@@ -204,6 +204,7 @@ class Register(object):
                 continue
 
             removeSet += [var]
+            
 
             if not G.CurrSymbolTable.IsLive(var):
                 if not G.CurrRegAddrTable.IsElsewhere(var, self.regName):
