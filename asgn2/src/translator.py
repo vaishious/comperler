@@ -161,24 +161,24 @@ def Translate_ASSIGN(instr):
             regComp = REG.tmpUsageRegs[2]
 
             if instr.dest.key.is_NUMBER():
-                G.AsmText.AddText(tempReg.LoadImmediate(instr.dest.key.value))
+                G.AsmText.AddText(tempReg.LoadImmediate(instr.dest.key.value), "Load index for array access")
             else:
                 regInp = SetupRegister(instr.dest.key, regComp)
-                G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp))
+                G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp), "Load index for array access")
 
             # Load the array address in regComp
-            G.AsmText.AddText(G.INDENT + "la %s, %s"%(regComp, ASM.GetArrAddr(instr.dest.value)))
+            G.AsmText.AddText(G.INDENT + "la %s, %s"%(regComp, ASM.GetArrAddr(instr.dest.value)), "Load array address")
 
             # We move the index value to tempReg to multiply it by 4
-            G.AsmText.AddText(G.INDENT + "sll %s, %s, 2"%(tempReg, tempReg))
-            G.AsmText.AddText(G.INDENT + "add %s, %s, %s"%(regComp, regComp, tempReg))
+            G.AsmText.AddText(G.INDENT + "sll %s, %s, 2"%(tempReg, tempReg), "Multiply index by 4")
+            G.AsmText.AddText(G.INDENT + "add %s, %s, %s"%(regComp, regComp, tempReg), "Add index as an offset to array address")
 
             # We will reuse tempReg as the dest register. We will then write it back to the
             # address location in the array
             GenCode_3OPASSIGN(instr, tempReg, reg1, reg2)
 
             # Store back the value
-            G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(tempReg, regComp))
+            G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(tempReg, regComp), "Array is a dest. Storing back the value")
 
     elif instr.opType.is_NONE():
         # dest = inp1

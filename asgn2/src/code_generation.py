@@ -38,6 +38,7 @@ class CodeGenerator(object):
         self.instructions = []
         self.basicBlocks  = []
         self.targets      = set([])
+        self.allLineIDs   = set([])
 
         # Build Global Objects
         G.AsmText = ASM.TextRegion(fileName)
@@ -47,7 +48,13 @@ class CodeGenerator(object):
         for line in text:
             instrTuple = line.split(',')
             instrTuple = [i.lstrip().rstrip() for i in instrTuple]
-            self.instructions += [INSTRUCTION.Instr3AC(instrTuple)]
+            instr = INSTRUCTION.Instr3AC(instrTuple)
+
+            # Disallow multiple input lines with same lineID
+            DEBUG.Assert(instr.lineID not in self.allLineIDs,"Multiple lines with same line ID.")
+
+            self.allLineIDs.add(instr.lineID)
+            self.instructions += [instr]
 
             # print self.instructions[-1]
 
