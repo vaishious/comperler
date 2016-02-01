@@ -145,7 +145,6 @@ class BasicBlock(object):
         # Register Allocation for dest variable
         if G.CurrInstruction.dest.is_SCALAR_VARIABLE():
             varName = G.CurrInstruction.dest.value
-            print varName
 
             if G.CurrInstruction.isCopy:
 
@@ -179,15 +178,12 @@ class BasicBlock(object):
 
                 if SafeToReuse(inpVarName):
                     # Use the same register
-                    print inpVarName
                     reg =  G.AllocMap[inpVarName]
-                    print str(reg)
                     G.AllocMap[varName] = reg
 
                     return codeSegment
 
             reg, getRegCode, isLoaded = GetReg(varName, alreadyAllocatedRegs, forceSearch=True)
-            print "VAR : ", varName, str(reg)
 
             # Set global details and add code for loading if necessary
             G.AllocMap[varName] = reg
