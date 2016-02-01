@@ -93,6 +93,19 @@ class OperationType(object):
         
         self.opType = OperationType.typeMap[inpType]
 
+    def __str__(self):
+        if self.is_PLUS()   : return "+" 
+        if self.is_MINUS()  : return "-"
+        if self.is_MULT()   : return "*"
+        if self.is_DIV()    : return "/"
+        if self.is_MOD()    : return "%"
+        if self.is_LT()     : return "<"
+        if self.is_GT()     : return ">"
+        if self.is_LEQ()    : return "<="
+        if self.is_GEQ()    : return ">="
+        if self.is_EQ()     : return "=="
+        if self.is_NE()     : return "!="
+
     def is_PLUS(self)   : return self.opType == OperationType.PLUS
     def is_MINUS(self)  : return self.opType == OperationType.MINUS
     def is_MULT(self)   : return self.opType == OperationType.MULT
@@ -164,6 +177,9 @@ class Entity(object):
 
         else:
             raise DEBUG.InputError3AC(inpString, "Failed to recognize entity")
+
+    def __str__(self):
+        return str(self.inpString)
 
     def is_NUMBER(self)          : return self.entity == Entity.NUMBER
     def is_SCALAR_VARIABLE(self) : return self.entity == Entity.SCALAR_VARIABLE
@@ -367,6 +383,8 @@ class Instr3AC(object):
             DEBUG.Assert(self.dest.is_VARIABLE(), "LHS of an ASSIGN has to be a variable")
             self.dest.AllocateGlobalMemory()
             
+    def __str__(self):
+        return self.PrettyPrint()
 
     def IsTarget(self): 
         """ Is this branch a jump target or a label? """
@@ -375,9 +393,6 @@ class Instr3AC(object):
     def GetTarget(self):
         """ Return line ID of the jump target if any """
         return self.jmpTarget
-
-    def PrettyPrint(self):
-        print self.inpTuple
 
     def ReturnSymbols(self):
         ret = self.dest.ReturnSymbols() + self.inp1.ReturnSymbols() + self.inp2.ReturnSymbols()
@@ -418,3 +433,39 @@ class Instr3AC(object):
 
 
         self.symTable = BB.SymSetProperties(oldTable, newProperties)
+
+    def PrettyPrint(self):
+        if self.instrType.is_IFGOTO():
+            return "If ( %s %s %s ) GOTO %s"%(self.inp1, self.opType, self.inp2, "$LID_" + str(self.jmpTarget))
+
+        if self.instrType.is_GOTO():
+            return "GOTO %s"%("$LID_" + str(self.jmpTarget))
+
+        if self.instrType.is_CALL():
+            return "call %s"%(str(self.jmpLabel))
+
+        if self.instrType.is_RETURN():
+            return "return"
+
+        if self.instrType.is_PRINT():
+            return "Print %s"%(str(self.inpTuple[2:]))
+
+        if self.instrType.is_DECLARE():
+            return "declare %s"%(self.inp1)
+
+        if self.instrType.is_LABEL():
+            return "%s : "%(str(self.label))
+
+        if self.instrType.is_NOP():
+            return "NOOP"
+
+        if self.instrType.is_ASSIGN():
+            if self.inp2.is_NONE():
+                if self.opType.is_NONE():
+                    return "%s = %s"%(self.dest, self.inp1)
+                else:
+                    return "%s = %s%s"%(self.dest, self.opType, self.inp1)
+            else:
+                return "%s = %s %s %s"%(self.dest, self.inp1, self.opType, self.inp2)
+        
+

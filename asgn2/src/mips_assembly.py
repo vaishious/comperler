@@ -130,8 +130,16 @@ class TextRegion(object):
         self.data    = ""
         self.fileName = fileName
 
-    def AddText(self, text):
-        self.text += text
+    def AddText(self, text, sideComment = ""):
+        if sideComment:
+            self.text += '{:<30} # {}'.format(text, sideComment)
+        else:
+            self.text += text
+        self.text += "\n"
+
+    def AddComment(self, comment):
+        self.text += "\n"
+        self.text += G.INDENT + "# " + comment
         self.text += "\n"
 
     def WriteHeader(self):

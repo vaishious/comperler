@@ -49,7 +49,7 @@ class CodeGenerator(object):
             instrTuple = [i.lstrip().rstrip() for i in instrTuple]
             self.instructions += [INSTRUCTION.Instr3AC(instrTuple)]
 
-            #self.instructions[-1].PrettyPrint()
+            # print self.instructions[-1]
 
             gotoTarget = self.instructions[-1].GetTarget()
             if gotoTarget:

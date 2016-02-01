@@ -70,18 +70,18 @@ def SetupRegister(inp, regComp, tempReg=REG.t9):
         # First we need the index
         regInp = None
         if inp.key.is_NUMBER():
-            G.AsmText.AddText(tempReg.LoadImmediate(inp.key.value))
+            G.AsmText.AddText(tempReg.LoadImmediate(inp.key.value), "Load index for the array access")
         else:
             regInp = SetupRegister(inp.key, regComp)
-            G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp))
+            G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp), "Load index for the array access")
 
         # Load the array address in regComp
-        G.AsmText.AddText(G.INDENT + "la %s, %s"%(regComp, ASM.GetArrAddr(inp.value)))
+        G.AsmText.AddText(G.INDENT + "la %s, %s"%(regComp, ASM.GetArrAddr(inp.value)), "Load array address")
 
         # We move the index value to tempReg to multiply it by 4
-        G.AsmText.AddText(G.INDENT + "sll %s, %s, 2"%(tempReg, tempReg))
-        G.AsmText.AddText(G.INDENT + "add %s, %s, %s"%(regComp, regComp, tempReg))
-        G.AsmText.AddText(G.INDENT + "lw %s, 0(%s)"%(regComp, regComp))
+        G.AsmText.AddText(G.INDENT + "sll %s, %s, 2"%(tempReg, tempReg), "Multiply index by 4")
+        G.AsmText.AddText(G.INDENT + "add %s, %s, %s"%(regComp, regComp, tempReg), "Add index as an offset to array address")
+        G.AsmText.AddText(G.INDENT + "lw %s, 0(%s)"%(regComp, regComp), "Extract array value")
 
         reg = regComp
 

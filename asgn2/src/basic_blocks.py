@@ -62,6 +62,8 @@ class BasicBlock(object):
             symTable = revInstr.symTable
 
     def Translate(self):
+        G.AsmText.AddComment("BASIC BLOCK #" + str(self.bbNum))
+
         self.ComputeSymbolTables()
         bbRegAddrDescriptor = RegAddrDescriptor(self.symbols)
 
@@ -74,12 +76,14 @@ class BasicBlock(object):
             G.CurrSymbolTable = instr.symTable
             G.CurrInstruction = instr
             G.AllocMap = {}
-            instr.PrettyPrint()
+            print instr
 
             if idx != len(self.instructions) - 1:
                 G.NextSymbolTable = self.instructions[idx + 1].symTable
             else:
                 G.NextSymbolTable = self.finalSymTable
+
+            G.AsmText.AddComment("INSTR : " + instr.PrettyPrint())
 
             # Add the necessary labels before doing register allocation
             if instr.instrType.is_LABEL():
@@ -106,7 +110,7 @@ class BasicBlock(object):
     def PrettyPrint(self):
         print "BASIC BLOCK #" + str(self.bbNum)
         for instr in self.instructions:
-            instr.PrettyPrint()
+            print instr
 
     def RegisterAllocate(self):
         """ Perform register allocation for the current instruction """
