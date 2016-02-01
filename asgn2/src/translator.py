@@ -180,6 +180,45 @@ def Translate_ASSIGN(instr):
             # Store back the value
             G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(tempReg, regComp))
 
+    elif (instr.opType.is_NONE()):
+        # dest = inp1
+
+        # TODO : Handle array and hash variables in the destination
+        if instr.dest.is_SCALAR_VARIABLE():
+            if instr.inp1.is_NUMBER():
+                G.AsmText.AddText(G.INDENT + "li %s, %s"%(reg3, str(instr.inp1.value)))
+            else:
+                reg1 = SetupRegister(instr.inp1,REG.tmpUsageRegs[0])
+                G.AsmText.AddText(G.INDENT + "movl %s, %s"%(reg3, reg1))
+
+        elif instr.dest.is_ARRAY_VARIABLE():
+            tempReg = REG.tmpUsageRegs[-1]
+            regComp = REG.tmpUsageRegs[2]
+
+            if instr.dest.key.is_NUMBER():
+                G.AsmText.AddText(tempReg.LoadImmediate(instr.dest.key.value))
+            else:
+                regInp = SetupRegister(instr.dest.key, regComp)
+                G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp))
+
+            # Load the array address in regComp
+            G.AsmText.AddText(G.INDENT + "la %s, %s"%(regComp, ASM.GetArrAddr(instr.dest.value)))
+
+            # We move the index value to tempReg to multiply it by 4
+            G.AsmText.AddText(G.INDENT + "sll %s, %s, 2"%(tempReg, tempReg))
+            G.AsmText.AddText(G.INDENT + "add %s, %s, %s"%(regComp, regComp, tempReg))
+
+            # We will reuse tempReg as the dest register. We will then write it back to the
+            # address location in the array
+            if instr.inp1.is_NUMBER():
+                G.AsmText.AddText(G.INDENT + "li %s, %s"%(tempReg, str(instr.inp1.value)))
+            else:
+                reg1 = SetupRegister(instr.inp1,REG.tmpUsageRegs[0])
+                G.AsmText.AddText(G.INDENT + "movl %s, %s"%(tempReg, reg1))
+
+            # Store back the value
+            G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(tempReg, regComp))
+
 def GenCode_3OPASSIGN(instr, regDest, regInp1, regInp2):
     # Currently ignoring overflows everywhere
     if instr.opType.is_PLUS():
