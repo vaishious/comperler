@@ -65,21 +65,23 @@ class InstrType(object):
 
 
 class OperationType(object):
-    """ Operation Types : PLUS, MINUS, MULT, DIV, LT, GT, LEQ, GEQ, EQ, NONE """ # Will add more later
+    """ Operation Types : PLUS, MINUS, MULT, DIV, MOD, LT, GT, LEQ, GEQ, EQ, NE, NONE """ # Will add more later
 
     # Set up an enum
-    PLUS, MINUS, MULT, DIV, LT, GT, LEQ, GEQ, EQ, NONE = range(10)
+    PLUS, MINUS, MULT, DIV, MOD, LT, GT, LEQ, GEQ, EQ, NE, NONE = range(12)
 
     typeMap = {
                 "+"     : PLUS,          "plus"     : PLUS,
                 "-"     : MINUS,         "minus"    : MINUS,
                 "*"     : MULT,          "mult"     : MULT,       "multiply"    : MULT,
                 "/"     : DIV,           "div"      : DIV,        "divide"      : DIV,
+                "%"     : MOD,           "mod"      : MOD,        "modulo"      : MOD,
                 "<"     : LT,            "lt"       : LT,
                 ">"     : GT,            "gt"       : GT,
                 "<="    : LEQ,           "leq"      : LEQ,
                 ">="    : GEQ,           "geq"      : GEQ,
                 "=="    : EQ,            "eq"       : EQ,
+                "!="    : NE,            "ne"       : NE,
                 ""      : NONE
               }
 
@@ -95,11 +97,13 @@ class OperationType(object):
     def is_MINUS(self)  : return self.opType == OperationType.MINUS
     def is_MULT(self)   : return self.opType == OperationType.MULT
     def is_DIV(self)    : return self.opType == OperationType.DIV
+    def is_MOD(self)    : return self.opType == OperationType.MOD
     def is_LT(self)     : return self.opType == OperationType.LT
     def is_GT(self)     : return self.opType == OperationType.GT
     def is_LEQ(self)    : return self.opType == OperationType.LEQ
     def is_GEQ(self)    : return self.opType == OperationType.GEQ
     def is_EQ(self)     : return self.opType == OperationType.EQ
+    def is_NE(self)     : return self.opType == OperationType.NE
     def is_NONE(self)   : return self.opType == OperationType.NONE
 
 
@@ -250,7 +254,7 @@ class Instr3AC(object):
 
         * Instruction Type : ASSIGN, IFGOTO, GOTO, CALL, RETURN, PRINT
 
-        * Operation Type   : PLUS, MINUS, MULT, DIV, LT, GT, LEQ, GEQ, EQ 
+        * Operation Type   : PLUS, MINUS, MULT, DIV, MOD, LT, GT, LEQ, GEQ, EQ, NE
 
         * Destination      : Where the result is to be stored (Eg: LHS in an assign)
 
