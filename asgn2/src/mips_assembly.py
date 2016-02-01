@@ -188,7 +188,7 @@ class Register(object):
         """ Use the current global reg-addr descriptor to calculate scores """
 
         if type(targetVar) == INSTRUCTION.Entity:
-            DEBUG.Assert(targetVar.is_VARIABLE(), "Entity is not a variable")
+            DEBUG.Assert(targetVar.is_SCALAR_VARIABLE(), "Entity is not a scalar variable")
             targetVar = targetVar.value
 
 

@@ -45,13 +45,13 @@ def SetupRegisters(inp1, inp2, regClob1, regClob2):
     reg1 = None
     reg2 = None
 
-    if inp1.is_VARIABLE() and inp2.is_VARIABLE():
+    if inp1.is_SCALAR_VARIABLE() and inp2.is_SCALAR_VARIABLE():
         # These variables have already been loaded into registers,
         # as register allocation has been done for this instruction
         reg1 = G.AllocMap[inp1.value]
         reg2 = G.AllocMap[inp2.value]
 
-    elif inp1.is_VARIABLE() and inp2.is_NUMBER():
+    elif inp1.is_SCALAR_VARIABLE() and inp2.is_NUMBER():
         reg1 = G.AllocMap[inp1.value]
 
         # Don't clobber the register corresponding to the variable
@@ -61,7 +61,7 @@ def SetupRegisters(inp1, inp2, regClob1, regClob2):
             reg2 = regClob1
         G.AsmText.AddText(reg2.LoadImmediate(inp2.value))
 
-    elif inp1.is_NUMBER() and inp2.is_VARIABLE():
+    elif inp1.is_NUMBER() and inp2.is_SCALAR_VARIABLE():
         reg2 = G.AllocMap[inp2.value]
 
         # Don't clobber the register corresponding to the variable
@@ -95,7 +95,7 @@ def Translate_IFGOTO(instr):
     # Instead of separately handling the cases in which one or both of
     # the operands is a number, load both operands into registers and 
     # operate only on the registers.
-    reg1, reg2 = SetupRegisters(instr.inp1, instr.inp2, REG.t1, REG.t2)
+    reg1, reg2 = SetupRegisters(instr.inp1, instr.inp2, REG.t7, REG.t8)
 
     if instr.opType.is_EQ():
         G.AsmText.AddText(G.INDENT + "beq %s, %s, L_%d"%(reg1, reg2, instr.jmpTarget))

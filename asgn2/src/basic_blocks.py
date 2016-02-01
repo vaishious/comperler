@@ -94,6 +94,9 @@ class BasicBlock(object):
             if regAllocCode:
                 G.AsmText.AddText(regAllocCode)
 
+            #G.CurrRegAddrTable.PrettyPrintRegisters()
+            #print regAllocCode
+
             # TODO : Actual Translation
 
             TRANS.Translate(instr)
@@ -112,7 +115,7 @@ class BasicBlock(object):
 
         # Take care of inputs first
         for entity in [G.CurrInstruction.inp1, G.CurrInstruction.inp2]:
-            if entity.is_VARIABLE():
+            if entity.is_SCALAR_VARIABLE():
                 varName = entity.value
 
                 if not G.CurrRegAddrTable.IsInRegister(varName):
@@ -139,7 +142,7 @@ class BasicBlock(object):
                 alreadyAllocatedRegs += [reg.regName]
 
         # Now take care of out variable if any
-        if G.CurrInstruction.dest.is_VARIABLE():
+        if G.CurrInstruction.dest.is_SCALAR_VARIABLE():
             varName = G.CurrInstruction.dest.value
 
             # We assume value is going to change
@@ -150,7 +153,7 @@ class BasicBlock(object):
                 G.CurrRegAddrTable.RemoveDestVarFromRegisters(varName)
 
                 # if it is a copy operation, simply allocate the register allocated to the input
-                if (G.CurrInstruction.inp1.is_VARIABLE()):
+                if (G.CurrInstruction.inp1.is_SCALAR_VARIABLE()):
                     inpVarName = G.CurrInstruction.inp1.value
                     reg =  G.CurrRegAddrTable.GetAllocatedRegister(inpVarName)
                     G.CurrRegAddrTable.SetRegister(varName, reg)
@@ -162,7 +165,7 @@ class BasicBlock(object):
                 # Otherwise we use the already allocated register
                 # We now look for a register
 
-                if G.CurrInstruction.inp1.is_VARIABLE():
+                if G.CurrInstruction.inp1.is_SCALAR_VARIABLE():
                     inpVarName = G.CurrInstruction.inp1.value
                     if SafeToReuse(inpVarName):
                         # Remove it from any existing registers
@@ -175,7 +178,7 @@ class BasicBlock(object):
                         G.AllocMap[varName] = reg
                         return codeSegment
 
-                if G.CurrInstruction.inp2.is_VARIABLE():
+                if G.CurrInstruction.inp2.is_SCALAR_VARIABLE():
                     inpVarName = G.CurrInstruction.inp2.value
                     if SafeToReuse(inpVarName):
                         # Remove it from any existing registers
@@ -186,6 +189,28 @@ class BasicBlock(object):
                         G.CurrRegAddrTable.ClearRegister(reg)
                         G.CurrRegAddrTable.SetRegister(varName, G.CurrRegAddrTable.GetAllocatedRegister(inpVarName))
                         G.AllocMap[varName] = reg
+                        return codeSegment
+
+                if G.CurrRegAddrTable.IsInRegister(varName):
+                    reg = G.CurrRegAddrTable.GetAllocatedRegister(varName)
+                    for var in G.CurrRegAddrTable.regMap[reg]:
+                        if var == varName:
+                            continue
+
+                        if G.CurrSymbolTable.GetNextUse(var) != -1:
+                            break
+                    else:
+                        # Just store it off. Won't need to dump it too. We save on a load instruction.
+                        for var in G.CurrRegAddrTable.regMap[reg]:
+                            if var == varName:
+                                continue
+
+                            codeSegment += reg.SpillVar(var)
+                            G.CurrRegAddrTable.SetInMemory(var, knockOffRegister=True)
+
+                        G.CurrRegAddrTable.ClearRegister(reg)
+                        G.CurrRegAddrTable.SetRegister(varName, reg)
+                        
                         return codeSegment
 
                 # Look for a fresh register                    
@@ -254,21 +279,21 @@ class SymbolTable(object):
 
     def SetLive(self, varName, isLive=True):
         if type(varName) == INSTRUCTION.Entity:
-            DEBUG.Assert(varName.is_VARIABLE(), "Entity is not a variable")
+            DEBUG.Assert(varName.is_SCALAR_VARIABLE(), "Entity is not a scalar variable")
             varName = varName.value
 
         self.symTable[varName][0] = isLive
 
     def SetNextUse(self, varName, nextUse):
         if type(varName) == INSTRUCTION.Entity:
-            DEBUG.Assert(varName.is_VARIABLE(), "Entity is not a variable")
+            DEBUG.Assert(varName.is_SCALAR_VARIABLE(), "Entity is not a scalar variable")
             varName = varName.value
 
         self.symTable[varName][1] = nextUse
 
     def GetNextUse(self, varName):
         if type(varName) == INSTRUCTION.Entity:
-            DEBUG.Assert(varName.is_VARIABLE(), "Entity is not a variable")
+            DEBUG.Assert(varName.is_SCALAR_VARIABLE(), "Entity is not a scalar variable")
             varName = varName.value
 
         return self.symTable[varName][1]
@@ -276,7 +301,7 @@ class SymbolTable(object):
 
     def IsLive(self, varName):
         if type(varName) == INSTRUCTION.Entity:
-            DEBUG.Assert(varName.is_VARIABLE(), "Entity is not a variable")
+            DEBUG.Assert(varName.is_SCALAR_VARIABLE(), "Entity is not a scalar variable")
             varName = varName.value
 
         return self.symTable[varName][0] and (self.symTable[varName][1] != -1)
@@ -325,14 +350,14 @@ class RegAddrDescriptor(object):
 
     def IsInRegister(self, varName):
         if type(varName) == INSTRUCTION.Entity:
-            DEBUG.Assert(varName.is_VARIABLE(), "Entity is not a variable")
+            DEBUG.Assert(varName.is_SCALAR_VARIABLE(), "Entity is not a scalar variable")
             varName = varName.value
 
         return (self.addrMap[varName][1] != None)
 
     def IsInRegisterSafe(self, varName):
         if type(varName) == INSTRUCTION.Entity:
-            DEBUG.Assert(varName.is_VARIABLE(), "Entity is not a variable")
+            DEBUG.Assert(varName.is_SCALAR_VARIABLE(), "Entity is not a scalar variable")
             varName = varName.value
 
         reg = self.addrMap[varName][1]
@@ -351,7 +376,7 @@ class RegAddrDescriptor(object):
         """ To be used after register allocation has been performed """
 
         if type(varName) == INSTRUCTION.Entity:
-            DEBUG.Assert(varName.is_VARIABLE(), "Entity is not a variable")
+            DEBUG.Assert(varName.is_SCALAR_VARIABLE(), "Entity is not a scalar variable")
             varName = varName.value
 
         return self.addrMap[varName][1]
@@ -360,14 +385,14 @@ class RegAddrDescriptor(object):
         """ Is latest value in memory? """
 
         if type(varName) == INSTRUCTION.Entity:
-            DEBUG.Assert(varName.is_VARIABLE(), "Entity is not a variable")
+            DEBUG.Assert(varName.is_SCALAR_VARIABLE(), "Entity is not a scalar variable")
             varName = varName.value
         
         return self.addrMap[varName][0]
 
     def SetInMemory(self, varName, inMemory=True, knockOffRegister=False):
         if type(varName) == INSTRUCTION.Entity:
-            DEBUG.Assert(varName.is_VARIABLE(), "Entity is not a variable")
+            DEBUG.Assert(varName.is_SCALAR_VARIABLE(), "Entity is not a scalar variable")
             varName = varName.value
         
         self.addrMap[varName][0] = inMemory
@@ -376,14 +401,14 @@ class RegAddrDescriptor(object):
 
     def SpillRegister(self, varName):
         if type(varName) == INSTRUCTION.Entity:
-            DEBUG.Assert(varName.is_VARIABLE(), "Entity is not a variable")
+            DEBUG.Assert(varName.is_SCALAR_VARIABLE(), "Entity is not a scalar variable")
             varName = varName.value
         
         self.addrMap[varName][1] = None
 
     def SetRegister(self, varName, reg):
         if type(varName) == INSTRUCTION.Entity:
-            DEBUG.Assert(varName.is_VARIABLE(), "Entity is not a variable")
+            DEBUG.Assert(varName.is_SCALAR_VARIABLE(), "Entity is not a scalar variable")
             varName = varName.value
         
         self.addrMap[varName][1] = reg
@@ -394,7 +419,7 @@ class RegAddrDescriptor(object):
 
     def RemoveDestVarFromRegisters(self, varName):
         if type(varName) == INSTRUCTION.Entity:
-            DEBUG.Assert(varName.is_VARIABLE(), "Entity is not a variable")
+            DEBUG.Assert(varName.is_SCALAR_VARIABLE(), "Entity is not a scalar variable")
             varName = varName.value
 
         for reg in self.regMap:
@@ -418,6 +443,7 @@ class RegAddrDescriptor(object):
                 continue
 
             score, regCodeSeg, regRemoveSet = reg.Score(varName)
+            print score, str(reg)
             if alreadyLoadedReg != None:
                 if alreadyLoadedReg.regName == reg.regName:
                     # Wouldn't need to an extra load
@@ -431,6 +457,7 @@ class RegAddrDescriptor(object):
 
         for removeVar in currRemoveSet:
             # Update Register-Address-Table 
+            print "REMOVING : ", removeVar
             self.SetInMemory(removeVar, knockOffRegister=True)
 
         return currReg, currCodeSegment

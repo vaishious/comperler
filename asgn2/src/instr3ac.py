@@ -181,7 +181,7 @@ class Entity(object):
 
     def IsRegisterAllocated(self):
         """ Reads the current reg-address descriptor and returns a boolean value """
-        if not self.is_VARIABLE():
+        if not self.is_SCALAR_VARIABLE():
             return False
 
         return G.AllocMap.has_key(self.value)
@@ -394,7 +394,7 @@ class Instr3AC(object):
 
         outSymbol = self.dest.value
 
-        if self.dest.is_VARIABLE():
+        if self.dest.is_SCALAR_VARIABLE():
             newProperties[outSymbol] = [False, -1]
 
         # Rest of the symbols count as a "use"
@@ -405,7 +405,7 @@ class Instr3AC(object):
             newProperties[sym] = [True, self.lineID]
 
         # Check if the outSymbol is used as an input as well
-        if self.dest.is_VARIABLE():
+        if self.dest.is_SCALAR_VARIABLE():
             if (self.inp1.value == outSymbol or 
                 self.inp2.value == outSymbol or 
                 outSymbol in [i.value for i in self.PrintArgs]):
