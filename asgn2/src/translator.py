@@ -39,46 +39,25 @@ def Translate(instr):
         G.CurrRegAddrTable.DumpDirtyVars()
         Translate_IFGOTO(instr)
 
-def SetupRegisters(inp1, inp2, regClob1, regClob2):
-    # Setup the registers, clobbering register regClob1 or regClob2, if required
+    elif instr.instrType.is_ASSIGN():
+        Translate_ASSIGN(instr)
 
-    reg1 = None
-    reg2 = None
+def SetupRegister(inp, regComp):
+    # Setup the input in a register, using regComp, if required
+    # TODO : Handle Array and Hash Variables
 
-    if inp1.is_SCALAR_VARIABLE() and inp2.is_SCALAR_VARIABLE():
-        # These variables have already been loaded into registers,
+    reg = None
+    if inp.is_SCALAR_VARIABLE():
+        # This variable has already been loaded into a register,
         # as register allocation has been done for this instruction
-        reg1 = G.AllocMap[inp1.value]
-        reg2 = G.AllocMap[inp2.value]
+        reg = G.AllocMap[inp.value]
 
-    elif inp1.is_SCALAR_VARIABLE() and inp2.is_NUMBER():
-        reg1 = G.AllocMap[inp1.value]
+    elif inp.is_NUMBER():
+        reg = regComp
+        G.AsmText.AddText(reg.LoadImmediate(inp.value))
 
-        # Don't clobber the register corresponding to the variable
-        if regClob1 == reg1:
-            reg2 = regClob2
-        else:
-            reg2 = regClob1
-        G.AsmText.AddText(reg2.LoadImmediate(inp2.value))
-
-    elif inp1.is_NUMBER() and inp2.is_SCALAR_VARIABLE():
-        reg2 = G.AllocMap[inp2.value]
-
-        # Don't clobber the register corresponding to the variable
-        if regClob1 == reg2:
-            reg1 = regClob2
-        else:
-            reg1 = regClob1
-        G.AsmText.AddText(reg1.LoadImmediate(inp1.value))
-
-    elif inp1.is_NUMBER() and inp2.is_NUMBER():
-        reg1 = regClob1
-        reg2 = regClob2
-        G.AsmText.AddText(reg1.LoadImmediate(inp1.value))
-        G.AsmText.AddText(reg2.LoadImmediate(inp2.value))
-
-    DEBUG.Assert(reg1 and reg2,"Unable to setup registers for IFGOTO.")
-    return reg1,reg2
+    DEBUG.Assert(reg,"Line %d: Unable to setup register for %s."%(G.CurrInstruction.lineID, str(inp.value)))
+    return reg
 
 def Translate_IFGOTO(instr):
     optype = INSTRUCTION.OperationType
@@ -93,7 +72,8 @@ def Translate_IFGOTO(instr):
     # Instead of separately handling the cases in which one or both of
     # the operands is a number, load both operands into registers and 
     # operate only on the registers.
-    reg1, reg2 = SetupRegisters(instr.inp1, instr.inp2, REG.t7, REG.t8)
+    reg1 = SetupRegister(instr.inp1, REG.t7)
+    reg2 = SetupRegister(instr.inp2, REG.t8)
 
     if instr.opType.is_EQ():
         G.AsmText.AddText(G.INDENT + "beq %s, %s, L_%d"%(reg1, reg2, instr.jmpTarget))
@@ -129,3 +109,32 @@ def StrTranslate_IFGOTO(instr):
                 G.AsmText.AddText(G.INDENT + "bltz $v0, L_%d"%(instr.jmpTarget))
             return True
         return False
+
+def Translate_ASSIGN(instr):
+    if (not instr.opType.is_NONE()) and (not instr.inp2.is_NONE()):
+        # dest = inp1 OP inp2
+
+        reg1 = SetupRegister(instr.inp1,REG.t7)
+        reg2 = SetupRegister(instr.inp2,REG.t8)
+
+        # TODO : Handle array and hash variables in the destination
+        if instr.dest.is_SCALAR_VARIABLE():
+            reg3 = G.AllocMap[instr.dest.value]
+
+            # Currently ignoring overflows everywhere
+            if instr.opType.is_PLUS():
+                G.AsmText.AddText(G.INDENT + "addu %s, %s, %s"%(reg3, reg1, reg2))
+
+            elif instr.opType.is_MINUS():
+                G.AsmText.AddText(G.INDENT + "subu %s, %s, %s"%(reg3, reg1, reg2))
+
+            elif instr.opType.is_MULT():
+                G.AsmText.AddText(G.INDENT + "multu %s, %s"%(reg1, reg2))
+                G.AsmText.AddText(G.INDENT + "mflo %s"%(reg3))
+
+            elif instr.opType.is_DIV():
+                G.AsmText.AddText(G.INDENT + "divu %s, %s"%(reg1, reg2))
+                G.AsmText.AddText(G.INDENT + "mflo %s"%(reg3))
+
+            # Register allocation algorithm sets the dirty flag
+            # for the destination variable

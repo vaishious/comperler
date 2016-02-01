@@ -1,0 +1,9 @@
+1, label, main
+2, =, a, 23
+3, =, b, 37
+4, =, /, a, a, b
+5, call, foo
+6, ret
+7, label, foo
+8, =, *, a, a, b
+9, ret
