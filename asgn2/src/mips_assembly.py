@@ -102,7 +102,7 @@ class DataRegion(object):
         dataText += "\n# ARRAYS\n"
         for (arr, size) in self.arraySet.items():
             dataText += ".align 2\n"
-            dataText += "$A_%s : .space %d\n\n"%(str(arr), 4*size)
+            dataText += "$A_%s : .word 0:%d\n\n"%(str(arr), size)
 
         dataText += "\n# STRINGS\n"
         for (string, label) in self.stringSet.items():
