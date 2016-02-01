@@ -180,15 +180,16 @@ def Translate_ASSIGN(instr):
             # Store back the value
             G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(tempReg, regComp))
 
-    elif (instr.opType.is_NONE()):
+    elif instr.opType.is_NONE():
         # dest = inp1
 
         # TODO : Handle array and hash variables in the destination
         if instr.dest.is_SCALAR_VARIABLE():
+            reg3 = SetupRegister(instr.dest,REG.tmpUsageRegs[0])
             if instr.inp1.is_NUMBER():
                 G.AsmText.AddText(G.INDENT + "li %s, %s"%(reg3, str(instr.inp1.value)))
             else:
-                reg1 = SetupRegister(instr.inp1,REG.tmpUsageRegs[0])
+                reg1 = SetupRegister(instr.inp1,REG.tmpUsageRegs[1])
                 G.AsmText.AddText(G.INDENT + "movl %s, %s"%(reg3, reg1))
 
         elif instr.dest.is_ARRAY_VARIABLE():
@@ -218,6 +219,40 @@ def Translate_ASSIGN(instr):
 
             # Store back the value
             G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(tempReg, regComp))
+
+    elif instr.inp2.is_NONE():
+        # dest = OP inp1
+        reg1 = SetupRegister(instr.inp1,REG.tmpUsageRegs[0])
+
+        # TODO : Handle array and hash variables in the destination
+        if instr.dest.is_SCALAR_VARIABLE():
+            reg3 = SetupRegister(instr.dest,REG.tmpUsageRegs[1])
+            GenCode_2OPASSIGN(instr, reg3, reg1)
+
+        elif instr.dest.is_ARRAY_VARIABLE():
+            tempReg = REG.tmpUsageRegs[-1]
+            regComp = REG.tmpUsageRegs[2]
+
+            if instr.dest.key.is_NUMBER():
+                G.AsmText.AddText(tempReg.LoadImmediate(instr.dest.key.value))
+            else:
+                regInp = SetupRegister(instr.dest.key, regComp)
+                G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp))
+
+            # Load the array address in regComp
+            G.AsmText.AddText(G.INDENT + "la %s, %s"%(regComp, ASM.GetArrAddr(instr.dest.value)))
+
+            # We move the index value to tempReg to multiply it by 4
+            G.AsmText.AddText(G.INDENT + "sll %s, %s, 2"%(tempReg, tempReg))
+            G.AsmText.AddText(G.INDENT + "add %s, %s, %s"%(regComp, regComp, tempReg))
+
+            # We will reuse tempReg as the dest register. We will then write it back to the
+            # address location in the array
+            GenCode_2OPASSIGN(instr, tempReg, reg1)
+
+            # Store back the value
+            G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(tempReg, regComp))
+
 
 def GenCode_3OPASSIGN(instr, regDest, regInp1, regInp2):
     # Currently ignoring overflows everywhere
@@ -279,3 +314,11 @@ def GenCode_3OPASSIGN(instr, regDest, regInp1, regInp2):
 
     elif instr.opType.is_RSHIFT():
         G.AsmText.AddText(G.INDENT + "slrv %s, %s, %s"%(regDest, regInp1, regInp2))
+
+def GenCode_2OPASSIGN(instr, regDest, regInp):
+    # Ignoring Overflow in negation operation
+    if instr.opType.is_UNOT():
+        G.AsmText.AddText(G.INDENT + "not %s, %s"%(regDest, regInp)
+
+    elif instr.opType.is_MINUS():
+        G.AsmText.AddText(G.INDENT + "negu %s, %s"%(regDest, regInp))

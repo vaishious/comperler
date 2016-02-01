@@ -92,6 +92,7 @@ class OperationType(object):
                 "^"     : BXOR,          "bxor"     : BXOR,
                 "<<"    : LSHIFT,        "lshift"   : LSHIFT,
                 ">>"    : RSHIFT,        "rshift"   : RSHIFT,
+                "!"     : UNOT,          "unot"     : UNOT,
                 ""      : NONE
               }
 
