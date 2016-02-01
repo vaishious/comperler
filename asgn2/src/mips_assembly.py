@@ -177,11 +177,11 @@ class Register(object):
         return codeLoad
 
     def LoadVar(self, var):
-        codeLoad  = G.INDENT + "lw %s, %s($gp)\n"%(self, GetVarAddr(var))
+        codeLoad  = G.INDENT + "lw %s, %s\n"%(self, GetVarAddr(var))
         return codeLoad
 
     def SpillVar(self, var):
-        codeStore = G.INDENT + "sw %s, %s($gp)\n"%(self, GetVarAddr(var))
+        codeStore = G.INDENT + "sw %s, %s\n"%(self, GetVarAddr(var))
         return codeStore
 
     def Score(self, targetVar, isInputVar=True, ):
