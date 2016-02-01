@@ -39,8 +39,12 @@ def Translate(instr):
         G.CurrRegAddrTable.DumpDirtyVars()
         Translate_IFGOTO(instr)
 
+    elif instr.instrType.is_ASSIGN():
+        Translate_ASSIGN(instr)
+
 def SetupRegister(inp, regComp):
     # Setup the input in a register, using regComp, if required
+    # TODO : Handle Array and Hash Variables
 
     reg = None
     if inp.is_SCALAR_VARIABLE():
@@ -52,7 +56,7 @@ def SetupRegister(inp, regComp):
         reg = regComp
         G.AsmText.AddText(reg.LoadImmediate(inp.value))
 
-    DEBUG.Assert(reg,"Unable to setup the register for IFGOTO.")
+    DEBUG.Assert(reg,"Line %d: Unable to setup register for %s."%(G.CurrInstruction.lineID, str(inp.value)))
     return reg
 
 def Translate_IFGOTO(instr):
@@ -105,3 +109,32 @@ def StrTranslate_IFGOTO(instr):
                 G.AsmText.AddText(G.INDENT + "bltz $v0, L_%d"%(instr.jmpTarget))
             return True
         return False
+
+def Translate_ASSIGN(instr):
+    if (not instr.opType.is_NONE()) and (not instr.inp2.is_NONE()):
+        # dest = inp1 OP inp2
+
+        reg1 = SetupRegister(instr.inp1,REG.t7)
+        reg2 = SetupRegister(instr.inp2,REG.t8)
+
+        # TODO : Handle array and hash variables in the destination
+        if instr.dest.is_SCALAR_VARIABLE():
+            reg3 = G.AllocMap[instr.dest.value]
+
+            # Currently ignoring overflows everywhere
+            if instr.opType.is_PLUS():
+                G.AsmText.AddText(G.INDENT + "addu %s, %s, %s"%(reg3, reg1, reg2))
+
+            elif instr.opType.is_MINUS():
+                G.AsmText.AddText(G.INDENT + "subu %s, %s, %s"%(reg3, reg1, reg2))
+
+            elif instr.opType.is_MULT():
+                G.AsmText.AddText(G.INDENT + "multu %s, %s"%(reg1, reg2))
+                G.AsmText.AddText(G.INDENT + "mflo %s"%(reg3))
+
+            elif instr.opType.is_DIV():
+                G.AsmText.AddText(G.INDENT + "divu %s, %s"%(reg1, reg2))
+                G.AsmText.AddText(G.INDENT + "mflo %s"%(reg3))
+
+            # Register allocation algorithm sets the dirty flag
+            # for the destination variable
