@@ -87,7 +87,7 @@ class BasicBlock(object):
             elif instr.IsTarget():
                 # Add a label L_<line_no> for each line in the input
                 # if it is a branch target
-                G.AsmText.AddText("L_%d:"%(instr.lineID))
+                G.AsmText.AddText("$LID_%d:"%(instr.lineID))
 
             # Perform register allocation
             regAllocCode = self.RegisterAllocate()
