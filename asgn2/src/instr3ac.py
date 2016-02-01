@@ -65,10 +65,14 @@ class InstrType(object):
 
 
 class OperationType(object):
-    """ Operation Types : PLUS, MINUS, MULT, DIV, MOD, LT, GT, LEQ, GEQ, EQ, NE, NONE """ # Will add more later
+    """ 
+        Operation Types : PLUS, MINUS, MULT, DIV, MOD, LT, GT, LEQ, GEQ, 
+                          EQ, NE, BOR, BAND, BNOT, BXOR, LSHIFT, RSHIFT, NONE 
+
+    """ # Will add more later
 
     # Set up an enum
-    PLUS, MINUS, MULT, DIV, MOD, LT, GT, LEQ, GEQ, EQ, NE, NONE = range(12)
+    PLUS, MINUS, MULT, DIV, MOD, LT, GT, LEQ, GEQ, EQ, NE, BOR, BAND, BNOT, BXOR, LSHIFT, RSHIFT, NONE = range(18)
 
     typeMap = {
                 "+"     : PLUS,          "plus"     : PLUS,
@@ -82,6 +86,12 @@ class OperationType(object):
                 ">="    : GEQ,           "geq"      : GEQ,
                 "=="    : EQ,            "eq"       : EQ,
                 "!="    : NE,            "ne"       : NE,
+                "|"     : BOR,           "bor"      : BOR,
+                "&"     : BAND,          "band"     : BAND,
+                "~"     : BNOT,          "bnot"     : BNOT,
+                "^"     : BXOR,          "bxor"     : BXOR,
+                "<<"    : LSHIFT,        "lshift"   : LSHIFT,
+                ">>"    : RSHIFT,        "rshift"   : RSHIFT,
                 ""      : NONE
               }
 
@@ -104,6 +114,12 @@ class OperationType(object):
     def is_GEQ(self)    : return self.opType == OperationType.GEQ
     def is_EQ(self)     : return self.opType == OperationType.EQ
     def is_NE(self)     : return self.opType == OperationType.NE
+    def is_BOR(self)    : return self.opType == OperationType.BOR
+    def is_BAND(self)   : return self.opType == OperationType.BAND
+    def is_BNOT(self)   : return self.opType == OperationType.BNOT
+    def is_BXOR(self)   : return self.opType == OperationType.BXOR
+    def is_LSHIFT(self) : return self.opType == OperationType.LSHIFT
+    def is_RSHIFT(self) : return self.opType == OperationType.RSHIFT
     def is_NONE(self)   : return self.opType == OperationType.NONE
 
 

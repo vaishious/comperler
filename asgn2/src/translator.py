@@ -225,3 +225,18 @@ def GenCode_3OPASSIGN(instr, regDest, regInp1, regInp2):
         G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(regDest, regInp1, regInp2))
         G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(regTmp, regInp2, regInp1))
         G.AsmText.AddText(G.INDENT + "or %s, %s, %s"%(regDest, regDest, regTmp))
+
+    elif instr.opType.is_BOR():
+        G.AsmText.AddText(G.INDENT + "or %s, %s, %s"%(regDest, regInp1, regInp2))
+
+    elif instr.opType.is_BAND():
+        G.AsmText.AddText(G.INDENT + "and %s, %s, %s"%(regDest, regInp1, regInp2))
+
+    elif instr.opType.is_BXOR():
+        G.AsmText.AddText(G.INDENT + "xor %s, %s, %s"%(regDest, regInp1, regInp2))
+
+    elif instr.opType.is_LSHIFT():
+        G.AsmText.AddText(G.INDENT + "sllv %s, %s, %s"%(regDest, regInp1, regInp2))
+
+    elif instr.opType.is_RSHIFT():
+        G.AsmText.AddText(G.INDENT + "slrv %s, %s, %s"%(regDest, regInp1, regInp2))
