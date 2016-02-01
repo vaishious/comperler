@@ -77,9 +77,7 @@ def SetupRegisters(inp1, inp2, regClob1, regClob2):
         G.AsmText.AddText(reg1.LoadImmediate(inp1.value))
         G.AsmText.AddText(reg2.LoadImmediate(inp2.value))
 
-    else:
-        pass
-
+    DEBUG.Assert(reg1 and reg2,"Unable to setup registers for IFGOTO.")
     return reg1,reg2
 
 def Translate_IFGOTO(instr):
