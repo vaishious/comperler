@@ -115,6 +115,12 @@ class OperationType(object):
         if self.is_GEQ()    : return ">="
         if self.is_EQ()     : return "=="
         if self.is_NE()     : return "!="
+        if self.is_BOR()    : return "|" 
+        if self.is_BAND()   : return "&"
+        if self.is_BNOT()   : return "~"
+        if self.is_BXOR()   : return "^" 
+        if self.is_LSHIFT() : return "<<"
+        if self.is_RSHIFT() : return ">>"
 
     def is_PLUS(self)   : return self.opType == OperationType.PLUS
     def is_MINUS(self)  : return self.opType == OperationType.MINUS
