@@ -210,6 +210,7 @@ class BasicBlock(object):
 
                         G.CurrRegAddrTable.ClearRegister(reg)
                         G.CurrRegAddrTable.SetRegister(varName, reg)
+                        G.AllocMap[varName] = reg
                         
                         return codeSegment
 
