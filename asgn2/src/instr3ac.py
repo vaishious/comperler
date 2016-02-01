@@ -181,11 +181,14 @@ class Entity(object):
 
     def IsRegisterAllocated(self):
         """ Reads the current reg-address descriptor and returns a boolean value """
-        return True
+        if not self.is_VARIABLE():
+            return False
+
+        return G.AllocMap.has_key(self.value)
 
     def GetCurrReg(self):
         """ Reads the current reg-address descriptor and returns the relevant register """
-        return 0
+        return G.AllocMap[self.value]
 
     def CopyToRegister(self, reg):
         """ 

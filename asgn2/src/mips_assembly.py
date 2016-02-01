@@ -160,6 +160,18 @@ class Register(object):
     def __str__(self):
         return "$%s"%(self.regName)
 
+    def __eq__(self, otherReg):
+        if isinstance(otherReg, Register):
+            return self.regName == otherReg.regName
+
+        return NotImplemented
+
+    def __ne__(self, otherReg):
+        if isinstance(otherReg, Register):
+            return self.regName != otherReg.regName
+
+        return NotImplemented
+
     def LoadImmediate(self, num):
         codeLoad = G.INDENT + "li %s, %s\n"%(self, str(num))
         return codeLoad
