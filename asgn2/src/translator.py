@@ -199,3 +199,29 @@ def GenCode_3OPASSIGN(instr, regDest, regInp1, regInp2):
     elif instr.opType.is_MOD():
         G.AsmText.AddText(G.INDENT + "divu %s, %s"%(regInp1, regInp2))
         G.AsmText.AddText(G.INDENT + "mfhi %s"%(regDest))
+
+    elif instr.opType.is_LT():
+        G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(regDest, regInp1, regInp2))
+
+    elif instr.opType.is_GT():
+        G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(regDest, regInp2, regInp1))
+
+    elif instr.opType.is_GEQ():
+        G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(regDest, regInp1, regInp2))
+        G.AsmText.AddText(G.INDENT + "nor %s, %s, %s"%(regDest, regDest, regDest))
+
+    elif instr.opType.is_LEQ():
+        G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(regDest, regInp2, regInp1))
+        G.AsmText.AddText(G.INDENT + "nor %s, %s, %s"%(regDest, regDest, regDest))
+
+    elif instr.opType.is_EQ():
+        regTmp = REG.tmpUsageRegs[0]
+        G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(regDest, regInp1, regInp2))
+        G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(regTmp, regInp2, regInp1))
+        G.AsmText.AddText(G.INDENT + "nor %s, %s, %s"%(regDest, regDest, regTmp))
+
+    elif instr.opType.is_NE():
+        regTmp = REG.tmpUsageRegs[0]
+        G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(regDest, regInp1, regInp2))
+        G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(regTmp, regInp2, regInp1))
+        G.AsmText.AddText(G.INDENT + "or %s, %s, %s"%(regDest, regDest, regTmp))

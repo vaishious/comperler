@@ -6,4 +6,5 @@
 6, ret
 7, label, foo
 8, =, *, a, a, b
-9, ret
+9, =, <=, a, a, a
+10, ret
