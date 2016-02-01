@@ -184,11 +184,11 @@ class Entity(object):
         if not self.is_SCALAR_VARIABLE():
             return False
 
-        return G.AllocMap.has_key(self.value)
+        return G.CurrRegAddrTable.IsInRegister(self.value)
 
     def GetCurrReg(self):
         """ Reads the current reg-address descriptor and returns the relevant register """
-        return G.AllocMap[self.value]
+        return G.CurrRegAddrTable.GetAllocatedRegister(self.value)
 
     def CopyToRegister(self, reg):
         """ 

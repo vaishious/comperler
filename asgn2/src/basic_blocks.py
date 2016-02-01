@@ -338,8 +338,8 @@ class RegAddrDescriptor(object):
 
     def __init__(self, initial_symbols):
         self.symbols = initial_symbols
-        #self.regs = REG.addrDescRegs + REG.savedRegs # Can be changed if we want to use less/more
-        self.regs = [REG.t0, REG.t1, REG.t2]
+        self.regs = REG.addrDescRegs + REG.savedRegs # Can be changed if we want to use less/more
+        #self.regs = [REG.t0, REG.t1, REG.t2]
 
         # Since everything is global, all of them reside in memory
         # MAP : <var_name> -> (in_memory? , in_register?)

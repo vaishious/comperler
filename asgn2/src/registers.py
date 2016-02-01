@@ -93,7 +93,9 @@ tmpRegs = [t0, t1, t2, t3, t4, t5, t6, t7, t8, t9]
 
 # Registers used in RegAddrDescriptor
 
-addrDescRegs = [t0, t1, t2, t3, t4, t5, t6]
+addrDescRegs = [t0, t1, t2, t3, t4, t5]
+
+tmpUsageRegs = [t6, t7, t8, t9]
 
 
 # Group callee saved registers together

@@ -24,6 +24,14 @@ def GetVarAddr(variable):
     else:
         return "$V_" + str(variable)
 
+def GetArrAddr(variable):
+    """ Get address of an array as $A_(arr_name) """
+    if type(variable) == INSTRUCTION.Entity:
+        return "$A_" + str(variable.value)
+
+    else:
+        return "$A_" + str(variable)
+
 def GetStrAddr(variable):
     """ Get address of a string as $STR_(stringNum) """
     if type(variable) == INSTRUCTION.Entity:
@@ -173,7 +181,7 @@ class Register(object):
         return NotImplemented
 
     def LoadImmediate(self, num):
-        codeLoad = G.INDENT + "li %s, %s\n"%(self, str(num))
+        codeLoad = G.INDENT + "li %s, %s"%(self, str(num))
         return codeLoad
 
     def LoadVar(self, var):

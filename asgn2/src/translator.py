@@ -14,6 +14,7 @@ import registers as REG
 import global_objects as G
 import translator as TRANS
 import library as LIB
+import mips_assembly as ASM
 # List of Imports End
 
 def Translate(instr):
@@ -42,7 +43,7 @@ def Translate(instr):
     elif instr.instrType.is_ASSIGN():
         Translate_ASSIGN(instr)
 
-def SetupRegister(inp, regComp):
+def SetupRegister(inp, regComp, tempReg=REG.t9):
     # Setup the input in a register, using regComp, if required
     # TODO : Handle Array and Hash Variables
 
@@ -50,13 +51,41 @@ def SetupRegister(inp, regComp):
     if inp.is_SCALAR_VARIABLE():
         # This variable has already been loaded into a register,
         # as register allocation has been done for this instruction
-        reg = G.AllocMap[inp.value]
+        try:
+            reg = G.AllocMap[inp.value]
+        except:
+            # This can only happen if this variable is an index of an array
+            # in which case, we directly load it from its register or from
+            # memory
+            if inp.IsRegisterAllocated():
+                reg = inp.GetCurrReg()
+            else:
+                reg.CopyToRegister(regComp)
 
     elif inp.is_NUMBER():
         reg = regComp
         G.AsmText.AddText(reg.LoadImmediate(inp.value))
 
-    DEBUG.Assert(reg,"Line %d: Unable to setup register for %s."%(G.CurrInstruction.lineID, str(inp.value)))
+    elif inp.is_ARRAY_VARIABLE():
+        # First we need the index
+        regInp = None
+        if inp.key.is_NUMBER():
+            G.AsmText.AddText(tempReg.LoadImmediate(inp.key.value))
+        else:
+            regInp = SetupRegister(inp.key, regComp)
+            G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp))
+
+        # Load the array address in regComp
+        G.AsmText.AddText(G.INDENT + "la %s, %s"%(regComp, ASM.GetArrAddr(inp.value)))
+
+        # We move the index value to tempReg to multiply it by 4
+        G.AsmText.AddText(G.INDENT + "sll %s, %s, 2"%(tempReg, tempReg))
+        G.AsmText.AddText(G.INDENT + "add %s, %s, %s"%(regComp, regComp, tempReg))
+        G.AsmText.AddText(G.INDENT + "lw %s, 0(%s)"%(regComp, regComp))
+
+        reg = regComp
+
+    DEBUG.Assert(reg, "Line %d: Unable to setup register for %s."%(G.CurrInstruction.lineID, str(inp.value)))
     return reg
 
 def Translate_IFGOTO(instr):
@@ -72,8 +101,8 @@ def Translate_IFGOTO(instr):
     # Instead of separately handling the cases in which one or both of
     # the operands is a number, load both operands into registers and 
     # operate only on the registers.
-    reg1 = SetupRegister(instr.inp1, REG.t7)
-    reg2 = SetupRegister(instr.inp2, REG.t8)
+    reg1 = SetupRegister(instr.inp1, REG.tmpUsageRegs[0])
+    reg2 = SetupRegister(instr.inp2, REG.tmpUsageRegs[1])
 
     if instr.opType.is_EQ():
         G.AsmText.AddText(G.INDENT + "beq %s, %s, L_%d"%(reg1, reg2, instr.jmpTarget))
@@ -95,27 +124,27 @@ def Translate_IFGOTO(instr):
         G.AsmText.AddText(G.INDENT + "beq %s, %s, L_%d"%(reg1, REG.zero, instr.jmpTarget))
 
 def StrTranslate_IFGOTO(instr):
-        if instr.inp1.is_STRING() and instr.inp2.is_STRING():
-            LIB.Translate_StrCmp(instr.inp1,instr.inp2)
-            if instr.opType.is_EQ():
-                G.AsmText.AddText(G.INDENT + "beqz $v0, L_%d"%(instr.jmpTarget))
-            elif instr.opType.is_GEQ():
-                G.AsmText.AddText(G.INDENT + "bgez $v0, L_%d"%(instr.jmpTarget))
-            elif instr.opType.is_LEQ():
-                G.AsmText.AddText(G.INDENT + "blez $v0, L_%d"%(instr.jmpTarget))
-            elif instr.opType.is_LT():
-                G.AsmText.AddText(G.INDENT + "bgtz $v0, L_%d"%(instr.jmpTarget))
-            elif instr.opType.is_GT():
-                G.AsmText.AddText(G.INDENT + "bltz $v0, L_%d"%(instr.jmpTarget))
-            return True
-        return False
+    if instr.inp1.is_STRING() and instr.inp2.is_STRING():
+        LIB.Translate_StrCmp(instr.inp1,instr.inp2)
+        if instr.opType.is_EQ():
+            G.AsmText.AddText(G.INDENT + "beqz $v0, L_%d"%(instr.jmpTarget))
+        elif instr.opType.is_GEQ():
+            G.AsmText.AddText(G.INDENT + "bgez $v0, L_%d"%(instr.jmpTarget))
+        elif instr.opType.is_LEQ():
+            G.AsmText.AddText(G.INDENT + "blez $v0, L_%d"%(instr.jmpTarget))
+        elif instr.opType.is_LT():
+            G.AsmText.AddText(G.INDENT + "bgtz $v0, L_%d"%(instr.jmpTarget))
+        elif instr.opType.is_GT():
+            G.AsmText.AddText(G.INDENT + "bltz $v0, L_%d"%(instr.jmpTarget))
+        return True
+    return False
 
 def Translate_ASSIGN(instr):
     if (not instr.opType.is_NONE()) and (not instr.inp2.is_NONE()):
         # dest = inp1 OP inp2
 
-        reg1 = SetupRegister(instr.inp1,REG.t7)
-        reg2 = SetupRegister(instr.inp2,REG.t8)
+        reg1 = SetupRegister(instr.inp1,REG.tmpUsageRegs[0])
+        reg2 = SetupRegister(instr.inp2,REG.tmpUsageRegs[1])
 
         # TODO : Handle array and hash variables in the destination
         if instr.dest.is_SCALAR_VARIABLE():
@@ -138,3 +167,42 @@ def Translate_ASSIGN(instr):
 
             # Register allocation algorithm sets the dirty flag
             # for the destination variable
+
+        elif instr.dest.is_ARRAY_VARIABLE():
+            tempReg = REG.tmpUsageRegs[-1]
+            regComp = REG.tmpUsageRegs[2]
+
+            if instr.dest.key.is_NUMBER():
+                G.AsmText.AddText(tempReg.LoadImmediate(instr.dest.key.value))
+            else:
+                regInp = SetupRegister(instr.dest.key, regComp)
+                G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp))
+
+            # Load the array address in regComp
+            G.AsmText.AddText(G.INDENT + "la %s, %s"%(regComp, ASM.GetArrAddr(instr.dest.value)))
+
+            # We move the index value to tempReg to multiply it by 4
+            G.AsmText.AddText(G.INDENT + "sll %s, %s, 2"%(tempReg, tempReg))
+            G.AsmText.AddText(G.INDENT + "add %s, %s, %s"%(regComp, regComp, tempReg))
+
+            # We will reuse tempReg as the dest register. We will then write it back to the
+            # address location in the array
+
+            # Currently ignoring overflows everywhere
+            if instr.opType.is_PLUS():
+                G.AsmText.AddText(G.INDENT + "addu %s, %s, %s"%(tempReg, reg1, reg2))
+
+            elif instr.opType.is_MINUS():
+                G.AsmText.AddText(G.INDENT + "subu %s, %s, %s"%(tempReg, reg1, reg2))
+
+            elif instr.opType.is_MULT():
+                G.AsmText.AddText(G.INDENT + "multu %s, %s"%(reg1, reg2))
+                G.AsmText.AddText(G.INDENT + "mflo %s"%(tempReg))
+
+            elif instr.opType.is_DIV():
+                G.AsmText.AddText(G.INDENT + "divu %s, %s"%(reg1, reg2))
+                G.AsmText.AddText(G.INDENT + "mflo %s"%(tempReg))
+
+            # Store back the value
+            G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(tempReg, regComp))
+
