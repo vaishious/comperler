@@ -90,7 +90,7 @@ def SetupRegister(inp, regComp, tempReg=REG.t9):
 
 def Translate_IFGOTO(instr):
     optype = INSTRUCTION.OperationType
-    cmp_ops = [optype.LT, optype.GT, optype.LEQ, optype.GEQ, optype.EQ]
+    cmp_ops = [optype.LT, optype.GT, optype.LEQ, optype.GEQ, optype.EQ, optype.NE]
     
     DEBUG.Assert(instr.opType.opType in cmp_ops,"Invalid operator for IFGOTO.")
 
@@ -106,6 +106,9 @@ def Translate_IFGOTO(instr):
 
     if instr.opType.is_EQ():
         G.AsmText.AddText(G.INDENT + "beq %s, %s, L_%d"%(reg1, reg2, instr.jmpTarget))
+
+    elif instr.opType.is_NE():
+        G.AsmText.AddText(G.INDENT + "bne %s, %s, L_%d"%(reg1, reg2, instr.jmpTarget))
 
     elif instr.opType.is_LT():
         G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(reg1, reg1, reg2))
@@ -128,6 +131,8 @@ def StrTranslate_IFGOTO(instr):
         LIB.Translate_StrCmp(instr.inp1,instr.inp2)
         if instr.opType.is_EQ():
             G.AsmText.AddText(G.INDENT + "beqz $v0, L_%d"%(instr.jmpTarget))
+        if instr.opType.is_NE():
+            G.AsmText.AddText(G.INDENT + "bne $v0, %s, L_%d"%(REG.zero, instr.jmpTarget))
         elif instr.opType.is_GEQ():
             G.AsmText.AddText(G.INDENT + "bgez $v0, L_%d"%(instr.jmpTarget))
         elif instr.opType.is_LEQ():
@@ -149,24 +154,7 @@ def Translate_ASSIGN(instr):
         # TODO : Handle array and hash variables in the destination
         if instr.dest.is_SCALAR_VARIABLE():
             reg3 = G.AllocMap[instr.dest.value]
-
-            # Currently ignoring overflows everywhere
-            if instr.opType.is_PLUS():
-                G.AsmText.AddText(G.INDENT + "addu %s, %s, %s"%(reg3, reg1, reg2))
-
-            elif instr.opType.is_MINUS():
-                G.AsmText.AddText(G.INDENT + "subu %s, %s, %s"%(reg3, reg1, reg2))
-
-            elif instr.opType.is_MULT():
-                G.AsmText.AddText(G.INDENT + "multu %s, %s"%(reg1, reg2))
-                G.AsmText.AddText(G.INDENT + "mflo %s"%(reg3))
-
-            elif instr.opType.is_DIV():
-                G.AsmText.AddText(G.INDENT + "divu %s, %s"%(reg1, reg2))
-                G.AsmText.AddText(G.INDENT + "mflo %s"%(reg3))
-
-            # Register allocation algorithm sets the dirty flag
-            # for the destination variable
+            GenCode_3OPASSIGN(instr, reg3, reg1, reg2)
 
         elif instr.dest.is_ARRAY_VARIABLE():
             tempReg = REG.tmpUsageRegs[-1]
@@ -187,22 +175,27 @@ def Translate_ASSIGN(instr):
 
             # We will reuse tempReg as the dest register. We will then write it back to the
             # address location in the array
-
-            # Currently ignoring overflows everywhere
-            if instr.opType.is_PLUS():
-                G.AsmText.AddText(G.INDENT + "addu %s, %s, %s"%(tempReg, reg1, reg2))
-
-            elif instr.opType.is_MINUS():
-                G.AsmText.AddText(G.INDENT + "subu %s, %s, %s"%(tempReg, reg1, reg2))
-
-            elif instr.opType.is_MULT():
-                G.AsmText.AddText(G.INDENT + "multu %s, %s"%(reg1, reg2))
-                G.AsmText.AddText(G.INDENT + "mflo %s"%(tempReg))
-
-            elif instr.opType.is_DIV():
-                G.AsmText.AddText(G.INDENT + "divu %s, %s"%(reg1, reg2))
-                G.AsmText.AddText(G.INDENT + "mflo %s"%(tempReg))
+            GenCode_3OPASSIGN(instr, tempReg, reg1, reg2)
 
             # Store back the value
             G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(tempReg, regComp))
 
+def GenCode_3OPASSIGN(instr, regDest, regInp1, regInp2):
+    # Currently ignoring overflows everywhere
+    if instr.opType.is_PLUS():
+        G.AsmText.AddText(G.INDENT + "addu %s, %s, %s"%(regDest, regInp1, regInp2))
+
+    elif instr.opType.is_MINUS():
+        G.AsmText.AddText(G.INDENT + "subu %s, %s, %s"%(regDest, regInp1, regInp2))
+
+    elif instr.opType.is_MULT():
+        G.AsmText.AddText(G.INDENT + "multu %s, %s"%(regInp1, regInp2))
+        G.AsmText.AddText(G.INDENT + "mflo %s"%(regDest))
+
+    elif instr.opType.is_DIV():
+        G.AsmText.AddText(G.INDENT + "divu %s, %s"%(regInp1, regInp2))
+        G.AsmText.AddText(G.INDENT + "mflo %s"%(regDest))
+
+    elif instr.opType.is_MOD():
+        G.AsmText.AddText(G.INDENT + "divu %s, %s"%(regInp1, regInp2))
+        G.AsmText.AddText(G.INDENT + "mfhi %s"%(regDest))
