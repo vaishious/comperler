@@ -94,8 +94,8 @@ class BasicBlock(object):
             if regAllocCode:
                 G.AsmText.AddText(regAllocCode)
 
-            #G.CurrRegAddrTable.PrettyPrintRegisters()
-            #print regAllocCode
+            G.CurrRegAddrTable.PrettyPrintRegisters()
+            print regAllocCode
 
             # TODO : Actual Translation
 
@@ -221,7 +221,7 @@ class BasicBlock(object):
                         G.CurrRegAddrTable.RemoveDestVarFromRegisters(varName)
 
                         G.CurrRegAddrTable.SetRegister(varName, reg)
-                        codeSegment += reg.LoadVar(varName)
+                        #codeSegment += reg.LoadVar(varName)
                         break
                 else:
                     # All registers are full, need to select the cheapest one.
@@ -255,7 +255,7 @@ class BasicBlock(object):
                         G.CurrRegAddrTable.RemoveDestVarFromRegisters(varName)
 
                     G.CurrRegAddrTable.SetRegister(varName, currReg)
-                    codeSegment += currReg.LoadVar(varName)
+                    #codeSegment += currReg.LoadVar(varName)
 
             reg = G.CurrRegAddrTable.GetAllocatedRegister(varName)
             G.AllocMap[varName] = reg
@@ -336,8 +336,8 @@ class RegAddrDescriptor(object):
 
     def __init__(self, initial_symbols):
         self.symbols = initial_symbols
-        self.regs = REG.addrDescRegs + REG.savedRegs # Can be changed if we want to use less/more
-        #self.regs = [REG.t0, REG.t1, REG.t2]
+        #self.regs = REG.addrDescRegs + REG.savedRegs # Can be changed if we want to use less/more
+        self.regs = [REG.t0, REG.t1, REG.t2]
 
         # Since everything is global, all of them reside in memory
         # MAP : <var_name> -> (in_memory? , in_register?)
