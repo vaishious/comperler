@@ -60,14 +60,25 @@ def Translate(instr):
     elif instr.instrType.is_IFGOTO():
         # We can safely clobber registers here because this is the last
         # instruction of the basic block
+        if (instr.dest.is_HASH_VARIABLE() or 
+            instr.inp1.is_HASH_VARIABLE() or
+            instr.inp2.is_HASH_VARIABLE()):
+
+            G.CurrRegAddrTable.DumpDirtyVars()
+            G.CurrRegAddrTable.Reset()
+            G.AllocMap = {}
 
         G.CurrRegAddrTable.DumpDirtyVars()
         Translate_IFGOTO(instr)
 
     elif instr.instrType.is_ASSIGN():
-        for var in [instr.inp1, instr.inp2, instr.dest]:
-            if var.is_HASH_VARIABLE():
-                G.CurrRegAddrTable.DumpDirtyVars()
+        if (instr.dest.is_HASH_VARIABLE() or 
+            instr.inp1.is_HASH_VARIABLE() or
+            instr.inp2.is_HASH_VARIABLE()):
+
+            G.CurrRegAddrTable.DumpDirtyVars()
+            G.CurrRegAddrTable.Reset()
+            G.AllocMap = {}
 
         Translate_ASSIGN(instr)
 
@@ -89,7 +100,8 @@ def SetupRegister(inp, regComp, tempReg=REG.t9, useImmediate=False):
             if inp.IsRegisterAllocated():
                 reg = inp.GetCurrReg()
             else:
-                inp.CopyToRegister(regComp)
+                G.AsmText.AddText(inp.CopyToRegister(regComp)[:-1])
+                reg = regComp
 
     elif inp.is_NUMBER():
         if useImmediate:
@@ -131,31 +143,7 @@ def SetupRegister(inp, regComp, tempReg=REG.t9, useImmediate=False):
             G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp), "Load key for the hash access")
 
         LIB.Translate_getValue(inp, tempReg, regComp) 
-
-         #Load the address of the Hash into the register a0
-        #G.AsmText.AddText(G.INDENT + "la %s, %s"%(REG.a0, ASM.GetHashAddr(inp)), "Load address of the hash")
-
-         #Load the key into the respective register a1 or a2
-        #if inp.key.is_NUMBER():
-            #G.AsmText.AddText(REG.a2.LoadImmediate(inp.key), "The key is a number")
-        #elif inp.key.is_STRING():
-            #G.AsmText.AddText(G.INDENT + "la %s, %s"%(REG.a1, ASM.GetStrAddr(inp.key)), "The key is a string")
-        #else:
-             #It is a variable
-            #regInp = SetupRegister(dest.key,regComp)
-
-             #Handle this better. Loading the same thing into both registers a1 and a2
-             #as string or number can be stored at this variable
-            #G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a1, regInp), "The key is a variable")
-            #G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a2, regInp))
-
-         #Call the getValue function
-        #G.AsmText.AddText(G.INDENT + "jal getValue", "Call the getValue function")
-    
-         #Add checks on the type of the value stored. Currently assumed to be a number
-        #G.AsmText.AddText(G.INDENT + "lw %s, 0(%s)"%(regComp, REG.v0), "Setup register by dereferencing the return value")
-
-        #reg = regComp
+        reg = regComp
 
     DEBUG.Assert(reg, "Line %d: Unable to setup register for %s."%(G.CurrInstruction.lineID, str(inp.value)))
     return reg
@@ -253,6 +241,18 @@ def Translate_ASSIGN(instr):
             # Store back the value
             G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(tempReg, regComp), "Array is a dest. Storing back the value")
 
+        elif instr.dest.is_HASH_VARIABLE():
+            tempReg = REG.tmpUsageRegs[-1]
+            regComp = REG.tmpUsageRegs[2]
+
+            SetupDestRegHash(instr.dest, regComp, tempReg) # The value of key is stored in tempReg
+            GenCode_3OPASSIGN(instr, regComp, reg1, reg2)
+
+            LIB.Translate_alloc(reg1) # Hack for now. Everything has been dumped anyway
+            G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(regComp, reg1), "Load key into allocated memory")
+
+            LIB.Translate_addElement(instr.dest, tempReg, reg1) 
+
     elif instr.opType.is_NONE():
         # dest = inp1
 
@@ -322,6 +322,18 @@ def Translate_ASSIGN(instr):
 
             # Store back the value
             G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(tempReg, regComp))
+
+        elif instr.dest.is_HASH_VARIABLE():
+            tempReg = REG.tmpUsageRegs[-1]
+            regComp = REG.tmpUsageRegs[2]
+
+            SetupDestRegHash(instr.dest, regComp, tempReg) # The value of key is stored in tempReg
+            GenCode_2OPASSIGN(instr, regComp, reg1)
+
+            LIB.Translate_alloc(REG.tmpUsageRegs[1])
+            G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(regComp, REG.tmpUsageRegs[1]), "Load key into allocated memory")
+
+            LIB.Translate_addElement(instr.dest, tempReg, REG.tmpUsageRegs[1])
 
 
 def GenCode_3OPASSIGN(instr, regDest, regInp1, regInp2):

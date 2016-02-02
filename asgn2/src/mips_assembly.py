@@ -97,8 +97,9 @@ class DataRegion(object):
         DEBUG.Assert(type(strEntity) == INSTRUCTION.Entity, "Type for AllocateString in Data-Region is not Entity")
         DEBUG.Assert(strEntity.is_STRING(), "Only string variables allowed for AllocateString in Data-Region")
 
-        self.stringSet[strEntity.value] = str(self.stringCnt)
-        self.stringCnt += 1
+        if not self.stringSet.has_key(strEntity.value):
+            self.stringSet[strEntity.value] = str(self.stringCnt)
+            self.stringCnt += 1
 
     def AllocateHash(self, hashEntity):
         DEBUG.Assert(type(hashEntity) == INSTRUCTION.Entity, "Type for AllocateHash in Data-Region is not Entity")

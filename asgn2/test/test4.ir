@@ -2,12 +2,13 @@
 18, declare, g[1]
 19, declare, h{0}
 17, print, "Enter a number : "
-20, =, h{3}, 20
+20, =, h{3}, 1
 2, read, "%d", g[0]
-3, =, i, 1 
+3, =, i, h{3}
 4, ifgoto, >, i, g[0], 8
-5, =, *, a, a, i
+5, =, *, h{3}, h{3}, i
 6, =, +, i, i, 1
 7, goto, 4
+25, =, a, h{3}
 8, print, "Factorial of %d is %d\n", g[0], a
 9, exit

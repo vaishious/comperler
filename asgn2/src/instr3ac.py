@@ -71,7 +71,9 @@ class InstrType(object):
                                    self.instrType == InstrType.GOTO or
                                    self.instrType == InstrType.RETURN or
                                    self.instrType == InstrType.EXIT or
-                                   self.instrType == InstrType.CALL)
+                                   self.instrType == InstrType.CALL or
+                                   self.instrType == InstrType.PRINT or
+                                   self.instrType == InstrType.READ)
 
 
 class OperationType(object):
@@ -207,8 +209,6 @@ class Entity(object):
             self.entity = Entity.HASH_VARIABLE
             self.value  = repr(inpString[:inpString.find('{')])[1:-1]
             self.key    = Entity(repr(inpString[inpString.find('{')+1:-1])[1:-1])
-            if self.key.is_NUMBER():
-                self.key = Entity(str(self.key.value))
 
         else:
             raise DEBUG.InputError3AC(inpString, "Failed to recognize entity")

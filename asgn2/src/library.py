@@ -120,7 +120,7 @@ def Translate_initHash(targetVar):
 
     DEBUG.Assert(targetVar.is_HASH_VARIABLE(), "Argument of initHash should be a hash pointer")
 
-    G.AsmText.AddText(G.INDENT + "li %s, %s"%(REG.v0, str(G.AsmData.GetHashType(targetVar.value))), "Passing the type of hash")
+    G.AsmText.AddText(G.INDENT + "li %s, %s"%(REG.argRegs[0], str(G.AsmData.GetHashType(targetVar.value))), "Passing the type of hash")
     G.AsmText.AddText(G.INDENT + "jal initHash", "Allocating memory and initializing the hash")
     G.AsmText.AddText(G.INDENT + "sw $v0, %s"%(ASM.GetHashAddr(targetVar)), "Storing the returned memory address of hash")
 
@@ -134,7 +134,7 @@ def Translate_getValue(targetVar, idxRegister, targetReg):
     DEBUG.Assert(targetVar.is_HASH_VARIABLE(), "Argument of getValue should be a hash pointer")
     G.AsmData.AllocateString(G.HashKeyError)
 
-    G.AsmText.AddText(target.CopyToRegister(REG.argRegs[0])[:-1])
+    G.AsmText.AddText(targetVar.CopyToRegister(REG.argRegs[0])[:-1])
 
     if G.AsmData.GetHashType(targetVar.value) == 1:
         G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[1], idxRegister), "Load key")

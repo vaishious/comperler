@@ -26,11 +26,6 @@ alloc:
 	addu	$sp,$sp,16
 	j	$31
 	.end	alloc
-	.sdata
-	.align	2
-$LC0:
-	.ascii	"%s : %s\000"
-	.text
 	.align	2
 	.globl	ExitWithMessage
 	.ent	ExitWithMessage
@@ -46,10 +41,10 @@ ExitWithMessage:
 	sw	$5,28($fp)
 	lw	$2,28($fp)
 	beq	$2,$0,$L3
-	la	$4,$LC0
-	lw	$5,24($fp)
-	lw	$6,28($fp)
-	jal	Printf
+	lw	$4,24($fp)
+	jal	PrintString
+	lw	$4,28($fp)
+	jal	PrintString
 	j	$L4
 $L3:
 	lw	$4,24($fp)

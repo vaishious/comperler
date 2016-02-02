@@ -17,30 +17,37 @@ findMatch:
 	lw	$2,32($fp)
 	lw	$2,0($2)
 	sw	$2,20($fp)
+	sw	$0,16($fp)
 $L2:
-	lw	$2,20($fp)
-	bne	$2,$0,$L4
+	lw	$2,32($fp)
+	lw	$3,16($fp)
+	lw	$2,8($2)
+	slt	$2,$3,$2
+	bne	$2,$0,$L5
 	j	$L3
-$L4:
+$L5:
 	lw	$2,32($fp)
 	lw	$2,12($2)
-	bne	$2,$0,$L5
+	bne	$2,$0,$L6
 	lw	$2,20($fp)
 	lw	$3,4($2)
 	lw	$2,40($fp)
-	bne	$3,$2,$L6
+	bne	$3,$2,$L8
 	j	$L3
 $L6:
 	lw	$2,20($fp)
 	lw	$4,0($2)
 	lw	$5,36($fp)
 	jal	strCmp
-	bne	$2,$0,$L5
+	bne	$2,$0,$L8
 	j	$L3
-$L5:
+$L8:
 	lw	$2,20($fp)
 	lw	$2,12($2)
 	sw	$2,20($fp)
+	lw	$2,16($fp)
+	addu	$2,$2,1
+	sw	$2,16($fp)
 	j	$L2
 $L3:
 	lw	$2,20($fp)
@@ -102,7 +109,7 @@ addElement:
 	jal	findMatch
 	sw	$2,16($fp)
 	lw	$2,16($fp)
-	beq	$2,$0,$L11
+	beq	$2,$0,$L12
 	lw	$3,16($fp)
 	lw	$2,36($fp)
 	sw	$2,0($3)
@@ -112,8 +119,8 @@ addElement:
 	lw	$3,16($fp)
 	lw	$2,44($fp)
 	sw	$2,8($3)
-	j	$L10
-$L11:
+	j	$L11
+$L12:
 	li	$4,16			# 0x10
 	jal	alloc
 	sw	$2,16($fp)
@@ -130,14 +137,14 @@ $L11:
 	sw	$0,12($2)
 	lw	$2,32($fp)
 	lw	$2,8($2)
-	bne	$2,$0,$L12
+	bne	$2,$0,$L13
 	lw	$4,32($fp)
 	lw	$3,32($fp)
 	lw	$2,16($fp)
 	sw	$2,4($3)
 	sw	$2,0($4)
-	j	$L13
-$L12:
+	j	$L14
+$L13:
 	lw	$2,32($fp)
 	lw	$3,4($2)
 	lw	$2,16($fp)
@@ -145,13 +152,13 @@ $L12:
 	lw	$3,32($fp)
 	lw	$2,16($fp)
 	sw	$2,4($3)
-$L13:
+$L14:
 	lw	$3,32($fp)
 	lw	$2,32($fp)
 	lw	$2,8($2)
 	addu	$2,$2,1
 	sw	$2,8($3)
-$L10:
+$L11:
 	move	$2,$0
 	move	$sp,$fp
 	lw	$31,28($sp)
@@ -180,16 +187,16 @@ getValue:
 	jal	findMatch
 	sw	$2,16($fp)
 	lw	$2,16($fp)
-	beq	$2,$0,$L15
+	beq	$2,$0,$L16
 	lw	$2,16($fp)
 	lw	$2,8($2)
 	sw	$2,20($fp)
-	j	$L14
-$L15:
+	j	$L15
+$L16:
 	lw	$4,44($fp)
 	lw	$5,36($fp)
 	jal	ExitWithMessage
-$L14:
+$L15:
 	lw	$2,20($fp)
 	move	$sp,$fp
 	lw	$31,28($sp)

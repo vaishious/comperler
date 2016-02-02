@@ -31,13 +31,15 @@ Element *findMatch(Hash *hashPtr, char *s, int keyInt)
     int i;
     Element *elemPtr = hashPtr->first;
 
-    while(elemPtr != 0) {
-        if (hashPtr->type == 0)
+    for (i=0; i < hashPtr->length; i++) {
+        if (hashPtr->type == 0) {
             if (elemPtr->keyInt == keyInt)
                 break;
-        else
+        }
+        else {
             if(!strCmp(elemPtr->key, s))
                 break;
+        }
 
         elemPtr = elemPtr->next;
     }

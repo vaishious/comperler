@@ -18,8 +18,10 @@ void *alloc(unsigned int size)
 
 void ExitWithMessage(char *message, char *reference)
 {
-    if(reference != NULL)
-        Printf("%s : %s", message, reference);
+    if(reference != NULL) {
+        PrintString(message);
+        PrintString(reference);
+    }
     else
         PrintString(message);
 

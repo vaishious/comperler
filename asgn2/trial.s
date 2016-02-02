@@ -1,27 +1,19 @@
  ### GENERATED MIPS ASSEMBLY - COMPERLER ###
- ### FILENAME : test/test4.ir ###
+ ### FILENAME : test/test5.ir ###
 
 .data
 # VARIABLES
 .align 2
 $V_a : .word 0
 
-.align 2
-$V_i : .word 0
-
 
 # ARRAYS
-.align 2
-$A_g : .word 0:1
-
 
 # STRINGS
 .align 2
-$STR_1 : .asciiz "%d"
+$STR_0 : .asciiz "%d"
 .align 2
-$STR_0 : .asciiz "Enter a number : "
-.align 2
-$STR_2 : .asciiz "Factorial of %d is %d\n"
+$STR_1 : .asciiz "KEY ERROR: Match not found\n"
 
 # HASHES
 .align 2
@@ -33,96 +25,63 @@ main:
 
     # BASIC BLOCK #0
 
-    # INSTR : a = 1
-    li $t3, 1
-
-    # INSTR : declare g[1]
-
     # INSTR : declare h{0}
-    sw $t3, $V_a
-
-    li $v0, 0                  # Passing the type of hash
+    li $a0, 0                  # Passing the type of hash
     jal initHash               # Allocating memory and initializing the hash
     sw $v0, $H_h               # Storing the returned memory address of hash
 
-    # INSTR : Print ['"Enter a number : "']
-    la $a0, $STR_0
-    jal Printf
-
-
-    # INSTR : h{3} = 20
+    # INSTR : h{3} = 2
     li $t9, 3                  # Load key for the hash access
-    li $t8, 20
+    li $t8, 2
     li $a0, 4                  # Load memory size to be allocated
     jal alloc                  #  call malloc
     move $t6, $v0              # Load returned pointer into targetReg
     sw $t8, 0($t6)             # Load key into allocated memory
     la $a0, $H_h
-    li $a1, 0
     move $a2, $t9              # Load key
-    move $a3, $t6             # Load value
+    la $a3, 0($t6)             # Load value
     jal addElement             # Add element to the hash
 
-    # INSTR : Read ['"%d"', 'g[0]']
-    la $a0, $STR_1
-    li $t9, 0
-    la $a1, $A_g
-    sll $t9, $t9, 2
-    add $a1, $a1, $t9
-    jal Scanf
+    # INSTR : h{3} = 1 + h{3}
+    li $t6, 1
+    li $t9, 3                  # Load key for the hash access
+    la $a0, $H_h
+    move $a2, $t9              # Load key
+    la $a3, $STR_1
+    jal getValue               # Searching for value in hash
+    lw $t7, 0($v0)             # Store result back into a designated register
+    li $t9, 3                  # Load key for the hash access
+    addu $t8, $t6, $t7
+    li $a0, 4                  # Load memory size to be allocated
+    jal alloc                  #  call malloc
+    move $t6, $v0              # Load returned pointer into targetReg
+    sw $t8, 0($t6)             # Load key into allocated memory
+    la $a0, $H_h
+    move $a2, $t9              # Load key
+    la $a3, 0($t6)             # Load value
+    jal addElement             # Add element to the hash
 
+    # INSTR : a = h{3}
+    sw $t3, $V_a
 
-    # INSTR : i = 1
-    li $t3, 1
-    sw $t3, $V_i
+    lw $t9, $V_a
+    li $t9, 3                  # Load key for the hash access
+    la $a0, $H_h
+    move $a2, $t9              # Load key
+    la $a3, $STR_1
+    jal getValue               # Searching for value in hash
+    lw $t7, 0($v0)             # Store result back into a designated register
+    move $t9, $t7
+
+    sw $t3, $V_a
+
+    # INSTR : Print ['"%d"', 'a']
+    la $a0, $STR_0
+    lw $a1, $V_a
+    jal Printf
 
 
     # BASIC BLOCK #1
-
-    # INSTR : If ( i > g[0] ) GOTO $LID_8
-$LID_4:
-    lw $t3, $V_i
-
-    li $t9, 0                  # Load index for the array access
-    la $t7, $A_g               # Load array address
-    sll $t9, $t9, 2            # Multiply index by 4
-    add $t7, $t7, $t9          # Add index as an offset to array address
-    lw $t7, 0($t7)             # Extract array value
-    sgt $t3, $t3, $t7
-    bgtz $t3, $LID_8
-
-    # BASIC BLOCK #2
-
-    # INSTR : a = a * i
-    lw $t3, $V_a
-    lw $t4, $V_i
-
-    multu $t3, $t4
-    mflo $t3
-
-    # INSTR : i = i + 1
-    addu $t4, $t4, 1
-
-    # INSTR : GOTO $LID_4
-    sw $t3, $V_a
-
-    sw $t4, $V_i
-
-    j $LID_4
-
-    # BASIC BLOCK #3
-
-    # INSTR : Print ['"Factorial of %d is %d\\n"', 'g[0]', 'a']
-$LID_8:
-    la $a0, $STR_2
-    li $t9, 0
-    la $a1, $A_g
-    sll $t9, $t9, 2
-    add $a1, $a1, $t9
-    lw $a1, 0($a1)
-    lw $a2, $V_a
-    jal Printf
-
 
     # INSTR : exit
     li $v0, 10
@@ -174,92 +133,39 @@ alloc:
 	j	$31
 	.end	alloc
 
-strCmp:
-	.frame	$fp,16,$31		# vars= 8, regs= 1/0, args= 0, extra= 0
-	.mask	0x40000000,-8
+ExitWithMessage:
+	.frame	$fp,24,$31		# vars= 0, regs= 2/0, args= 16, extra= 0
+	.mask	0xc0000000,-4
 	.fmask	0x00000000,0
-	subu	$sp,$sp,16
-	sw	$fp,8($sp)
+	subu	$sp,$sp,24
+	sw	$31,20($sp)
+	sw	$fp,16($sp)
 	move	$fp,$sp
-	sw	$4,16($fp)
-	sw	$5,20($fp)
-	sw	$0,0($fp)
-$LstrCmp2:
-	lw	$3,16($fp)
-	lw	$2,0($fp)
-	addu	$2,$3,$2
-	lb	$2,0($2)
-	bne	$2,$0,$LstrCmp5
-	lw	$3,20($fp)
-	lw	$2,0($fp)
-	addu	$2,$3,$2
-	lb	$2,0($2)
-	bne	$2,$0,$LstrCmp5
-	j	$LstrCmp3
-$LstrCmp5:
-	lw	$3,16($fp)
-	lw	$2,0($fp)
-	addu	$4,$3,$2
-	lw	$3,20($fp)
-	lw	$2,0($fp)
-	addu	$2,$3,$2
-	lb	$3,0($4)
-	lb	$2,0($2)
-	slt	$2,$2,$3
-	beq	$2,$0,$LstrCmp6
-	li	$2,1			# 0x1
-	sw	$2,4($fp)
-	j	$LstrCmp1
-$LstrCmp6:
-	lw	$3,16($fp)
-	lw	$2,0($fp)
-	addu	$4,$3,$2
-	lw	$3,20($fp)
-	lw	$2,0($fp)
-	addu	$2,$3,$2
-	lb	$3,0($4)
-	lb	$2,0($2)
-	slt	$2,$3,$2
-	beq	$2,$0,$LstrCmp4
-	li	$2,-1			# 0xffffffffffffffff
-	sw	$2,4($fp)
-	j	$LstrCmp1
-$LstrCmp4:
-	lw	$2,0($fp)
-	addu	$2,$2,1
-	sw	$2,0($fp)
-	j	$LstrCmp2
-$LstrCmp3:
-	sw	$0,4($fp)
-$LstrCmp1:
-	lw	$2,4($fp)
-	move	$sp,$fp
-	lw	$fp,8($sp)
-	addu	$sp,$sp,16
-	j	$31
-	.end	strCmp
-
-ReadInt:
-	.frame	$fp,16,$31		# vars= 8, regs= 1/0, args= 0, extra= 0
-	.mask	0x40000000,-8
-	.fmask	0x00000000,0
-	subu	$sp,$sp,16
-	sw	$fp,8($sp)
-	move	$fp,$sp
+	sw	$4,24($fp)
+	sw	$5,28($fp)
+	lw	$2,28($fp)
+	beq	$2,$0,$LExitWithMessage3
+	lw	$4,24($fp)
+	jal	PrintString
+	lw	$4,28($fp)
+	jal	PrintString
+	j	$LExitWithMessage4
+$LExitWithMessage3:
+	lw	$4,24($fp)
+	jal	PrintString
+$LExitWithMessage4:
  #APP
 	
-            li  $v0, 5
+            li $v0, 10
             syscall
-            move $2, $v0
         
  #NO_APP
-	sw	$2,0($fp)
-	lw	$2,0($fp)
 	move	$sp,$fp
-	lw	$fp,8($sp)
-	addu	$sp,$sp,16
+	lw	$31,20($sp)
+	lw	$fp,16($sp)
+	addu	$sp,$sp,24
 	j	$31
-	.end	ReadInt
+	.end	ExitWithMessage
 
 initHash:
 	.frame	$fp,32,$31		# vars= 8, regs= 2/0, args= 16, extra= 0
@@ -289,77 +195,6 @@ initHash:
 	addu	$sp,$sp,32
 	j	$31
 	.end	initHash
-
-Scanf:
-	.frame	$fp,40,$31		# vars= 16, regs= 2/0, args= 16, extra= 0
-	.mask	0xc0000000,-4
-	.fmask	0x00000000,0
-	sw	$4,0($sp)
-	sw	$5,4($sp)
-	sw	$6,8($sp)
-	sw	$7,12($sp)
-	subu	$sp,$sp,40
-	sw	$31,36($sp)
-	sw	$fp,32($sp)
-	move	$fp,$sp
-	sw	$4,40($fp)
-	addu	$2,$fp,44
-	sw	$2,16($fp)
-$LScanf20:
-	lw	$2,40($fp)
-	lb	$2,0($2)
-	bne	$2,$0,$LScanf22
-	j	$LScanf19
-$LScanf22:
-	lw	$2,40($fp)
-	lb	$3,0($2)
-	li	$2,37			# 0x25
-	bne	$3,$2,$LScanf23
-	lw	$2,40($fp)
-	addu	$2,$2,1
-	sw	$2,40($fp)
-	lw	$2,40($fp)
-	lb	$3,0($2)
-	li	$2,100			# 0x64
-	bne	$3,$2,$LScanf24
-	lw	$2,16($fp)
-	lw	$2,0($2)
-	sw	$2,20($fp)
-	jal	ReadInt
-	move	$3,$2
-	lw	$2,20($fp)
-	sw	$3,0($2)
-	lw	$2,16($fp)
-	addu	$2,$2,4
-	sw	$2,16($fp)
-	j	$LScanf23
-$LScanf24:
-	lw	$2,40($fp)
-	lb	$3,0($2)
-	li	$2,99			# 0x63
-	bne	$3,$2,$LScanf19
-	lw	$2,16($fp)
-	lw	$2,0($2)
-	sw	$2,24($fp)
-	jal	ReadChar
-	move	$3,$2
-	lw	$2,24($fp)
-	sb	$3,0($2)
-	lw	$2,16($fp)
-	addu	$2,$2,4
-	sw	$2,16($fp)
-$LScanf23:
-	lw	$2,40($fp)
-	addu	$2,$2,1
-	sw	$2,40($fp)
-	j	$LScanf20
-$LScanf19:
-	move	$sp,$fp
-	lw	$31,36($sp)
-	lw	$fp,32($sp)
-	addu	$sp,$sp,40
-	j	$31
-	.end	Scanf
 
 PrintChar:
 	.frame	$fp,16,$31		# vars= 8, regs= 1/0, args= 0, extra= 0
@@ -398,30 +233,37 @@ findMatch:
 	lw	$2,32($fp)
 	lw	$2,0($2)
 	sw	$2,20($fp)
+	sw	$0,16($fp)
 $LfindMatch2:
-	lw	$2,20($fp)
-	bne	$2,$0,$LfindMatch4
+	lw	$2,32($fp)
+	lw	$3,16($fp)
+	lw	$2,8($2)
+	slt	$2,$3,$2
+	bne	$2,$0,$LfindMatch5
 	j	$LfindMatch3
-$LfindMatch4:
+$LfindMatch5:
 	lw	$2,32($fp)
 	lw	$2,12($2)
-	bne	$2,$0,$LfindMatch5
+	bne	$2,$0,$LfindMatch6
 	lw	$2,20($fp)
 	lw	$3,4($2)
 	lw	$2,40($fp)
-	bne	$3,$2,$LfindMatch6
+	bne	$3,$2,$LfindMatch8
 	j	$LfindMatch3
 $LfindMatch6:
 	lw	$2,20($fp)
 	lw	$4,0($2)
 	lw	$5,36($fp)
 	jal	strCmp
-	bne	$2,$0,$LfindMatch5
+	bne	$2,$0,$LfindMatch8
 	j	$LfindMatch3
-$LfindMatch5:
+$LfindMatch8:
 	lw	$2,20($fp)
 	lw	$2,12($2)
 	sw	$2,20($fp)
+	lw	$2,16($fp)
+	addu	$2,$2,1
+	sw	$2,16($fp)
 	j	$LfindMatch2
 $LfindMatch3:
 	lw	$2,20($fp)
@@ -432,7 +274,7 @@ $LfindMatch3:
 	j	$31
 	.end	findMatch
 
-addElement:
+getValue:
 	.frame	$fp,32,$31		# vars= 8, regs= 2/0, args= 16, extra= 0
 	.mask	0xc0000000,-4
 	.fmask	0x00000000,0
@@ -450,63 +292,23 @@ addElement:
 	jal	findMatch
 	sw	$2,16($fp)
 	lw	$2,16($fp)
-	beq	$2,$0,$LaddElement11
-	lw	$3,16($fp)
-	lw	$2,36($fp)
-	sw	$2,0($3)
-	lw	$3,16($fp)
-	lw	$2,40($fp)
-	sw	$2,4($3)
-	lw	$3,16($fp)
-	lw	$2,44($fp)
-	sw	$2,8($3)
-	j	$LaddElement10
-$LaddElement11:
-	li	$4,16			# 0x10
-	jal	alloc
-	sw	$2,16($fp)
-	lw	$3,16($fp)
-	lw	$2,36($fp)
-	sw	$2,0($3)
-	lw	$3,16($fp)
-	lw	$2,40($fp)
-	sw	$2,4($3)
-	lw	$3,16($fp)
-	lw	$2,44($fp)
-	sw	$2,8($3)
+	beq	$2,$0,$LgetValue16
 	lw	$2,16($fp)
-	sw	$0,12($2)
-	lw	$2,32($fp)
 	lw	$2,8($2)
-	bne	$2,$0,$LaddElement12
-	lw	$4,32($fp)
-	lw	$3,32($fp)
-	lw	$2,16($fp)
-	sw	$2,4($3)
-	sw	$2,0($4)
-	j	$LaddElement13
-$LaddElement12:
-	lw	$2,32($fp)
-	lw	$3,4($2)
-	lw	$2,16($fp)
-	sw	$2,12($3)
-	lw	$3,32($fp)
-	lw	$2,16($fp)
-	sw	$2,4($3)
-$LaddElement13:
-	lw	$3,32($fp)
-	lw	$2,32($fp)
-	lw	$2,8($2)
-	addu	$2,$2,1
-	sw	$2,8($3)
-$LaddElement10:
-	move	$2,$0
+	sw	$2,20($fp)
+	j	$LgetValue15
+$LgetValue16:
+	lw	$4,44($fp)
+	lw	$5,36($fp)
+	jal	ExitWithMessage
+$LgetValue15:
+	lw	$2,20($fp)
 	move	$sp,$fp
 	lw	$31,28($sp)
 	lw	$fp,24($sp)
 	addu	$sp,$sp,32
 	j	$31
-	.end	addElement
+	.end	getValue
 
 Printf:
 	.frame	$fp,40,$31		# vars= 16, regs= 2/0, args= 16, extra= 0
@@ -596,27 +398,138 @@ $LPrintf7:
 	j	$31
 	.end	Printf
 
-ReadChar:
+addElement:
+	.frame	$fp,32,$31		# vars= 8, regs= 2/0, args= 16, extra= 0
+	.mask	0xc0000000,-4
+	.fmask	0x00000000,0
+	subu	$sp,$sp,32
+	sw	$31,28($sp)
+	sw	$fp,24($sp)
+	move	$fp,$sp
+	sw	$4,32($fp)
+	sw	$5,36($fp)
+	sw	$6,40($fp)
+	sw	$7,44($fp)
+	lw	$4,32($fp)
+	lw	$5,36($fp)
+	lw	$6,40($fp)
+	jal	findMatch
+	sw	$2,16($fp)
+	lw	$2,16($fp)
+	beq	$2,$0,$LaddElement12
+	lw	$3,16($fp)
+	lw	$2,36($fp)
+	sw	$2,0($3)
+	lw	$3,16($fp)
+	lw	$2,40($fp)
+	sw	$2,4($3)
+	lw	$3,16($fp)
+	lw	$2,44($fp)
+	sw	$2,8($3)
+	j	$LaddElement11
+$LaddElement12:
+	li	$4,16			# 0x10
+	jal	alloc
+	sw	$2,16($fp)
+	lw	$3,16($fp)
+	lw	$2,36($fp)
+	sw	$2,0($3)
+	lw	$3,16($fp)
+	lw	$2,40($fp)
+	sw	$2,4($3)
+	lw	$3,16($fp)
+	lw	$2,44($fp)
+	sw	$2,8($3)
+	lw	$2,16($fp)
+	sw	$0,12($2)
+	lw	$2,32($fp)
+	lw	$2,8($2)
+	bne	$2,$0,$LaddElement13
+	lw	$4,32($fp)
+	lw	$3,32($fp)
+	lw	$2,16($fp)
+	sw	$2,4($3)
+	sw	$2,0($4)
+	j	$LaddElement14
+$LaddElement13:
+	lw	$2,32($fp)
+	lw	$3,4($2)
+	lw	$2,16($fp)
+	sw	$2,12($3)
+	lw	$3,32($fp)
+	lw	$2,16($fp)
+	sw	$2,4($3)
+$LaddElement14:
+	lw	$3,32($fp)
+	lw	$2,32($fp)
+	lw	$2,8($2)
+	addu	$2,$2,1
+	sw	$2,8($3)
+$LaddElement11:
+	move	$2,$0
+	move	$sp,$fp
+	lw	$31,28($sp)
+	lw	$fp,24($sp)
+	addu	$sp,$sp,32
+	j	$31
+	.end	addElement
+
+strCmp:
 	.frame	$fp,16,$31		# vars= 8, regs= 1/0, args= 0, extra= 0
 	.mask	0x40000000,-8
 	.fmask	0x00000000,0
 	subu	$sp,$sp,16
 	sw	$fp,8($sp)
 	move	$fp,$sp
- #APP
-	
-            li  $v0, 12
-            syscall
-            move $2, $v0
-        
- #NO_APP
-	sb	$2,0($fp)
-	lb	$2,0($fp)
+	sw	$4,16($fp)
+	sw	$5,20($fp)
+$LstrCmp2:
+	lw	$2,16($fp)
+	lw	$3,20($fp)
+	lb	$4,0($2)
+	lb	$2,0($3)
+	bne	$4,$2,$LstrCmp3
+	lw	$2,16($fp)
+	lb	$2,0($2)
+	bne	$2,$0,$LstrCmp4
+	j	$LstrCmp3
+$LstrCmp4:
+	lw	$2,16($fp)
+	addu	$2,$2,1
+	sw	$2,16($fp)
+	lw	$2,20($fp)
+	addu	$2,$2,1
+	sw	$2,20($fp)
+	j	$LstrCmp2
+$LstrCmp3:
+	lw	$2,16($fp)
+	lw	$3,20($fp)
+	lb	$4,0($2)
+	lb	$2,0($3)
+	slt	$2,$2,$4
+	beq	$2,$0,$LstrCmp6
+	li	$2,1			# 0x1
+	sw	$2,0($fp)
+	j	$LstrCmp1
+$LstrCmp6:
+	lw	$2,16($fp)
+	lw	$3,20($fp)
+	lb	$4,0($2)
+	lb	$2,0($3)
+	slt	$2,$4,$2
+	beq	$2,$0,$LstrCmp7
+	li	$2,-1			# 0xffffffffffffffff
+	sw	$2,0($fp)
+	j	$LstrCmp1
+$LstrCmp7:
+	sw	$0,0($fp)
+$LstrCmp1:
+	lw	$2,0($fp)
 	move	$sp,$fp
 	lw	$fp,8($sp)
 	addu	$sp,$sp,16
 	j	$31
-	.end	ReadChar
+	.end	strCmp
 
 PrintString:
 	.frame	$fp,8,$31		# vars= 0, regs= 1/0, args= 0, extra= 0

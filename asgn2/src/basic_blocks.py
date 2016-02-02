@@ -156,7 +156,7 @@ class BasicBlock(object):
 
             if G.CurrInstruction.isCopy:
 
-                # If it is a copy operation, simply allocate the register allocated to the input
+                #If it is a copy operation, simply allocate the register allocated to the input
                 if (G.CurrInstruction.inp1.is_SCALAR_VARIABLE()):
                     inpVarName = G.CurrInstruction.inp1.value
                     reg =  G.AllocMap[inpVarName]
@@ -169,6 +169,9 @@ class BasicBlock(object):
                 reg = G.CurrRegAddrTable.GetAllocatedRegister(varName)
                 G.AllocMap[varName] = reg
 
+                return codeSegment
+
+            if G.AllocMap.has_key(varName):
                 return codeSegment
         
             if G.CurrInstruction.inp1.is_SCALAR_VARIABLE():
