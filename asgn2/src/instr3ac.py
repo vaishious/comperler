@@ -175,7 +175,7 @@ class Entity(object):
     reHashNum        = re.compile(r'^' + hashAccessNumber + r'$')
     reHashString     = re.compile(r'^' + hashAccessString + r'$')
 
-    def __init__(self, inpString):
+    def __init__(self, inpString, stringAllocate=True):
         self.inpString = inpString
         self.entity = None
         self.value  = None
@@ -191,7 +191,8 @@ class Entity(object):
         elif Entity.reString.match(inpString): # Is a string
             self.entity = Entity.STRING
             self.value  = inpString[1:-1]
-            G.AsmData.AllocateString(self)
+            if stringAllocate:
+                G.AsmData.AllocateString(self)
 
         elif Entity.reScalar.match(inpString): # Is a scalar
             self.entity = Entity.SCALAR_VARIABLE
