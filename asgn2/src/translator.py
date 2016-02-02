@@ -36,7 +36,11 @@ def Translate(instr):
 
     elif instr.instrType.is_PRINT():
         G.CurrRegAddrTable.DumpDirtyVars()
-        LIB.Translate_Printf(instr.PrintArgs)
+        LIB.Translate_Printf(instr.IOArgs)
+
+    elif instr.instrType.is_READ():
+        G.CurrRegAddrTable.DumpDirtyVars()
+        LIB.Translate_Scanf(instr.IOArgs)
 
     elif instr.instrType.is_RETURN():
         G.CurrRegAddrTable.DumpDirtyVars()

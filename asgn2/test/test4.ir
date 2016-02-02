@@ -1,9 +1,11 @@
 1, =, a, 1
-2, =, b, 12
+18, declare, g[1]
+17, print, "Enter a number : "
+2, read, "%d", g[0]
 3, =, i, 1 
-4, ifgoto, >, i, b, 8
+4, ifgoto, >, i, g[0], 8
 5, =, *, a, a, i
 6, =, +, i, i, 1
 7, goto, 4
-8, print, "Factorial of %d is %d\n", b, a
+8, print, "Factorial of %d is %d\n", g[0], a
 9, exit

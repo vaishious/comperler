@@ -1,4 +1,4 @@
-	.file	1 "../asgn2/lib/hashlib.c"
+	.file	1 "hashlib.c"
 	.text
 	.align	2
 	.globl	alloc

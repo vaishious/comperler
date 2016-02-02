@@ -62,6 +62,31 @@ def Translate_Printf(parameters):
     G.LibraryFunctionsUsed.add("PrintChar")
     G.LibraryFunctionsUsed.add("PrintString")
 
+def Translate_Scanf(parameters):
+    """ Custom version of Scanf can be found in iolib.c in the lib/ folder """
+
+    formatString = parameters[0]
+
+    DEBUG.Assert(formatString.is_STRING(), "First argument of Printf has to be a format specifier")
+
+    G.StackSpaceRequired = max(G.StackSpaceRequired, 4*len(parameters))
+
+    codeSegment = ""
+
+    for (idx, param) in enumerate(parameters):
+        if idx <= 3:
+            codeSegment += parameters[idx].CopyAddressToRegister(REG.argRegs[idx])
+
+        else:
+            codeSegment += parameters[idx].CopyAddressToMemory(str(4*idx)+"($sp)")
+
+    codeSegment += G.INDENT + "jal Scanf\n"
+    G.AsmText.AddText(codeSegment)
+
+    # Add library for linking
+    G.LibraryFunctionsUsed.add("Scanf")
+    G.LibraryFunctionsUsed.add("ReadInt")
+    G.LibraryFunctionsUsed.add("ReadChar")
 
 def Translate_StrCmp(str1, str2):
     """ Custom version of strCmp can be found in hashlib.c in the lib/ folder """

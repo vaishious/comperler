@@ -23,7 +23,7 @@ class InstrType(object):
     """ 
         Instruction Types : 
     
-        Straightforward : ASSIGN, IFGOTO, GOTO, CALL, RETURN, PRINT, NOP, LABEL, EXIT
+        Straightforward : ASSIGN, IFGOTO, GOTO, CALL, RETURN, PRINT, READ, NOP, LABEL, EXIT
 
         Custom          : Declare - Will be used to fix sizes of the arrays
 
@@ -31,7 +31,7 @@ class InstrType(object):
 
 
     # Enum for holding these values
-    ASSIGN, IFGOTO, GOTO, CALL, RETURN, PRINT, LABEL, DECLARE, EXIT, NOP = range(10)
+    ASSIGN, IFGOTO, GOTO, CALL, RETURN, PRINT, READ, LABEL, DECLARE, EXIT, NOP = range(11)
 
     typeMap = { 
                 "="       : ASSIGN,        "assign" : ASSIGN,       "ASSIGN"   : ASSIGN,
@@ -40,6 +40,7 @@ class InstrType(object):
                 "call"    : CALL,                                   "CALL"     : CALL,
                 "ret"     : RETURN,        "return" : RETURN,       "RETURN"   : RETURN,       "RET" : RETURN,
                 "print"   : PRINT,         "printf" : PRINT,        "PRINT"    : PRINT,
+                "read"    : READ,          "scanf"  : READ,         "READ"     : READ,
                 "label"   : LABEL,         "Label"  : LABEL,        "LABEL"    : LABEL,
                 "declare" : DECLARE,       "decl"   : DECLARE,      "DECLARE"  : DECLARE,
                 "exit"    : EXIT,          "quit"   : EXIT,         "EXIT"     : EXIT,         "done" : EXIT,
@@ -60,6 +61,7 @@ class InstrType(object):
     def is_CALL(self)    : return self.instrType == InstrType.CALL
     def is_RETURN(self)  : return self.instrType == InstrType.RETURN
     def is_PRINT(self)   : return self.instrType == InstrType.PRINT
+    def is_READ(self)    : return self.instrType == InstrType.READ
     def is_LABEL(self)   : return self.instrType == InstrType.LABEL
     def is_DECLARE(self) : return self.instrType == InstrType.DECLARE
     def is_EXIT(self)    : return self.instrType == InstrType.EXIT
@@ -259,19 +261,97 @@ class Entity(object):
             else:
                 return G.INDENT + "lw %s, %s\n"%(reg, ASM.GetVarAddr(self))
 
+        if self.is_ARRAY_VARIABLE():
+            tempReg = REG.tmpUsageRegs[-1]
+            regComp = reg
+            codeSegment = ""
+
+            if self.key.is_NUMBER():
+                codeSegment += tempReg.LoadImmediate(self.key.value) + "\n"
+
+            else:
+                regInp = TRANS.SetupRegister(self.key, regComp)
+                codeSegment += G.INDENT + "move %s, %s\n"%(tempReg, regInp)
+
+            # Load the array address in regComp
+            codeSegment += G.INDENT + "la %s, %s\n"%(regComp, ASM.GetArrAddr(self.value))
+
+            # We move the index value to tempReg to multiply it by 4
+            codeSegment += G.INDENT + "sll %s, %s, 2\n"%(tempReg, tempReg)
+            codeSegment += G.INDENT + "add %s, %s, %s\n"%(regComp, regComp, tempReg)
+            codeSegment += G.INDENT + "lw %s, 0(%s)\n"%(regComp, regComp)
+            
+            return codeSegment
+
+        raise Exception("Can't copy value to register")
+
+    def CopyAddressToRegister(self, reg):
+        """ 
+            Copies its address to the given register. 
+        """
+        if self.is_SCALAR_VARIABLE():
+            return G.INDENT + "la %s, %s\n"%(reg, ASM.GetVarAddr(self))
+
+        if self.is_STRING():
+            return G.INDENT + "la %s, %s\n"%(reg, ASM.GetStrAddr(self))
+
+        if self.is_ARRAY_VARIABLE():
+            tempReg = REG.tmpUsageRegs[-1]
+            regComp = reg
+            codeSegment = ""
+
+            if self.key.is_NUMBER():
+                codeSegment += tempReg.LoadImmediate(self.key.value) + "\n"
+
+            else:
+                regInp = TRANS.SetupRegister(self.key, regComp)
+                codeSegment += G.INDENT + "move %s, %s\n"%(tempReg, regInp)
+
+            # Load the array address in regComp
+            codeSegment += G.INDENT + "la %s, %s\n"%(regComp, ASM.GetArrAddr(self.value))
+
+            # We move the index value to tempReg to multiply it by 4
+            codeSegment += G.INDENT + "sll %s, %s, 2\n"%(tempReg, tempReg)
+            codeSegment += G.INDENT + "add %s, %s, %s\n"%(regComp, regComp, tempReg)
+
+            return codeSegment
+
+        print self.value
+        raise Exception("Can't copy value to register")
+
     def CopyToMemory(self, mem):
         """
             Copies the value at the given memory location. Instructions used are straightforward. In case it is allocated, 
             we use sw directly. Otherwise we copy it to $v0 and then use sw. Specifically used in parameter assignments.
         """
 
-        if self.IsRegisterAllocated():
-            return G.INDENT + "sw %s, %s\n"%(self.GetCurrReg(), mem)
+        if self.is_SCALAR_VARIABLE():
+            if self.IsRegisterAllocated():
+                return G.INDENT + "sw %s, %s\n"%(self.GetCurrReg(), mem)
 
-        codeSegment = self.CopyToRegister(REG.v0)
-        codeSegment += G.INDENT + "sw %s, %s\n"%(REG.v0, mem)
+            codeSegment = self.CopyToRegister(REG.tmpUsageRegs[-1])
+            codeSegment += G.INDENT + "sw %s, %s\n"%(REG.tmpUsageRegs[-1], mem)
+            return codeSegment
 
-        return codeSegment
+        if self.is_ARRAY_VARIABLE():
+            codeSegment = self.CopyToRegister(REG.tmpUsageRegs[-1])
+            codeSegment += G.INDENT + "sw %s, %s\n"%(REG.tmpUsageRegs[-1], mem)
+            return codeSegment
+
+
+        raise Exception("Can't copy value to memory")
+
+    def CopyAddressToMemory(self, mem):
+        """
+            Copies the address of this variable to the given memory location
+        """
+
+        if self.is_SCALAR_VARIABLE() or self.is_ARRAY_VARIABLE():
+            codeSegment = self.CopyAddressToRegister(REG.tmpUsageRegs[-1])
+            codeSegment += G.INDENT + "sw %s, %s\n"%(REG.tmpUsageRegs[-1], mem)
+            return codeSegment
+
+        raise Exception("Can't copy value to memory")
 
     def ReturnSymbols(self):
 
@@ -308,7 +388,7 @@ class Instr3AC(object):
 
         * Inp2             : Input 2 for the operation. May be omitted
 
-        * PrintArgs        : Store the arguments to Print. Deviation from 3-addr code. Cannot be used for any other instruction
+        * IOArgs           : Store the arguments to Print/Read. Deviation from 3-addr code. Cannot be used for any other instruction
 
         * Jump Target      : Line ID to jump to in case the type is GOTO or IFGOTO
 
@@ -334,7 +414,7 @@ class Instr3AC(object):
         self.dest      = Entity("")
         self.inp1      = Entity("")
         self.inp2      = Entity("")
-        self.PrintArgs = []
+        self.IOArgs    = []
         self.lineID    = 0
         self.jmpTarget = None
         self.jmpLabel  = None
@@ -377,7 +457,15 @@ class Instr3AC(object):
         elif self.instrType.is_PRINT():
             # Line Number, Print, Inputs                                
             DEBUG.Assert(len(inpTuple) >= 3, "Expected atleast a 3-tuple for print")
-            self.PrintArgs = map(Entity, map(str, inpTuple[2:]))
+            self.IOArgs = map(Entity, map(str, inpTuple[2:]))
+            for arg in self.IOArgs:
+                if arg.is_SCALAR_VARIABLE():
+                    arg.AllocateGlobalMemory()
+            
+        elif self.instrType.is_READ():
+            # Line Number, Read, Inputs                                
+            DEBUG.Assert(len(inpTuple) >= 3, "Expected atleast a 3-tuple for read")
+            self.IOArgs = map(Entity, map(str, inpTuple[2:]))
             
         elif self.instrType.is_LABEL():
             # Line Number, Label, LabelName
@@ -389,6 +477,7 @@ class Instr3AC(object):
             # Line Number, Declare, Input                                
             DEBUG.Assert(len(inpTuple) == 3, "Expected 3-tuple for declare")
             self.inp1 = Entity(str(inpTuple[2]))
+            self.inp1.AllocateGlobalMemory()
 
         elif self.instrType.is_ASSIGN():                 
             # Line Number, =, OP, dest, inp1, inp2                 
@@ -415,9 +504,12 @@ class Instr3AC(object):
 
             DEBUG.Assert(self.dest.is_VARIABLE(), "LHS of an ASSIGN has to be a variable")
 
-        self.dest.AllocateGlobalMemory()
-        self.inp1.AllocateGlobalMemory()
-        self.inp2.AllocateGlobalMemory()
+        if self.dest.is_SCALAR_VARIABLE():
+            self.dest.AllocateGlobalMemory()
+        if self.inp1.is_SCALAR_VARIABLE():
+            self.dest.AllocateGlobalMemory()
+        if self.inp2.is_SCALAR_VARIABLE():
+            self.dest.AllocateGlobalMemory()
             
     def __str__(self):
         return self.PrettyPrint()
@@ -432,7 +524,7 @@ class Instr3AC(object):
 
     def ReturnSymbols(self):
         ret = self.dest.ReturnSymbols() + self.inp1.ReturnSymbols() + self.inp2.ReturnSymbols()
-        for arg in self.PrintArgs:
+        for arg in self.IOArgs:
             ret += arg.ReturnSymbols()
 
         return set(ret)
@@ -463,7 +555,7 @@ class Instr3AC(object):
         if self.dest.is_SCALAR_VARIABLE():
             if (self.inp1.value == outSymbol or 
                 self.inp2.value == outSymbol or 
-                outSymbol in [i.value for i in self.PrintArgs]):
+                outSymbol in [i.value for i in self.IOArgs]):
 
                 newProperties[outSymbol] = [True, self.lineID] 
 
@@ -488,6 +580,9 @@ class Instr3AC(object):
 
         if self.instrType.is_PRINT():
             return "Print %s"%(str(self.inpTuple[2:]))
+
+        if self.instrType.is_READ():
+            return "Read %s"%(str(self.inpTuple[2:]))
 
         if self.instrType.is_DECLARE():
             return "declare %s"%(self.inp1)

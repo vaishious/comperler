@@ -132,6 +132,38 @@ void Printf(char *formatSpecifier, ...) {
     }
 }
 
+void Scanf(char *formatSpecifier, ...) {
+
+    // We only care about %d, %c. We ignore all the other characters
+
+    // va_start
+    char *argPtr = (char *)(&formatSpecifier) + sizeof(char *);
+
+    int *argInt;
+
+    char *argChar;
+
+    while((*formatSpecifier) != '\0') {
+        if ((*formatSpecifier) == '%') {
+            formatSpecifier++;
+
+            if ((*formatSpecifier) == 'd') {
+                argInt = (int *) (*((int *)argPtr));
+                (* argInt) = ReadInt();
+                argPtr += sizeof(int *);
+            } else if ((*formatSpecifier) == 'c') {
+                argChar = (char *) (*((int *) argPtr));
+                (* argChar) = ReadChar();
+                argPtr += sizeof(char *);
+            } else {
+                return;
+            }
+
+        }
+
+        formatSpecifier++;
+    }
+}
 
 int main() {
     char *namePtr = (char *)alloc(sizeof(char) * 40);
@@ -141,14 +173,17 @@ int main() {
     PrintString(namePtr);
     PrintChar('\n');
     PrintString("Input a Number : ");
-    int a = ReadInt();
+    int a;
+    Scanf("%d", &a);
     int b = a * a;
     PrintString("Square of ");
     PrintInt(a);
     PrintString(" is ");
     PrintInt(b);
     PrintChar('\n');
-    Printf("%d %d %d Hello World %s \nI am just trying here : %s %s", 1, 2, 3, "My String", "Maah Lifee", "Maah Ruless");
+    char c;
+    Scanf("%c", &c);
+    Printf("%d %d %d %c Hello World\n", 1, 2, 3, c);
     return 0;
 }
 

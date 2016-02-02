@@ -1,4 +1,4 @@
-	.file	1 "../asgn2/lib/iolib.c"
+	.file	1 "iolib.c"
 	.text
 	.align	2
 	.globl	PrintInt
@@ -238,3 +238,76 @@ $L7:
 	addu	$sp,$sp,40
 	j	$31
 	.end	Printf
+	.align	2
+	.globl	Scanf
+	.ent	Scanf
+Scanf:
+	.frame	$fp,40,$31		# vars= 16, regs= 2/0, args= 16, extra= 0
+	.mask	0xc0000000,-4
+	.fmask	0x00000000,0
+	sw	$4,0($sp)
+	sw	$5,4($sp)
+	sw	$6,8($sp)
+	sw	$7,12($sp)
+	subu	$sp,$sp,40
+	sw	$31,36($sp)
+	sw	$fp,32($sp)
+	move	$fp,$sp
+	sw	$4,40($fp)
+	addu	$2,$fp,44
+	sw	$2,16($fp)
+$L20:
+	lw	$2,40($fp)
+	lb	$2,0($2)
+	bne	$2,$0,$L22
+	j	$L19
+$L22:
+	lw	$2,40($fp)
+	lb	$3,0($2)
+	li	$2,37			# 0x25
+	bne	$3,$2,$L23
+	lw	$2,40($fp)
+	addu	$2,$2,1
+	sw	$2,40($fp)
+	lw	$2,40($fp)
+	lb	$3,0($2)
+	li	$2,100			# 0x64
+	bne	$3,$2,$L24
+	lw	$2,16($fp)
+	lw	$2,0($2)
+	sw	$2,20($fp)
+	jal	ReadInt
+	move	$3,$2
+	lw	$2,20($fp)
+	sw	$3,0($2)
+	lw	$2,16($fp)
+	addu	$2,$2,4
+	sw	$2,16($fp)
+	j	$L23
+$L24:
+	lw	$2,40($fp)
+	lb	$3,0($2)
+	li	$2,99			# 0x63
+	bne	$3,$2,$L19
+	lw	$2,16($fp)
+	lw	$2,0($2)
+	sw	$2,24($fp)
+	jal	ReadChar
+	move	$3,$2
+	lw	$2,24($fp)
+	sb	$3,0($2)
+	lw	$2,16($fp)
+	addu	$2,$2,4
+	sw	$2,16($fp)
+$L23:
+	lw	$2,40($fp)
+	addu	$2,$2,1
+	sw	$2,40($fp)
+	j	$L20
+$L19:
+	move	$sp,$fp
+	lw	$31,36($sp)
+	lw	$fp,32($sp)
+	addu	$sp,$sp,40
+	j	$31
+	.end	Scanf

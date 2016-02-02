@@ -114,3 +114,36 @@ void Printf(char *formatSpecifier, ...) {
         formatSpecifier++;
     }
 }
+
+void Scanf(char *formatSpecifier, ...) {
+
+    // We only care about %d, %c. We ignore all the other characters
+
+    // va_start
+    char *argPtr = (char *)(&formatSpecifier) + sizeof(char *);
+
+    int *argInt;
+
+    char *argChar;
+
+    while((*formatSpecifier) != '\0') {
+        if ((*formatSpecifier) == '%') {
+            formatSpecifier++;
+
+            if ((*formatSpecifier) == 'd') {
+                argInt = (int *) (*((int *)argPtr));
+                (* argInt) = ReadInt();
+                argPtr += sizeof(int *);
+            } else if ((*formatSpecifier) == 'c') {
+                argChar = (char *) (*((int *) argPtr));
+                (* argChar) = ReadChar();
+                argPtr += sizeof(char *);
+            } else {
+                return;
+            }
+
+        }
+
+        formatSpecifier++;
+    }
+}
