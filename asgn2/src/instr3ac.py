@@ -160,7 +160,7 @@ class Entity(object):
     singleQuoteString = r'\'([^\\]|(\\[\s\S]))*?\''
     doubleQuoteString = r'\"([^\\]|(\\[\s\S]))*?\"'
     string            = r'(' + singleQuoteString + r'|' + doubleQuoteString + r')'
-    number            = r'\d+'
+    number            = r'[-]?\d+'
     identifier        = r'[a-zA-Z_][a-zA-Z0-9_]*'
     arrayAccess       = identifier + r'\[' + number + r'\]'
     hashAccessNumber  = identifier + r'\{' + number + r'\}'
