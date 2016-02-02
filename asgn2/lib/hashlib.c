@@ -68,6 +68,7 @@ int addElement(Hash *hashPtr, char *key, int keyInt, void *valRef)
     elemPtr->key = key;
     elemPtr->keyInt = keyInt;
     elemPtr->valRef = valRef;
+    elemPtr->next = 0;
     if(hashPtr->length == 0)
             hashPtr->first = hashPtr->last = elemPtr;
     else {
