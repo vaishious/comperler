@@ -124,22 +124,22 @@ def Translate_IFGOTO(instr):
         if reg2 == "0":
             G.AsmText.AddText(G.INDENT + "bgtz %s, %s"%(reg1, instr.jmpTarget))
         else:
-            G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(reg1, reg2, reg1))
+            G.AsmText.AddText(G.INDENT + "sgt %s, %s, %s"%(reg1, reg1, reg2))
             G.AsmText.AddText(G.INDENT + "bgtz %s, %s"%(reg1, instr.jmpTarget))
 
     elif instr.opType.is_LEQ():
         if reg2 == "0":
             G.AsmText.AddText(G.INDENT + "blez %s, %s"%(reg1, instr.jmpTarget))
         else:
-            G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(reg1, reg2, reg1))
-            G.AsmText.AddText(G.INDENT + "beq %s, %s, %s"%(reg1, REG.zero, instr.jmpTarget))
+            G.AsmText.AddText(G.INDENT + "sle %s, %s, %s"%(reg1, reg1, reg2))
+            G.AsmText.AddText(G.INDENT + "bgtz %s, %s, %s"%(reg1, REG.zero, instr.jmpTarget))
 
     elif instr.opType.is_GEQ():
         if reg2 == "0":
             G.AsmText.AddText(G.INDENT + "bgez %s, %s"%(reg1, instr.jmpTarget))
         else:
-            G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(reg1, reg1, reg2))
-            G.AsmText.AddText(G.INDENT + "beq %s, %s, %s"%(reg1, REG.zero, instr.jmpTarget))
+            G.AsmText.AddText(G.INDENT + "sge %s, %s, %s"%(reg1, reg1, reg2))
+            G.AsmText.AddText(G.INDENT + "bgtz %s, %s, %s"%(reg1, REG.zero, instr.jmpTarget))
 
 def StrTranslate_IFGOTO(instr):
     if instr.inp1.is_STRING() and instr.inp2.is_STRING():
