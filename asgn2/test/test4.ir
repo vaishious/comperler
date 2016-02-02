@@ -1,0 +1,9 @@
+1, =, a, 1
+2, =, b, 12
+3, =, i, 1 
+4, ifgoto, >, i, b, 8
+5, =, *, a, a, i
+6, =, +, i, i, 1
+7, goto, 4
+8, print, "Factorial of %d is %d\n", b, a
+9, exit
