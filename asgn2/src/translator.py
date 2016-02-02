@@ -117,6 +117,18 @@ def SetupRegister(inp, regComp, tempReg=REG.t9, useImmediate=False):
 
         reg = regComp
 
+    elif inp.is_HASH_VARIABLE():
+        # First we need the key
+        regInp = None
+        if inp.key.is_NUMBER():
+            G.AsmText.AddText(tempReg.LoadImmediate(inp.key.value), "Load key for the hash access")
+        else:
+            regInp = SetupRegister(inp.key, regComp)
+            G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp), "Load key for the hash access")
+
+        LIB.Translate_getValue(inp, tempReg, regComp) 
+
+
     DEBUG.Assert(reg, "Line %d: Unable to setup register for %s."%(G.CurrInstruction.lineID, str(inp.value)))
     return reg
 
@@ -243,6 +255,24 @@ def Translate_ASSIGN(instr):
             # Store back the value
             G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(tempReg, regComp))
 
+        elif instr.dest.is_HASH_VARIABLE():
+            tempReg = REG.tmpUsageRegs[-1]
+            regComp = REG.tmpUsageRegs[2]
+
+            SetupDestRegHash(instr.dest, regComp, tempReg) # The value of key is stored in tempReg
+
+            # Store the value in regComp
+            if instr.inp1.is_NUMBER():
+                G.AsmText.AddText(G.INDENT + "li %s, %s"%(regComp, str(instr.inp1.value)))
+            else:
+                reg1 = SetupRegister(instr.inp1, REG.tmpUsageRegs[0])
+                G.AsmText.AddText(G.INDENT + "move %s, %s"%(regComp, reg1))
+
+            LIB.Translate_alloc(REG.tmpUsageRegs[0])
+            G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(regComp, REG.tmpUsageRegs[0]), "Load key into allocated memory")
+
+            LIB.Translate_addElement(instr.dest, tempReg, REG.tmpUsageRegs[0]) 
+
     elif instr.inp2.is_NONE():
         # dest = OP inp1
         reg1 = SetupRegister(instr.inp1,REG.tmpUsageRegs[0])
@@ -358,3 +388,12 @@ def SetupDestRegArray(dest, regComp, tempReg=REG.tmpUsageRegs[-1]):
     # We move the index value to tempReg to multiply it by 4
     G.AsmText.AddText(G.INDENT + "sll %s, %s, 2"%(tempReg, tempReg), "Multiply index by 4")
     G.AsmText.AddText(G.INDENT + "add %s, %s, %s"%(regComp, regComp, tempReg), "Add index as an offset to array address")
+
+def SetupDestRegHash(dest, regComp, tempReg=REG.tmpUsageRegs[-1]):
+    if dest.key.is_NUMBER():
+        G.AsmText.AddText(tempReg.LoadImmediate(dest.key.value), "Load key for the hash access")
+    else:
+        regInp = SetupRegister(inp.key, regComp)
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp), "Load key for the hash access")
+
+

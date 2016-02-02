@@ -1,7 +1,8 @@
 1, =, a, 1
 18, declare, g[1]
-19, declare, h{''}
+19, declare, h{0}
 17, print, "Enter a number : "
+20, =, h{3}, 20
 2, read, "%d", g[0]
 3, =, i, 1 
 4, ifgoto, >, i, g[0], 8

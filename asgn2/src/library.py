@@ -120,7 +120,7 @@ def Translate_initHash(targetVar):
     G.LibraryFunctionsUsed.add("initHash")
     G.LibraryFunctionsUsed.add("alloc")
 
-def Translate_getValue(targetVar, targetReg):
+def Translate_getValue(targetVar, idxRegister, targetReg):
     """ Hash implementation can be found in hashlib.c in the lib/ folder """
 
     DEBUG.Assert(targetVar.is_HASH_VARIABLE(), "Argument of getValue should be a hash pointer")
@@ -129,9 +129,9 @@ def Translate_getValue(targetVar, targetReg):
     G.AsmText.AddText(target.CopyToRegister(REG.argRegs[0])[:-1])
 
     if G.AsmData.GetHashType(targetVar.value) == 1:
-        G.AsmText.AddText(target.key.CopyAddressToRegister(REG.argRegs[1])[:-1])
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[1], idxRegister), "Load key")
     else:
-        G.AsmText.AddText(target.key.CopyToRegister(REG.argRegs[2])[:-1])
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[2], idxRegister), "Load key")
 
     G.AsmText.AddText(G.HashKeyError.CopyAddressToRegister(REG.argRegs[3])[:-1])
 
@@ -142,23 +142,37 @@ def Translate_getValue(targetVar, targetReg):
     G.LibraryFunctionsUsed.add("getValue")
     G.LibraryFunctionsUsed.add("ExitWithMessage")
 
-def Translate_addElement(targetVar, valEntry):
+def Translate_addElement(targetVar, idxRegister, valReg):
     """ Hash implementation can be found in hashlib.c in the lib/ folder """
 
     DEBUG.Assert(targetVar.is_HASH_VARIABLE(), "Argument of addElement should be a hash pointer")
     G.AsmData.AllocateString(G.HashKeyError)
 
-    G.AsmText.AddText(target.CopyToRegister(REG.argRegs[0])[:-1])
+    G.AsmText.AddText(targetVar.CopyToRegister(REG.argRegs[0])[:-1])
 
     if G.AsmData.GetHashType(targetVar.value) == 1:
-        G.AsmText.AddText(target.key.CopyAddressToRegister(REG.argRegs[1])[:-1])
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[1], idxRegister), "Load key")
     else:
-        G.AsmText.AddText(target.key.CopyToRegister(REG.argRegs[2])[:-1])
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[2], idxRegister), "Load key")
 
-    G.AsmText.AddText(valEntry.CopyAddressToRegister(REG.argRegs[3])[:-1])
+    G.AsmText.AddText(G.INDENT + "la %s, 0(%s)"%(REG.argRegs[3], valReg), "Load value")
 
     G.AsmText.AddText(G.INDENT + "jal addElement", "Add element to the hash")
 
     # Add library for linking
     G.LibraryFunctionsUsed.add("addElement")
     G.LibraryFunctionsUsed.add("findMatch")
+    G.LibraryFunctionsUsed.add("strCmp")
+
+def Translate_alloc(targetReg, size=4):
+
+    if type(size) == int:
+        G.AsmText.AddText(G.INDENT + "li %s, %s"%(REG.argRegs[0], str(size)), "Load memory size to be allocated")
+    else:
+        G.AsmText.AddText(size.CopyToRegister(REG.argRegs[0])[:-1], "Load memory size to be allocated")
+
+    G.AsmText.AddText(G.INDENT + "jal alloc", " call malloc")
+    G.AsmText.AddText(G.INDENT + "move %s, %s"%(targetReg, REG.v0), "Load returned pointer into targetReg")
+
+    # Add library for linking
+    G.LibraryFunctionsUsed.add("alloc")
