@@ -69,7 +69,7 @@ class DataRegion(object):
 
     def __init__(self):
         self.varSet    = set([])
-        self.hashSet   = set([])
+        self.hashSet   = {}
         self.arraySet  = {}
         self.stringSet = {}
         self.stringCnt = 0
@@ -104,7 +104,10 @@ class DataRegion(object):
         DEBUG.Assert(type(hashEntity) == INSTRUCTION.Entity, "Type for AllocateHash in Data-Region is not Entity")
         DEBUG.Assert(hashEntity.is_HASH_VARIABLE(), "Only hash variable for AllocateHash in Data-Region")
 
-        self.hashSet.add(hashEntity.value)
+        self.hashSet[hashEntity.value] = 0 if hashEntity.key.is_NUMBER() else 1
+
+    def GetHashType(self, varName):
+        return self.hashSet[varName]
 
     def GetStringLabel(self, string):
         return self.stringSet[string]

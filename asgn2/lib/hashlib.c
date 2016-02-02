@@ -11,6 +11,7 @@
 
 typedef struct Element {
     char *key;	// Should be NULL terminated
+    int keyInt;
     void *valRef;
     struct Element *next;
 } Element;
@@ -20,41 +21,52 @@ typedef struct Hash {
 
     Element *first,*last;
     int length;
+
+    // Integers or Addresses (strings/hashes)
+    int type;
 } Hash;
 
-Element *findMatch(Hash *hashPtr, char *s)
+Element *findMatch(Hash *hashPtr, char *s, int keyInt)
 {
     int i;
     Element *elemPtr = hashPtr->first;
 
     while(elemPtr != 0) {
-        if(!strCmp(elemPtr->key,s))
-            break;
+        if (hashPtr->type == 0)
+            if (elemPtr->keyInt == keyInt)
+                break;
+        else
+            if(!strCmp(elemPtr->key, s))
+                break;
+
         elemPtr = elemPtr->next;
     }
 
     return elemPtr;
 }
 
-Hash *initHash(void)
+Hash *initHash(int type)
 {
     Hash *hashPtr = (Hash *)alloc(sizeof(Hash));
     hashPtr->first = hashPtr->last = 0;
     hashPtr->length = 0;
+    hashPtr->type = type;
     return hashPtr;
 }
 
-int addElement(Hash *hashPtr, char *key, void *valRef)
+int addElement(Hash *hashPtr, char *key, int keyInt, void *valRef)
 {
     Element *elemPtr;
-    if((elemPtr = findMatch(hashPtr,key))) {
+    if((elemPtr = findMatch(hashPtr, key, keyInt))) {
         elemPtr->key = key;
+        elemPtr->keyInt = keyInt;
         elemPtr->valRef = valRef;
         return 0;
     }
 
     elemPtr = (Element *)alloc(sizeof(Element));
     elemPtr->key = key;
+    elemPtr->keyInt = keyInt;
     elemPtr->valRef = valRef;
     if(hashPtr->length == 0)
             hashPtr->first = hashPtr->last = elemPtr;
@@ -66,10 +78,10 @@ int addElement(Hash *hashPtr, char *key, void *valRef)
     return 0;
 }
 
-void *getValue(Hash *hashPtr, char *key, char *message)
+void *getValue(Hash *hashPtr, char *key, int keyInt, char *message)
 {
     Element *elemPtr;
-    if((elemPtr = findMatch(hashPtr,key)))
+    if((elemPtr = findMatch(hashPtr, key, keyInt)))
             return elemPtr->valRef;
 
     // Raise an exception

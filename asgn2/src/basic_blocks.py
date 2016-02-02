@@ -453,7 +453,7 @@ class RegAddrDescriptor(object):
         # Since everything is global, all of them reside in memory
         # MAP : <var_name> -> (in_memory? , in_register?)
 
-        self.addrMap = {sym:[True, None] for sym in initial_symbols}
+        self.addrMap = {sym:[True, None] for sym in self.symbols}
 
         # All registers assumed to be empty initially
 
