@@ -115,16 +115,16 @@ def Translate_IFGOTO(instr):
         G.AsmText.AddText(G.INDENT + "bgtz %s, $LID_%d"%(reg1, instr.jmpTarget))
 
     elif instr.opType.is_GT():
-        G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(reg1, reg2, reg1))
+        G.AsmText.AddText(G.INDENT + "sgt %s, %s, %s"%(reg1, reg1, reg2))
         G.AsmText.AddText(G.INDENT + "bgtz %s, $LID_%d"%(reg1, instr.jmpTarget))
 
     elif instr.opType.is_LEQ():
-        G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(reg1, reg2, reg1))
-        G.AsmText.AddText(G.INDENT + "beq %s, %s, $LID_%d"%(reg1, REG.zero, instr.jmpTarget))
+        G.AsmText.AddText(G.INDENT + "sle %s, %s, %s"%(reg1, reg1, reg2))
+        G.AsmText.AddText(G.INDENT + "bgtz %s, $LID_%d"%(reg1, instr.jmpTarget))
 
     elif instr.opType.is_GEQ():
-        G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(reg1, reg1, reg2))
-        G.AsmText.AddText(G.INDENT + "beq %s, %s, $LID_%d"%(reg1, REG.zero, instr.jmpTarget))
+        G.AsmText.AddText(G.INDENT + "sge %s, %s, %s"%(reg1, reg1, reg2))
+        G.AsmText.AddText(G.INDENT + "bgtz %s, $LID_%d"%(reg1, instr.jmpTarget))
 
 def StrTranslate_IFGOTO(instr):
     if instr.inp1.is_STRING() and instr.inp2.is_STRING():
@@ -278,27 +278,19 @@ def GenCode_3OPASSIGN(instr, regDest, regInp1, regInp2):
         G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(regDest, regInp1, regInp2))
 
     elif instr.opType.is_GT():
-        G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(regDest, regInp2, regInp1))
+        G.AsmText.AddText(G.INDENT + "sgt %s, %s, %s"%(regDest, regInp1, regInp2))
 
     elif instr.opType.is_GEQ():
-        G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(regDest, regInp1, regInp2))
-        G.AsmText.AddText(G.INDENT + "nor %s, %s, %s"%(regDest, regDest, regDest))
+        G.AsmText.AddText(G.INDENT + "sge %s, %s, %s"%(regDest, regInp1, regInp2))
 
     elif instr.opType.is_LEQ():
-        G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(regDest, regInp2, regInp1))
-        G.AsmText.AddText(G.INDENT + "nor %s, %s, %s"%(regDest, regDest, regDest))
+        G.AsmText.AddText(G.INDENT + "sle %s, %s, %s"%(regDest, regInp1, regInp2))
 
     elif instr.opType.is_EQ():
-        regTmp = REG.tmpUsageRegs[0]
-        G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(regDest, regInp1, regInp2))
-        G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(regTmp, regInp2, regInp1))
-        G.AsmText.AddText(G.INDENT + "nor %s, %s, %s"%(regDest, regDest, regTmp))
+        G.AsmText.AddText(G.INDENT + "seq %s, %s, %s"%(regDest, regInp1, regInp2))
 
     elif instr.opType.is_NE():
-        regTmp = REG.tmpUsageRegs[0]
-        G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(regDest, regInp1, regInp2))
-        G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(regTmp, regInp2, regInp1))
-        G.AsmText.AddText(G.INDENT + "or %s, %s, %s"%(regDest, regDest, regTmp))
+        G.AsmText.AddText(G.INDENT + "sne %s, %s, %s"%(regDest, regInp1, regInp2))
 
     elif instr.opType.is_BOR():
         G.AsmText.AddText(G.INDENT + "or %s, %s, %s"%(regDest, regInp1, regInp2))
