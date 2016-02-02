@@ -34,6 +34,10 @@ def Translate(instr):
         G.CurrRegAddrTable.DumpDirtyVars()
         G.AsmText.AddText(G.INDENT + "jal %s"%(instr.jmpLabel))
 
+    elif instr.instrType.is_PRINT():
+        G.CurrRegAddrTable.DumpDirtyVars()
+        LIB.Translate_Printf(instr.PrintArgs)
+
     elif instr.instrType.is_RETURN():
         G.CurrRegAddrTable.DumpDirtyVars()
         G.AsmText.AddText(G.INDENT + "jr $ra")

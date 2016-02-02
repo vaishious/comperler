@@ -14,6 +14,7 @@ Import Acronym : ASM
 import instr3ac as INSTRUCTION
 import debug as DEBUG
 import global_objects as G
+import library as LIB
 # List of Imports End
 
 def GetVarAddr(variable):
@@ -126,7 +127,7 @@ class TextRegion(object):
     def __init__(self, fileName):
         self.header  = """ ### GENERATED MIPS ASSEMBLY - COMPERLER ###""" + "\n"
         self.header += """ ### FILENAME : """ + str(fileName) + " ###\n" 
-        self.text    = ".text\nmain:\n"     # We assume that our first basic block will be a part of main
+        self.text    = ""
         self.data    = ""
         self.fileName = fileName
 
@@ -145,7 +146,13 @@ class TextRegion(object):
     def WriteHeader(self):
         print self.header
 
+    def AddLibraryFunctions(self):
+        for func in G.LibraryFunctionsUsed:
+            self.text += "\n" + LIB.LinkFunction(func)
+
     def WriteToFile(self):
+        self.text = ".text\nmain:\n" + self.text
+        self.AddLibraryFunctions()
         print self.text
 
 

@@ -188,7 +188,7 @@ class Entity(object):
 
         elif Entity.reString.match(inpString): # Is a string
             self.entity = Entity.STRING
-            self.value  = repr(inpString)[2:-2]
+            self.value  = inpString[1:-1]
             G.AsmData.AllocateString(self)
 
         elif Entity.reScalar.match(inpString): # Is a scalar

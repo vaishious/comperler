@@ -13,7 +13,16 @@ import instr3ac as INSTRUCTION
 import basic_blocks as BB
 import mips_assembly as ASM
 import global_objects as G
+
+import shlex
 # List of Imports End
+
+def LexerIR(inpString):
+    lex = shlex.shlex(inpString)
+    lex.whitespace_split = True
+    lex.whitespace = ", "
+    lex.commenters = '#'
+    return list(lex)
 
 
 class CodeGenerator(object):
@@ -46,7 +55,7 @@ class CodeGenerator(object):
 
         # Create an instance of the instruction class for each line
         for line in text:
-            instrTuple = line.split(',')
+            instrTuple = LexerIR(line)
             instrTuple = [i.lstrip().rstrip() for i in instrTuple]
             instr = INSTRUCTION.Instr3AC(instrTuple)
 

@@ -31,3 +31,7 @@ NextSymbolTable  = None
 # This map provides an easier interface to see the register allocation for the current
 # instruction
 AllocMap = {}
+
+# Library functions
+LibraryFunctionsUsed = set([])
+LIBSRC = ['../lib/hashlib.s', '../lib/iolib.s']

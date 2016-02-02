@@ -14,7 +14,26 @@ import mips_assembly as ASM
 import registers as REG
 import global_objects as G
 import debug as DEBUG
+
+import os
 # List of Imports End
+
+def LinkFunction(funcName):
+    codeFunc = ""
+    insideFunc = False
+    for fileName in G.LIBSRC:
+        with open(os.path.dirname(__file__) + "/" + fileName, 'r') as f:
+            for line in f:
+                if insideFunc:
+                    codeFunc += line
+                    if (".end" in line) and (funcName in line):
+                        return codeFunc
+
+                elif funcName + ":" in line:
+                    insideFunc = True
+                    codeFunc += line
+
+    return ""
 
 def Translate_Printf(parameters):
     """ Custom version of Printf can be found in iolib.c in the lib/ folder """
@@ -37,6 +56,12 @@ def Translate_Printf(parameters):
     codeSegment += G.INDENT + "jal Printf\n"
     G.AsmText.AddText(codeSegment)
 
+    # Add library for linking
+    G.LibraryFunctionsUsed.add("Printf")
+    G.LibraryFunctionsUsed.add("PrintInt")
+    G.LibraryFunctionsUsed.add("PrintChar")
+    G.LibraryFunctionsUsed.add("PrintString")
+
 
 def Translate_StrCmp(str1, str2):
     """ Custom version of strCmp can be found in hashlib.c in the lib/ folder """
@@ -53,3 +78,6 @@ def Translate_StrCmp(str1, str2):
 
     codeSegment += G.INDENT + "jal strCmp\n"
     G.AsmText.AddText(codeSegment)
+
+    # Add library for linking
+    G.LibraryFunctionsUsed.add("strCmp")
