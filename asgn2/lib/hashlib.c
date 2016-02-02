@@ -7,97 +7,71 @@
  * 3. Now the .s file will run on SPIM
  */
 
+#define NULL 0
+
 typedef struct Element {
-	char *key;	// Should be NULL terminated
-	void *valRef;
-	struct Element *next;
+    char *key;	// Should be NULL terminated
+    void *valRef;
+    struct Element *next;
 } Element;
 
 typedef struct Hash {
-  	/* Data looks like [ <Hash> -> <Element> -> <Element> -> ... ] */
+    /* Data looks like [ <Hash> -> <Element> -> <Element> -> ... ] */
 
-	Element *first,*last;
-	int length;
+    Element *first,*last;
+    int length;
 } Hash;
 
-void *alloc(unsigned int size)
+Element *findMatch(Hash *hashPtr, char *s)
 {
-        void *ptr;
+    int i;
+    Element *elemPtr = hashPtr->first;
 
-	/* Inline assembly to call the sbrk syscall */
-        asm("	
-		move $a0, %1
-        	li $v0,9
-        	syscall
-        	sw $v0, %0
-	    "
-	    :"=m"(ptr)
-	    :"r"(size)
-        );  
-        return ptr;
-}
+    while(elemPtr != 0) {
+        if(!strCmp(elemPtr->key,s))
+            break;
+        elemPtr = elemPtr->next;
+    }
 
-int strCmp(char *s1,char *s2)
-{
-	int i;
-	for(i = 0;s1[i] || s2[i];i++) {	// Only end if both strings terminate 
-            // If the next character of any one string is more in value than that of another then return 1, -1 appropriately
-            if(s1[i] > s2[i]) {    
-                    return 1;
-            } else if(s1[i] < s2[i]) {
-                    return -1;
-            }
-	}
-	return 0; // Will only reach here if both have same length and same characters at all points
-}
-
-Element *findMatch(Hash *hashPtr,char *s)
-{
-	int i;
-	Element *elemPtr = hashPtr->first;
-
-	while(elemPtr != 0) {
-		if(!strCmp(elemPtr->key,s))
-			break;
-		elemPtr = elemPtr->next;
-	}
-	return elemPtr;		/* If no match, returns NULL */
+    return elemPtr;
 }
 
 Hash *initHash(void)
 {
-	Hash *hashPtr = (Hash *)alloc(sizeof(Hash));
-	hashPtr->first = hashPtr->last = 0;
-	hashPtr->length = 0;
-	return hashPtr;
+    Hash *hashPtr = (Hash *)alloc(sizeof(Hash));
+    hashPtr->first = hashPtr->last = 0;
+    hashPtr->length = 0;
+    return hashPtr;
 }
 
-int addElement(Hash *hashPtr,char *key,void *valRef)
+int addElement(Hash *hashPtr, char *key, void *valRef)
 {
-	Element *elemPtr;
-	if((elemPtr = findMatch(hashPtr,key))) {
-		elemPtr->key = key;
-		elemPtr->valRef = valRef;
-		return 0;
-	}
+    Element *elemPtr;
+    if((elemPtr = findMatch(hashPtr,key))) {
+        elemPtr->key = key;
+        elemPtr->valRef = valRef;
+        return 0;
+    }
 
-	elemPtr = (Element *)alloc(sizeof(Element));
-	elemPtr->key = key;
-	elemPtr->valRef = valRef;
-	if(hashPtr->length == 0)
-		hashPtr->first = hashPtr->last = elemPtr;
-	else {
-		hashPtr->last->next = elemPtr;
-		hashPtr->last = elemPtr;
-	}
-	hashPtr->length++;
-	return 0;
+    elemPtr = (Element *)alloc(sizeof(Element));
+    elemPtr->key = key;
+    elemPtr->valRef = valRef;
+    if(hashPtr->length == 0)
+            hashPtr->first = hashPtr->last = elemPtr;
+    else {
+            hashPtr->last->next = elemPtr;
+            hashPtr->last = elemPtr;
+    }
+    hashPtr->length++;
+    return 0;
 }
 
-void *getValue(Hash *hashPtr,char *key)
+void *getValue(Hash *hashPtr, char *key, char *message)
 {
-	Element *elemPtr;
-	if((elemPtr = findMatch(hashPtr,key)))
-		return elemPtr->valRef;
-	return 0;
+    Element *elemPtr;
+    if((elemPtr = findMatch(hashPtr,key)))
+            return elemPtr->valRef;
+
+    // Raise an exception
+    ExitWithMessage(message, key);
 }

@@ -21,7 +21,6 @@ def GetVarAddr(variable):
     """ Get address of a variable as $V_(var_name) """
     if type(variable) == INSTRUCTION.Entity:
         return "$V_" + str(variable.value)
-
     else:
         return "$V_" + str(variable)
 
@@ -29,7 +28,6 @@ def GetArrAddr(variable):
     """ Get address of an array as $A_(arr_name) """
     if type(variable) == INSTRUCTION.Entity:
         return "$A_" + str(variable.value)
-
     else:
         return "$A_" + str(variable)
 
@@ -40,6 +38,12 @@ def GetStrAddr(variable):
     else:
         return "$STR_" + G.AsmData.GetStringLabel(str(variable))
 
+def GetHashAddr(variable):
+    """ Get address of a hash as $H_(var_name) """
+    if type(variable) == INSTRUCTION.Entity:
+        return "$H_" + str(variable.value)
+    else:
+        return "$H_" + str(variable)
 
 class DataRegion(object):
     """
@@ -65,6 +69,7 @@ class DataRegion(object):
 
     def __init__(self):
         self.varSet    = set([])
+        self.hashSet   = set([])
         self.arraySet  = {}
         self.stringSet = {}
         self.stringCnt = 0
@@ -95,6 +100,12 @@ class DataRegion(object):
         self.stringSet[strEntity.value] = str(self.stringCnt)
         self.stringCnt += 1
 
+    def AllocateHash(self, hashEntity):
+        DEBUG.Assert(type(hashEntity) == INSTRUCTION.Entity, "Type for AllocateHash in Data-Region is not Entity")
+        DEBUG.Assert(hashEntity.is_HASH_VARIABLE(), "Only hash variable for AllocateHash in Data-Region")
+
+        self.hashSet.add(hashEntity.value)
+
     def GetStringLabel(self, string):
         return self.stringSet[string]
 
@@ -117,6 +128,11 @@ class DataRegion(object):
         for (string, label) in self.stringSet.items():
             dataText += ".align 2\n"
             dataText += "$STR_%s : .asciiz \"%s\"\n"%(label, string)
+
+        dataText += "\n# HASHES\n"
+        for hashVar in self.hashSet:
+            dataText += ".align 2\n"
+            dataText += "$H_%s : .word 0\n\n"%(str(hashVar))
 
         print dataText
 

@@ -100,8 +100,8 @@ class CodeGenerator(object):
 
             self.basicBlocks[-1].AddInstruction(instr)
 
-            # Is the current instruction a goto/call/ret statement? If yes, the next statement is a leader
-            if instr.instrType.is_GOTO() or instr.instrType.is_IFGOTO() or instr.instrType.is_CALL() or instr.instrType.is_RETURN():
+            # Is next statement a leader?
+            if instr.instrType.is_JMP(): 
                 bbCount += 1
                 self.basicBlocks += [BB.BasicBlock(bbCount)]
 

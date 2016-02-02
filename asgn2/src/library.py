@@ -98,11 +98,56 @@ def Translate_StrCmp(str1, str2):
 
     codeSegment = ""
 
-    codeSegment+= str1.CopyToRegister(REG.argRegs[0])
-    codeSegment+= str2.CopyToRegister(REG.argRegs[1])
+    codeSegment += str1.CopyToRegister(REG.argRegs[0])
+    codeSegment += str2.CopyToRegister(REG.argRegs[1])
 
     codeSegment += G.INDENT + "jal strCmp\n"
     G.AsmText.AddText(codeSegment)
 
     # Add library for linking
     G.LibraryFunctionsUsed.add("strCmp")
+
+def Translate_initHash(targetVar):
+    """ Hash implementation can be found in hashlib.c in the lib/ folder """
+
+    DEBUG.Assert(targetVar.is_HASH_VARIABLE(), "Argument of initHash should be a hash pointer")
+
+    G.AsmText.AddText(G.INDENT + "jal initHash", "Allocating memory and initializing the hash")
+    G.AsmText.AddText(G.INDENT + "sw $v0, %s\n"%(ASM.GetHashAddr(targetVar)), "Storing the returned memory address of hash")
+
+    # Add library for linking
+    G.LibraryFunctionsUsed.add("initHash")
+    G.LibraryFunctionsUsed.add("alloc")
+
+def Translate_getValue(targetVar, targetReg)
+    """ Hash implementation can be found in hashlib.c in the lib/ folder """
+
+    DEBUG.Assert(targetVar.is_HASH_VARIABLE(), "Argument of getValue should be a hash pointer")
+    G.AsmData.AllocateString(G.HashKeyError)
+
+    G.AsmText.AddText(target.CopyToRegister(REG.argRegs[0])[:-1])
+    G.AsmText.AddText(target.key.CopyAddressToRegister(REG.argRegs[1])[:-1])
+    G.AsmText.AddText(G.HashKeyError.CopyAddressToRegister(REG.argRegs[2])[:-1])
+
+    G.AsmText.AddText(G.INDENT + "jal getValue", "Searching for value in hash")
+    G.AsmText.AddText(G.INDENT + "lw %s, 0(%s)"%(targetReg, REG.v0), "Store result back into a designated register")
+
+    # Add library for linking
+    G.LibraryFunctionsUsed.add("getValue")
+    G.LibraryFunctionsUsed.add("ExitWithMessage")
+
+def Translate_addElement(targetVar, valEntry)
+    """ Hash implementation can be found in hashlib.c in the lib/ folder """
+
+    DEBUG.Assert(targetVar.is_HASH_VARIABLE(), "Argument of addElement should be a hash pointer")
+    G.AsmData.AllocateString(G.HashKeyError)
+
+    G.AsmText.AddText(target.CopyToRegister(REG.argRegs[0])[:-1])
+    G.AsmText.AddText(target.key.CopyAddressToRegister(REG.argRegs[1])[:-1])
+    G.AsmText.AddText(valEntry.CopyAddressToRegister(REG.argRegs[2])[:-1])
+
+    G.AsmText.AddText(G.INDENT + "jal addElement", "Add element to the hash")
+
+    # Add library for linking
+    G.LibraryFunctionsUsed.add("addElement")
+    G.LibraryFunctionsUsed.add("findMatch")

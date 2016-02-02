@@ -3,10 +3,11 @@
 3, =, a, -20
 11, declare, g[50]
 12, =, g[1], 2
-#13, =, +, g[1], a, b
+13, =, +, g[1], a, b
 4, =, -, t, a, b
 5, =, -, u, a, c
 6, =, +, v, t, u
+7, =, a, d
 8, =, +, d, v, u
-9, print, "%d, %d, %d\n", g[1], b, t
-10, exit
+9, print, "%d, %d, %d\n", v, u, d
+10, return, d

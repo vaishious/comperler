@@ -448,3 +448,13 @@ class RegAddrDescriptor(object):
         for (var,value) in self.addrMap.iteritems():
             if not value[0]:
                 G.AsmText.AddText(value[1].SpillVar(var))
+
+    def Reset(self):
+        # Since everything is global, all of them reside in memory
+        # MAP : <var_name> -> (in_memory? , in_register?)
+
+        self.addrMap = {sym:[True, None] for sym in initial_symbols}
+
+        # All registers assumed to be empty initially
+
+        self.regMap  = {reg : [] for reg in self.regs}

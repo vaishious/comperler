@@ -19,7 +19,11 @@ import mips_assembly as ASM
 
 def Translate(instr):
     if instr.instrType.is_DECLARE():
-        pass
+        if instr.inp1.is_HASH_VARIABLE():
+            G.CurrRegAddrTable.DumpDirtyVars()
+            G.CurrRegAddrTable.Reset()
+            G.AllocMap = {}
+            LIB.Translate_initHash(instr.inp1)
 
     elif instr.instrType.is_EXIT():
         G.CurrRegAddrTable.DumpDirtyVars()
@@ -33,6 +37,8 @@ def Translate(instr):
     elif instr.instrType.is_CALL():
         G.CurrRegAddrTable.DumpDirtyVars()
         G.AsmText.AddText(G.INDENT + "jal %s"%(instr.jmpLabel))
+        if instr.dest.is_VARIABLE():
+            GenCode_CallAssignment(instr.dest)
 
     elif instr.instrType.is_PRINT():
         G.CurrRegAddrTable.DumpDirtyVars()
@@ -43,6 +49,11 @@ def Translate(instr):
         LIB.Translate_Scanf(instr.IOArgs)
 
     elif instr.instrType.is_RETURN():
+        if not instr.inp1.is_NONE():
+            reg = SetupRegister(instr.inp1, REG.v0)
+            if reg != REG.v0:
+                G.AsmText.AddText(G.INDENT + "move %s, %s\n"%(REG.v0, reg), "Storing return value in $v0")
+
         G.CurrRegAddrTable.DumpDirtyVars()
         G.AsmText.AddText(G.INDENT + "jr $ra")
 
@@ -69,11 +80,12 @@ def SetupRegister(inp, regComp, tempReg=REG.t9, useImmediate=False):
         except:
             # This can only happen if this variable is an index of an array
             # in which case, we directly load it from its register or from
-            # memory
+            # memory. It can also happen when we're dealing with hashes as it
+            # requires a function call and everything will be wiped out.
             if inp.IsRegisterAllocated():
                 reg = inp.GetCurrReg()
             else:
-                reg.CopyToRegister(regComp)
+                inp.CopyToRegister(regComp)
 
     elif inp.is_NUMBER():
         if useImmediate:
@@ -181,25 +193,14 @@ def Translate_ASSIGN(instr):
 
         # TODO : Handle array and hash variables in the destination
         if instr.dest.is_SCALAR_VARIABLE():
-            reg3 = G.AllocMap[instr.dest.value]
+            reg3 = SetupDestRegScalar(instr.dest)
             GenCode_3OPASSIGN(instr, reg3, reg1, reg2)
 
         elif instr.dest.is_ARRAY_VARIABLE():
             tempReg = REG.tmpUsageRegs[-1]
             regComp = REG.tmpUsageRegs[2]
 
-            if instr.dest.key.is_NUMBER():
-                G.AsmText.AddText(tempReg.LoadImmediate(instr.dest.key.value), "Load index for array access")
-            else:
-                regInp = SetupRegister(instr.dest.key, regComp)
-                G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp), "Load index for array access")
-
-            # Load the array address in regComp
-            G.AsmText.AddText(G.INDENT + "la %s, %s"%(regComp, ASM.GetArrAddr(instr.dest.value)), "Load array address")
-
-            # We move the index value to tempReg to multiply it by 4
-            G.AsmText.AddText(G.INDENT + "sll %s, %s, 2"%(tempReg, tempReg), "Multiply index by 4")
-            G.AsmText.AddText(G.INDENT + "add %s, %s, %s"%(regComp, regComp, tempReg), "Add index as an offset to array address")
+            SetupDestRegArray(instr.dest, regComp, tempReg)
 
             # We will reuse tempReg as the dest register. We will then write it back to the
             # address location in the array
@@ -213,37 +214,27 @@ def Translate_ASSIGN(instr):
 
         # TODO : Handle array and hash variables in the destination
         if instr.dest.is_SCALAR_VARIABLE():
-            reg3 = SetupRegister(instr.dest,REG.tmpUsageRegs[0])
+            reg3 = SetupDestRegScalar(instr.dest)
             if instr.inp1.is_NUMBER():
                 G.AsmText.AddText(G.INDENT + "li %s, %s"%(reg3, str(instr.inp1.value)))
             else:
-                reg1 = SetupRegister(instr.inp1,REG.tmpUsageRegs[1])
-                G.AsmText.AddText(G.INDENT + "move %s, %s"%(reg3, reg1))
+                reg1 = SetupRegister(instr.inp1, REG.tmpUsageRegs[1])
+                if reg1 != reg3:
+                    G.AsmText.AddText(G.INDENT + "move %s, %s"%(reg3, reg1))
 
         elif instr.dest.is_ARRAY_VARIABLE():
             tempReg = REG.tmpUsageRegs[-1]
             regComp = REG.tmpUsageRegs[2]
 
-            if instr.dest.key.is_NUMBER():
-                G.AsmText.AddText(tempReg.LoadImmediate(instr.dest.key.value))
-            else:
-                regInp = SetupRegister(instr.dest.key, regComp)
-                G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp))
-
-            # Load the array address in regComp
-            G.AsmText.AddText(G.INDENT + "la %s, %s"%(regComp, ASM.GetArrAddr(instr.dest.value)), "Load array address")
-
-            # We move the index value to tempReg to multiply it by 4
-            G.AsmText.AddText(G.INDENT + "sll %s, %s, 2"%(tempReg, tempReg), "Multiply index by 4")
-            G.AsmText.AddText(G.INDENT + "add %s, %s, %s"%(regComp, regComp, tempReg), "Add index as an offset to array address")
+            SetupDestRegArray(instr.dest, regComp, tempReg)
 
             # We will reuse tempReg as the dest register. We will then write it back to the
             # address location in the array
             if instr.inp1.is_NUMBER():
                 G.AsmText.AddText(G.INDENT + "li %s, %s"%(tempReg, str(instr.inp1.value)))
             else:
-                reg1 = SetupRegister(instr.inp1,REG.tmpUsageRegs[0])
-                G.AsmText.AddText(G.INDENT + "movl %s, %s"%(tempReg, reg1))
+                reg1 = SetupRegister(instr.inp1, REG.tmpUsageRegs[0])
+                G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, reg1))
 
             # Store back the value
             G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(tempReg, regComp))
@@ -261,18 +252,7 @@ def Translate_ASSIGN(instr):
             tempReg = REG.tmpUsageRegs[-1]
             regComp = REG.tmpUsageRegs[2]
 
-            if instr.dest.key.is_NUMBER():
-                G.AsmText.AddText(tempReg.LoadImmediate(instr.dest.key.value))
-            else:
-                regInp = SetupRegister(instr.dest.key, regComp)
-                G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp))
-
-            # Load the array address in regComp
-            G.AsmText.AddText(G.INDENT + "la %s, %s"%(regComp, ASM.GetArrAddr(instr.dest.value)), "Load array address")
-
-            # We move the index value to tempReg to multiply it by 4
-            G.AsmText.AddText(G.INDENT + "sll %s, %s, 2"%(tempReg, tempReg), "Multiply index by 4")
-            G.AsmText.AddText(G.INDENT + "add %s, %s, %s"%(regComp, regComp, tempReg), "Add index as an offset to array address")
+            SetupDestRegArray(instr.dest, regComp, tempReg)
 
             # We will reuse tempReg as the dest register. We will then write it back to the
             # address location in the array
@@ -342,3 +322,35 @@ def GenCode_2OPASSIGN(instr, regDest, regInp):
 
     elif instr.opType.is_MINUS():
         G.AsmText.AddText(G.INDENT + "negu %s, %s"%(regDest, regInp))
+
+def GenCode_CallAssignment(instr):
+
+    # TODO : Handle array and hash variables in the destination
+    if instr.dest.is_SCALAR_VARIABLE():
+        G.AsmText.AddText(G.INDENT + "sw %s, %s"%(reg3, ASM.GetVarAddr(instr.dest)))
+
+    elif instr.dest.is_ARRAY_VARIABLE():
+        tempReg = REG.tmpUsageRegs[-1]
+        regComp = REG.tmpUsageRegs[2]
+
+        SetupDestRegArray(instr.dest, regComp, tempReg)
+
+        # Store back the value
+        G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(REG.v0, regComp))
+
+def SetupDestRegScalar(dest):
+    return SetupRegister(dest, tmpUsageRegs[-1])
+
+def SetupDestRegArray(dest, regComp, tempReg=REG.tmpUsageRegs[-1]):
+    if dest.key.is_NUMBER():
+        G.AsmText.AddText(tempReg.LoadImmediate(dest.key.value), "Load index for array access")
+    else:
+        regInp = SetupRegister(dest.key, regComp)
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp), "Load index for array access")
+
+    # Load the array address in regComp
+    G.AsmText.AddText(G.INDENT + "la %s, %s"%(regComp, ASM.GetArrAddr(dest.value)), "Load array address")
+
+    # We move the index value to tempReg to multiply it by 4
+    G.AsmText.AddText(G.INDENT + "sll %s, %s, 2"%(tempReg, tempReg), "Multiply index by 4")
+    G.AsmText.AddText(G.INDENT + "add %s, %s, %s"%(regComp, regComp, tempReg), "Add index as an offset to array address")

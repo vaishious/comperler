@@ -1,5 +1,6 @@
 1, =, a, 1
 18, declare, g[1]
+19, declare, h{''}
 17, print, "Enter a number : "
 2, read, "%d", g[0]
 3, =, i, 1 

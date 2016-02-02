@@ -206,6 +206,8 @@ class Entity(object):
             self.entity = Entity.HASH_VARIABLE
             self.value  = repr(inpString[:inpString.find('{')])[1:-1]
             self.key    = Entity(repr(inpString[inpString.find('{')+1:-1])[1:-1])
+            if self.key.is_NUMBER():
+                self.key = Entity(str(self.key.value))
 
         else:
             raise DEBUG.InputError3AC(inpString, "Failed to recognize entity")
@@ -231,6 +233,9 @@ class Entity(object):
         elif self.is_ARRAY_VARIABLE():
             G.AsmData.AllocateArray(self)
 
+        elif self.is_HASH_VARIABLE():
+            G.AsmData.AllocateHash(self)
+
     def IsRegisterAllocated(self):
         """ Reads the current reg-address descriptor and returns a boolean value """
         if not self.is_SCALAR_VARIABLE():
@@ -254,6 +259,9 @@ class Entity(object):
 
         if self.is_STRING():
             return G.INDENT + "la %s, %s\n"%(reg, ASM.GetStrAddr(self))
+
+        if self.is_HASH_VARIABLE():
+            return G.INDENT + "la %s, %s\n"%(reg, ASM.GetHashAddr(self))
 
         if self.is_SCALAR_VARIABLE():
             if self.IsRegisterAllocated():
@@ -295,6 +303,9 @@ class Entity(object):
         if self.is_STRING():
             return G.INDENT + "la %s, %s\n"%(reg, ASM.GetStrAddr(self))
 
+        if self.is_HASH_VARIABLE():
+            return G.INDENT + "la %s, %s\n"%(reg, ASM.GetHashAddr(self))
+
         if self.is_ARRAY_VARIABLE():
             tempReg = REG.tmpUsageRegs[-1]
             regComp = reg
@@ -324,6 +335,15 @@ class Entity(object):
             Copies the value at the given memory location. Instructions used are straightforward. In case it is allocated, 
             we use sw directly. Otherwise we copy it to $v0 and then use sw. Specifically used in parameter assignments.
         """
+        if self.is_STRING():
+            codeSegment = G.INDENT + "la %s, %s\n"%(REG.tmpUsageRegs[-1], ASM.GetStrAddr(self))
+            codeSegment = G.INDENT + "sw %s, %s\n"%(REG.tmpUsageRegs[-1], mem)
+            return codeSegment
+
+        if self.is_HASH_VARIABLE():
+            codeSegment = G.INDENT + "la %s, %s\n"%(REG.tmpUsageRegs[-1], ASM.GetHashAddr(self))
+            codeSegment = G.INDENT + "sw %s, %s\n"%(REG.tmpUsageRegs[-1], mem)
+            return codeSegment
 
         if self.is_SCALAR_VARIABLE():
             if self.IsRegisterAllocated():
@@ -345,6 +365,16 @@ class Entity(object):
         """
             Copies the address of this variable to the given memory location
         """
+
+        if self.is_STRING():
+            codeSegment = G.INDENT + "la %s, %s\n"%(REG.tmpUsageRegs[-1], ASM.GetStrAddr(self))
+            codeSegment = G.INDENT + "sw %s, %s\n"%(REG.tmpUsageRegs[-1], mem)
+            return codeSegment
+
+        if self.is_HASH_VARIABLE():
+            codeSegment = G.INDENT + "la %s, %s\n"%(REG.tmpUsageRegs[-1], ASM.GetHashAddr(self))
+            codeSegment = G.INDENT + "sw %s, %s\n"%(REG.tmpUsageRegs[-1], mem)
+            return codeSegment
 
         if self.is_SCALAR_VARIABLE() or self.is_ARRAY_VARIABLE():
             codeSegment = self.CopyAddressToRegister(REG.tmpUsageRegs[-1])
@@ -442,13 +472,21 @@ class Instr3AC(object):
             self.jmpTarget  =  ConvertTarget(str(inpTuple[2]))
 
         elif self.instrType.is_CALL():
-            # Line Number, Call, Label
-            DEBUG.Assert(len(inpTuple) == 3, "Expected 3-tuple for call")
+            # Line Number, Call, Label, retValTarget
+            DEBUG.Assert(len(inpTuple) >= 3, "Expected 3/4-tuple for call")
+            DEBUG.Assert(len(inpTuple) <= 4, "Expected 3/4-tuple for call")
+
             self.jmpLabel  = str(inpTuple[2])               
+            if len(inpTuple) == 4:
+                self.dest = Entity(str(inpTuple[3]))
+                DEBUG.Assert(self.dest.is_VARIABLE(), "LHS of a CALL has to be a variable")
 
         elif self.instrType.is_RETURN():
-            # Line Number, Return
-            DEBUG.Assert(len(inpTuple) == 2, "Expected 2-tuple for return")
+            # Line Number, Return, retVal
+            DEBUG.Assert(len(inpTuple) >= 2, "Expected 2/3-tuple for return")
+            DEBUG.Assert(len(inpTuple) <= 3, "Expected 2/3-tuple for return")
+            if len(inpTuple) == 3:
+                self.inp1 = Entity(str(inpTuple[2]))
 
         elif self.instrType.is_EXIT():
             # Line Number, Exit
@@ -507,9 +545,9 @@ class Instr3AC(object):
         if self.dest.is_SCALAR_VARIABLE():
             self.dest.AllocateGlobalMemory()
         if self.inp1.is_SCALAR_VARIABLE():
-            self.dest.AllocateGlobalMemory()
+            self.inp1.AllocateGlobalMemory()
         if self.inp2.is_SCALAR_VARIABLE():
-            self.dest.AllocateGlobalMemory()
+            self.inp2.AllocateGlobalMemory()
             
     def __str__(self):
         return self.PrettyPrint()
@@ -570,10 +608,10 @@ class Instr3AC(object):
             return "GOTO %s"%(self.jmpTarget)
 
         if self.instrType.is_CALL():
-            return "call %s"%(str(self.jmpLabel))
+            return "call %s %s"%(str(self.jmpLabel), self.dest)
 
         if self.instrType.is_RETURN():
-            return "return"
+            return "return %s"%(self.inp1)
 
         if self.instrType.is_EXIT():
             return "exit"
@@ -602,7 +640,6 @@ class Instr3AC(object):
             else:
                 return "%s = %s %s %s"%(self.dest, self.inp1, self.opType, self.inp2)
         
-
 def ConvertTarget(inpString):
     if inpString.isdigit():
         return "$LID_" + inpString
