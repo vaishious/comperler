@@ -76,7 +76,7 @@ class BasicBlock(object):
             G.CurrSymbolTable = instr.symTable
             G.CurrInstruction = instr
             G.AllocMap = {}
-            print instr
+            #print instr
 
             if idx != len(self.instructions) - 1:
                 G.NextSymbolTable = self.instructions[idx + 1].symTable
@@ -100,7 +100,7 @@ class BasicBlock(object):
 
             self.UpdateRegAddrDescriptor()
 
-            G.CurrRegAddrTable.PrettyPrintRegisters()
+            #G.CurrRegAddrTable.PrettyPrintRegisters()
 
             # TODO : Actual Translation
 
@@ -166,7 +166,7 @@ class BasicBlock(object):
 
             if G.CurrRegAddrTable.IsInRegisterSafe(varName):
 
-                reg = G.AllocMap[varName]
+                reg = G.CurrRegAddrTable.GetAllocatedRegister(varName)
                 G.AllocMap[varName] = reg
 
                 return codeSegment

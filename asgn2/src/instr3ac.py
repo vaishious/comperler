@@ -23,7 +23,7 @@ class InstrType(object):
     """ 
         Instruction Types : 
     
-        Straightforward : ASSIGN, IFGOTO, GOTO, CALL, RETURN, PRINT, NOP, LABEL
+        Straightforward : ASSIGN, IFGOTO, GOTO, CALL, RETURN, PRINT, NOP, LABEL, EXIT
 
         Custom          : Declare - Will be used to fix sizes of the arrays
 
@@ -31,7 +31,7 @@ class InstrType(object):
 
 
     # Enum for holding these values
-    ASSIGN, IFGOTO, GOTO, CALL, RETURN, PRINT, LABEL, DECLARE, NOP = range(9)
+    ASSIGN, IFGOTO, GOTO, CALL, RETURN, PRINT, LABEL, DECLARE, EXIT, NOP = range(10)
 
     typeMap = { 
                 "="       : ASSIGN,        "assign" : ASSIGN,       "ASSIGN"   : ASSIGN,
@@ -42,6 +42,7 @@ class InstrType(object):
                 "print"   : PRINT,         "printf" : PRINT,        "PRINT"    : PRINT,
                 "label"   : LABEL,         "Label"  : LABEL,        "LABEL"    : LABEL,
                 "declare" : DECLARE,       "decl"   : DECLARE,      "DECLARE"  : DECLARE,
+                "exit"    : EXIT,          "quit"   : EXIT,         "EXIT"     : EXIT,         "done" : EXIT,
                 "nop"     : NOP,           ""       : NOP,          "NOP"      : NOP
               }
 
@@ -61,11 +62,13 @@ class InstrType(object):
     def is_PRINT(self)   : return self.instrType == InstrType.PRINT
     def is_LABEL(self)   : return self.instrType == InstrType.LABEL
     def is_DECLARE(self) : return self.instrType == InstrType.DECLARE
+    def is_EXIT(self)    : return self.instrType == InstrType.EXIT
     def is_NOP(self)     : return self.instrType == InstrType.NOP
 
     def is_JMP(self)     : return (self.instrType == InstrType.IFGOTO or
                                    self.instrType == InstrType.GOTO or
                                    self.instrType == InstrType.RETURN or
+                                   self.instrType == InstrType.EXIT or
                                    self.instrType == InstrType.CALL)
 
 
@@ -367,6 +370,10 @@ class Instr3AC(object):
             # Line Number, Return
             DEBUG.Assert(len(inpTuple) == 2, "Expected 2-tuple for return")
 
+        elif self.instrType.is_EXIT():
+            # Line Number, Exit
+            DEBUG.Assert(len(inpTuple) == 2, "Expected 2-tuple for exit")
+
         elif self.instrType.is_PRINT():
             # Line Number, Print, Inputs                                
             DEBUG.Assert(len(inpTuple) >= 3, "Expected atleast a 3-tuple for print")
@@ -382,7 +389,6 @@ class Instr3AC(object):
             # Line Number, Declare, Input                                
             DEBUG.Assert(len(inpTuple) == 3, "Expected 3-tuple for declare")
             self.inp1 = Entity(str(inpTuple[2]))
-            self.inp1.AllocateGlobalMemory()
 
         elif self.instrType.is_ASSIGN():                 
             # Line Number, =, OP, dest, inp1, inp2                 
@@ -408,7 +414,10 @@ class Instr3AC(object):
                 self.inp2   = Entity(str(inpTuple[5]))
 
             DEBUG.Assert(self.dest.is_VARIABLE(), "LHS of an ASSIGN has to be a variable")
-            self.dest.AllocateGlobalMemory()
+
+        self.dest.AllocateGlobalMemory()
+        self.inp1.AllocateGlobalMemory()
+        self.inp2.AllocateGlobalMemory()
             
     def __str__(self):
         return self.PrettyPrint()
@@ -473,6 +482,9 @@ class Instr3AC(object):
 
         if self.instrType.is_RETURN():
             return "return"
+
+        if self.instrType.is_EXIT():
+            return "exit"
 
         if self.instrType.is_PRINT():
             return "Print %s"%(str(self.inpTuple[2:]))

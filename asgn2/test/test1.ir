@@ -10,7 +10,7 @@
 13, ifgoto, lt, a, b, 12
 14, ifgoto, gt, 275, a, 10
 5, call, foo
-6, ret
+6, exit
 7, label, foo
 8, print, "%d %d %d", a, b, c, d, e, f
 9, ret

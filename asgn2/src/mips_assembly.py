@@ -126,7 +126,7 @@ class TextRegion(object):
     def __init__(self, fileName):
         self.header  = """ ### GENERATED MIPS ASSEMBLY - COMPERLER ###""" + "\n"
         self.header += """ ### FILENAME : """ + str(fileName) + " ###\n" 
-        self.text    = ".text\n"
+        self.text    = ".text\nmain:\n"     # We assume that our first basic block will be a part of main
         self.data    = ""
         self.fileName = fileName
 

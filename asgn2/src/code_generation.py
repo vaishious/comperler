@@ -61,7 +61,6 @@ class CodeGenerator(object):
             gotoTarget = self.instructions[-1].GetTarget()
             if gotoTarget:
                 self.targets.add(gotoTarget)
-        print self.targets
 
         # Identify the branch targets and set their isTarget value to true 
         for instr in self.instructions:

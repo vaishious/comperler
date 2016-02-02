@@ -21,6 +21,11 @@ def Translate(instr):
     if instr.instrType.is_DECLARE():
         pass
 
+    elif instr.instrType.is_EXIT():
+        G.CurrRegAddrTable.DumpDirtyVars()
+        G.AsmText.AddText(G.INDENT + "li %s, 10"%(REG.v0))
+        G.AsmText.AddText(G.INDENT + "syscall")
+
     elif instr.instrType.is_GOTO():
         G.CurrRegAddrTable.DumpDirtyVars()
         G.AsmText.AddText(G.INDENT + "j %s"%(instr.jmpTarget))
@@ -205,7 +210,7 @@ def Translate_ASSIGN(instr):
                 G.AsmText.AddText(G.INDENT + "li %s, %s"%(reg3, str(instr.inp1.value)))
             else:
                 reg1 = SetupRegister(instr.inp1,REG.tmpUsageRegs[1])
-                G.AsmText.AddText(G.INDENT + "movl %s, %s"%(reg3, reg1))
+                G.AsmText.AddText(G.INDENT + "move %s, %s"%(reg3, reg1))
 
         elif instr.dest.is_ARRAY_VARIABLE():
             tempReg = REG.tmpUsageRegs[-1]
