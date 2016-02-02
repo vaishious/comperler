@@ -61,10 +61,11 @@ class CodeGenerator(object):
             gotoTarget = self.instructions[-1].GetTarget()
             if gotoTarget:
                 self.targets.add(gotoTarget)
+        print self.targets
 
         # Identify the branch targets and set their isTarget value to true 
         for instr in self.instructions:
-            if instr.lineID in self.targets:
+            if "$LID_" + str(instr.lineID) in self.targets:
                 instr.isTarget = True
 
     def GenBasicBlocks(self): 

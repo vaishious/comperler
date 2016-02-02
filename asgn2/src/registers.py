@@ -14,7 +14,7 @@ import mips_assembly as ASM
 # List of Imports End
 
 # Constant Value Zero
-zero = ASM.Register("zero")
+zero = ASM.Register("0")
 
 # These registers contain the Returned Value of a subroutine
 # If the value is 1 word only $v0 is significant.

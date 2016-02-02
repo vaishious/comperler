@@ -106,6 +106,9 @@ class BasicBlock(object):
 
             TRANS.Translate(instr)
 
+        if not self.instructions[-1].instrType.is_JMP():
+            G.CurrRegAddrTable.DumpDirtyVars()
+
 
     def PrettyPrint(self):
         print "BASIC BLOCK #" + str(self.bbNum)
@@ -129,6 +132,7 @@ class BasicBlock(object):
 
             if not isLoaded:
                 codeSegment += reg.LoadVar(varName)
+
 
             alreadyAllocatedRegs += [reg.regName]
 
@@ -193,7 +197,7 @@ class BasicBlock(object):
             G.AllocMap[varName] = reg
             codeSegment += getRegCode
 
-            return codeSegment
+        return codeSegment
 
     def UpdateRegAddrDescriptor(self):
         if G.CurrInstruction.inp1.is_SCALAR_VARIABLE():

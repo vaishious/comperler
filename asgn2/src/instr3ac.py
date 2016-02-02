@@ -53,15 +53,20 @@ class InstrType(object):
         
         self.instrType = InstrType.typeMap[inpType]
 
-    def is_ASSIGN(self) : return self.instrType == InstrType.ASSIGN
-    def is_IFGOTO(self) : return self.instrType == InstrType.IFGOTO
-    def is_GOTO(self)   : return self.instrType == InstrType.GOTO
-    def is_CALL(self)   : return self.instrType == InstrType.CALL
-    def is_RETURN(self) : return self.instrType == InstrType.RETURN
-    def is_PRINT(self)  : return self.instrType == InstrType.PRINT
-    def is_LABEL(self)  : return self.instrType == InstrType.LABEL
-    def is_DECLARE(self)  : return self.instrType == InstrType.DECLARE
-    def is_NOP(self)    : return self.instrType == InstrType.NOP
+    def is_ASSIGN(self)  : return self.instrType == InstrType.ASSIGN
+    def is_IFGOTO(self)  : return self.instrType == InstrType.IFGOTO
+    def is_GOTO(self)    : return self.instrType == InstrType.GOTO
+    def is_CALL(self)    : return self.instrType == InstrType.CALL
+    def is_RETURN(self)  : return self.instrType == InstrType.RETURN
+    def is_PRINT(self)   : return self.instrType == InstrType.PRINT
+    def is_LABEL(self)   : return self.instrType == InstrType.LABEL
+    def is_DECLARE(self) : return self.instrType == InstrType.DECLARE
+    def is_NOP(self)     : return self.instrType == InstrType.NOP
+
+    def is_JMP(self)     : return (self.instrType == InstrType.IFGOTO or
+                                   self.instrType == InstrType.GOTO or
+                                   self.instrType == InstrType.RETURN or
+                                   self.instrType == InstrType.CALL)
 
 
 class OperationType(object):
@@ -92,7 +97,6 @@ class OperationType(object):
                 "^"     : BXOR,          "bxor"     : BXOR,
                 "<<"    : LSHIFT,        "lshift"   : LSHIFT,
                 ">>"    : RSHIFT,        "rshift"   : RSHIFT,
-                "!"     : UNOT,          "unot"     : UNOT,
                 ""      : NONE
               }
 
@@ -347,12 +351,12 @@ class Instr3AC(object):
             self.opType     =  OperationType(str(inpTuple[2]))
             self.inp1       =  Entity(str(inpTuple[3]))
             self.inp2       =  Entity(str(inpTuple[4]))
-            self.jmpTarget  =  int(inpTuple[5])
+            self.jmpTarget  =  ConvertTarget(str(inpTuple[5]))
 
         elif self.instrType.is_GOTO():
             # Line Number, Goto, Target
             DEBUG.Assert(len(inpTuple) == 3, "Expected 3-tuple for goto")                       
-            self.jmpTarget  = int(inpTuple[2])
+            self.jmpTarget  =  ConvertTarget(str(inpTuple[2]))
 
         elif self.instrType.is_CALL():
             # Line Number, Call, Label
@@ -414,7 +418,7 @@ class Instr3AC(object):
         return self.isTarget
 
     def GetTarget(self):
-        """ Return line ID of the jump target if any """
+        """ Return ID of the jump target if any """
         return self.jmpTarget
 
     def ReturnSymbols(self):
@@ -459,10 +463,10 @@ class Instr3AC(object):
 
     def PrettyPrint(self):
         if self.instrType.is_IFGOTO():
-            return "If ( %s %s %s ) GOTO %s"%(self.inp1, self.opType, self.inp2, "$LID_" + str(self.jmpTarget))
+            return "If ( %s %s %s ) GOTO %s"%(self.inp1, self.opType, self.inp2, self.jmpTarget)
 
         if self.instrType.is_GOTO():
-            return "GOTO %s"%("$LID_" + str(self.jmpTarget))
+            return "GOTO %s"%(self.jmpTarget)
 
         if self.instrType.is_CALL():
             return "call %s"%(str(self.jmpLabel))
@@ -492,3 +496,8 @@ class Instr3AC(object):
                 return "%s = %s %s %s"%(self.dest, self.inp1, self.opType, self.inp2)
         
 
+def ConvertTarget(inpString):
+    if inpString.isdigit():
+        return "$LID_" + inpString
+    else:
+        return inpString
