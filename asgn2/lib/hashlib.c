@@ -32,12 +32,13 @@ Element *findMatch(Hash *hashPtr, char *s, int keyInt)
     Element *elemPtr = hashPtr->first;
 
     while(elemPtr != 0) {
-        if (hashPtr->type == 0)
+        if (hashPtr->type == 0) {
             if (elemPtr->keyInt == keyInt)
                 break;
-        else
+	} else {
             if(!strCmp(elemPtr->key, s))
                 break;
+	}
 
         elemPtr = elemPtr->next;
     }

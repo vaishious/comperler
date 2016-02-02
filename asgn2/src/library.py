@@ -120,7 +120,7 @@ def Translate_initHash(targetVar):
 
     DEBUG.Assert(targetVar.is_HASH_VARIABLE(), "Argument of initHash should be a hash pointer")
 
-    G.AsmText.AddText(G.INDENT + "li %s, %s"%(REG.v0, str(G.AsmData.GetHashType(targetVar.value))), "Passing the type of hash")
+    G.AsmText.AddText(G.INDENT + "li %s, %s"%(REG.a0, str(G.AsmData.GetHashType(targetVar.value))), "Passing the type of hash")
     G.AsmText.AddText(G.INDENT + "jal initHash", "Allocating memory and initializing the hash")
     G.AsmText.AddText(G.INDENT + "sw $v0, %s"%(ASM.GetHashAddr(targetVar)), "Storing the returned memory address of hash")
 

@@ -28,16 +28,16 @@ $L4:
 	lw	$2,20($fp)
 	lw	$3,4($2)
 	lw	$2,40($fp)
-	bne	$3,$2,$L6
+	bne	$3,$2,$L7
 	j	$L3
-$L6:
+$L5:
 	lw	$2,20($fp)
 	lw	$4,0($2)
 	lw	$5,36($fp)
 	jal	strCmp
-	bne	$2,$0,$L5
+	bne	$2,$0,$L7
 	j	$L3
-$L5:
+$L7:
 	lw	$2,20($fp)
 	lw	$2,12($2)
 	sw	$2,20($fp)
