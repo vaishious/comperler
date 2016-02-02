@@ -65,6 +65,10 @@ def Translate(instr):
         Translate_IFGOTO(instr)
 
     elif instr.instrType.is_ASSIGN():
+        for var in [instr.inp1, instr.inp2, instr.dest]:
+            if var.is_HASH_VARIABLE():
+                G.CurrRegAddrTable.DumpDirtyVars()
+
         Translate_ASSIGN(instr)
 
 def SetupRegister(inp, regComp, tempReg=REG.t9, useImmediate=False):
@@ -128,6 +132,30 @@ def SetupRegister(inp, regComp, tempReg=REG.t9, useImmediate=False):
 
         LIB.Translate_getValue(inp, tempReg, regComp) 
 
+         #Load the address of the Hash into the register a0
+        #G.AsmText.AddText(G.INDENT + "la %s, %s"%(REG.a0, ASM.GetHashAddr(inp)), "Load address of the hash")
+
+         #Load the key into the respective register a1 or a2
+        #if inp.key.is_NUMBER():
+            #G.AsmText.AddText(REG.a2.LoadImmediate(inp.key), "The key is a number")
+        #elif inp.key.is_STRING():
+            #G.AsmText.AddText(G.INDENT + "la %s, %s"%(REG.a1, ASM.GetStrAddr(inp.key)), "The key is a string")
+        #else:
+             #It is a variable
+            #regInp = SetupRegister(dest.key,regComp)
+
+             #Handle this better. Loading the same thing into both registers a1 and a2
+             #as string or number can be stored at this variable
+            #G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a1, regInp), "The key is a variable")
+            #G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a2, regInp))
+
+         #Call the getValue function
+        #G.AsmText.AddText(G.INDENT + "jal getValue", "Call the getValue function")
+    
+         #Add checks on the type of the value stored. Currently assumed to be a number
+        #G.AsmText.AddText(G.INDENT + "lw %s, 0(%s)"%(regComp, REG.v0), "Setup register by dereferencing the return value")
+
+        #reg = regComp
 
     DEBUG.Assert(reg, "Line %d: Unable to setup register for %s."%(G.CurrInstruction.lineID, str(inp.value)))
     return reg
