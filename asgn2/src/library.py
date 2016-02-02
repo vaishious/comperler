@@ -21,19 +21,27 @@ import os
 def LinkFunction(funcName):
     codeFunc = ""
     insideFunc = False
+    labels = []
     for fileName in G.LIBSRC:
         with open(os.path.dirname(__file__) + "/" + fileName, 'r') as f:
             for line in f:
                 if insideFunc:
                     codeFunc += line
                     if (".end" in line) and (funcName in line):
+
+                        for l in labels:
+                            codeFunc = codeFunc.replace(l, l.replace("$L", "$L" + funcName))
+
                         return codeFunc
+
+                    if line[:2] == '$L':
+                        labels += [line[:-2]]
 
                 elif funcName + ":" in line:
                     insideFunc = True
                     codeFunc += line
 
-    return ""
+    raise Exception("Did not find function : " + funcName)
 
 def Translate_Printf(parameters):
     """ Custom version of Printf can be found in iolib.c in the lib/ folder """
@@ -146,7 +154,6 @@ def Translate_addElement(targetVar, idxRegister, valReg):
     """ Hash implementation can be found in hashlib.c in the lib/ folder """
 
     DEBUG.Assert(targetVar.is_HASH_VARIABLE(), "Argument of addElement should be a hash pointer")
-    G.AsmData.AllocateString(G.HashKeyError)
 
     G.AsmText.AddText(targetVar.CopyToRegister(REG.argRegs[0])[:-1])
 
