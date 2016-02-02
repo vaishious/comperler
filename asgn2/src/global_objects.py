@@ -37,4 +37,4 @@ LibraryFunctionsUsed = set([])
 LIBSRC = ['../lib/hashlib.s', '../lib/iolib.s', '../lib/libstd.s', '../lib/libstring.s']
 
 # Exception messages for ExitWithMessage
-HashKeyError = Entity("KEY ERROR: Match not found\n")
+HashKeyError = None

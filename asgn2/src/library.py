@@ -119,7 +119,7 @@ def Translate_initHash(targetVar):
     G.LibraryFunctionsUsed.add("initHash")
     G.LibraryFunctionsUsed.add("alloc")
 
-def Translate_getValue(targetVar, targetReg)
+def Translate_getValue(targetVar, targetReg):
     """ Hash implementation can be found in hashlib.c in the lib/ folder """
 
     DEBUG.Assert(targetVar.is_HASH_VARIABLE(), "Argument of getValue should be a hash pointer")
@@ -136,7 +136,7 @@ def Translate_getValue(targetVar, targetReg)
     G.LibraryFunctionsUsed.add("getValue")
     G.LibraryFunctionsUsed.add("ExitWithMessage")
 
-def Translate_addElement(targetVar, valEntry)
+def Translate_addElement(targetVar, valEntry):
     """ Hash implementation can be found in hashlib.c in the lib/ folder """
 
     DEBUG.Assert(targetVar.is_HASH_VARIABLE(), "Argument of addElement should be a hash pointer")

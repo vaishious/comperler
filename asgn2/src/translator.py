@@ -94,6 +94,10 @@ def SetupRegister(inp, regComp, tempReg=REG.t9, useImmediate=False):
             reg = regComp
             G.AsmText.AddText(reg.LoadImmediate(inp.value))
 
+    elif inp.is_STRING():
+        reg = regComp
+        G.AsmText.AddText(inp.CopyToRegister(reg)[:-1])
+
     elif inp.is_ARRAY_VARIABLE():
         # First we need the index
         regInp = None
@@ -339,7 +343,7 @@ def GenCode_CallAssignment(instr):
         G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(REG.v0, regComp))
 
 def SetupDestRegScalar(dest):
-    return SetupRegister(dest, tmpUsageRegs[-1])
+    return SetupRegister(dest, REG.tmpUsageRegs[-1])
 
 def SetupDestRegArray(dest, regComp, tempReg=REG.tmpUsageRegs[-1]):
     if dest.key.is_NUMBER():

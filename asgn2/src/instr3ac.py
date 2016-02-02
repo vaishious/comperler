@@ -265,7 +265,7 @@ class Entity(object):
 
         if self.is_SCALAR_VARIABLE():
             if self.IsRegisterAllocated():
-                return G.INDENT + "move %s %s\n"%(reg, self.GetCurrReg())
+                return G.INDENT + "move %s, %s\n"%(reg, self.GetCurrReg())
             else:
                 return G.INDENT + "lw %s, %s\n"%(reg, ASM.GetVarAddr(self))
 
