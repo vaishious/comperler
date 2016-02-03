@@ -121,6 +121,13 @@ class BasicBlock(object):
         codeSegment = ""
         alreadyAllocatedRegs = []
 
+        if (G.CurrInstruction.inp1.is_HASH_VARIABLE() or
+            G.CurrInstruction.inp2.is_HASH_VARIABLE() or
+            G.CurrInstruction.dest.is_HASH_VARIABLE()):
+
+            # No need to do register allocation
+            return codeSegment
+
         # Register Allocation for input 1
         if G.CurrInstruction.inp1.is_SCALAR_VARIABLE():
             varName = G.CurrInstruction.inp1.value
@@ -203,6 +210,13 @@ class BasicBlock(object):
         return codeSegment
 
     def UpdateRegAddrDescriptor(self):
+        if (G.CurrInstruction.inp1.is_HASH_VARIABLE() or
+            G.CurrInstruction.inp2.is_HASH_VARIABLE() or
+            G.CurrInstruction.dest.is_HASH_VARIABLE()):
+            # No allocation has been performed
+            return
+
+
         if G.CurrInstruction.inp1.is_SCALAR_VARIABLE():
             varName = G.CurrInstruction.inp1.value
             G.CurrRegAddrTable.SetRegister(varName, G.AllocMap[varName])

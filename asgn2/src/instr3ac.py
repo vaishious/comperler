@@ -262,7 +262,7 @@ class Entity(object):
             return G.INDENT + "la %s, %s\n"%(reg, ASM.GetStrAddr(self))
 
         if self.is_HASH_VARIABLE():
-            return G.INDENT + "la %s, %s\n"%(reg, ASM.GetHashAddr(self))
+            return G.INDENT + "lw %s, %s\n"%(reg, ASM.GetHashAddr(self))
 
         if self.is_SCALAR_VARIABLE():
             if self.IsRegisterAllocated():
@@ -342,7 +342,7 @@ class Entity(object):
             return codeSegment
 
         if self.is_HASH_VARIABLE():
-            codeSegment = G.INDENT + "la %s, %s\n"%(REG.tmpUsageRegs[-1], ASM.GetHashAddr(self))
+            codeSegment = G.INDENT + "lw %s, %s\n"%(REG.tmpUsageRegs[-1], ASM.GetHashAddr(self))
             codeSegment = G.INDENT + "sw %s, %s\n"%(REG.tmpUsageRegs[-1], mem)
             return codeSegment
 

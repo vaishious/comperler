@@ -225,8 +225,10 @@ def Translate_ASSIGN(instr):
 
         # TODO : Handle array and hash variables in the destination
         if instr.dest.is_SCALAR_VARIABLE():
-            reg3 = SetupDestRegScalar(instr.dest)
+            reg3 = SetupDestRegScalar(instr.dest, REG.tmpUsageRegs[-1])
             GenCode_3OPASSIGN(instr, reg3, reg1, reg2)
+            if reg3 == REG.tmpUsageRegs[-1]:
+                G.AsmText.AddText(G.INDENT + "sw %s, %s"%(reg3, ASM.GetVarAddr(instr.dest)), "Store it back")
 
         elif instr.dest.is_ARRAY_VARIABLE():
             tempReg = REG.tmpUsageRegs[-1]
@@ -258,13 +260,16 @@ def Translate_ASSIGN(instr):
 
         # TODO : Handle array and hash variables in the destination
         if instr.dest.is_SCALAR_VARIABLE():
-            reg3 = SetupDestRegScalar(instr.dest)
+            reg3 = SetupDestRegScalar(instr.dest, REG.tmpUsageRegs[-1])
             if instr.inp1.is_NUMBER():
                 G.AsmText.AddText(G.INDENT + "li %s, %s"%(reg3, str(instr.inp1.value)))
             else:
                 reg1 = SetupRegister(instr.inp1, REG.tmpUsageRegs[1])
                 if reg1 != reg3:
                     G.AsmText.AddText(G.INDENT + "move %s, %s"%(reg3, reg1))
+
+            if reg3 == REG.tmpUsageRegs[-1]:
+                G.AsmText.AddText(G.INDENT + "sw %s, %s"%(reg3, ASM.GetVarAddr(instr.dest)), "Store it back")
 
         elif instr.dest.is_ARRAY_VARIABLE():
             tempReg = REG.tmpUsageRegs[-1]
@@ -307,8 +312,11 @@ def Translate_ASSIGN(instr):
 
         # TODO : Handle array and hash variables in the destination
         if instr.dest.is_SCALAR_VARIABLE():
-            reg3 = SetupRegister(instr.dest,REG.tmpUsageRegs[1])
+            reg3 = SetupDestRegScalar(instr.dest, REG.tmpUsageRegs[-1])
             GenCode_2OPASSIGN(instr, reg3, reg1)
+
+            if reg3 == REG.tmpUsageRegs[-1]:
+                G.AsmText.AddText(G.INDENT + "sw %s, %s"%(reg3, ASM.GetVarAddr(instr.dest)), "Store it back")
 
         elif instr.dest.is_ARRAY_VARIABLE():
             tempReg = REG.tmpUsageRegs[-1]
@@ -412,8 +420,9 @@ def GenCode_CallAssignment(instr):
         # Store back the value
         G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(REG.v0, regComp))
 
-def SetupDestRegScalar(dest):
-    return SetupRegister(dest, REG.tmpUsageRegs[-1])
+def SetupDestRegScalar(dest, tmpReg=REG.tmpUsageRegs[-1]):
+    return SetupRegister(dest, tmpReg)
+
 
 def SetupDestRegArray(dest, regComp, tempReg=REG.tmpUsageRegs[-1]):
     if dest.key.is_NUMBER():
