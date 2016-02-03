@@ -338,7 +338,7 @@ class Entity(object):
         """
         if self.is_STRING():
             codeSegment = G.INDENT + "la %s, %s\n"%(REG.tmpUsageRegs[-1], ASM.GetStrAddr(self))
-            codeSegment = G.INDENT + "sw %s, %s\n"%(REG.tmpUsageRegs[-1], mem)
+            codeSegment += G.INDENT + "sw %s, %s\n"%(REG.tmpUsageRegs[-1], mem)
             return codeSegment
 
         if self.is_HASH_VARIABLE():

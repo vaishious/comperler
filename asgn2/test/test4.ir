@@ -11,4 +11,10 @@
 7, goto, 4
 25, =, a, h{3}
 8, print, "Factorial of %d is %d\n", g[0], a
+27, =, h{10}, 67
+30, =, h{12}, "Hello There!"
+31, =, h{71}, 354
+32, print, "h{10}: %d\n", h{10}
+33, print, "h{12}: %s\n", h{12}
+34, print, "h{71}: %d\n", h{71}
 9, exit

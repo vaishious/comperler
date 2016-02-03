@@ -53,13 +53,39 @@ def Translate_Printf(parameters):
     G.StackSpaceRequired = max(G.StackSpaceRequired, 4*len(parameters))
 
     codeSegment = ""
+    
+    nHashVars = map(lambda x:x.is_HASH_VARIABLE(),parameters).count(True)
+    DEBUG.Assert(nHashVars <= 1,"Only supports printing a single hash variable at a time.")
+
+    # We necessarily have to fetch the hash variable first.
+    # This is because it involves function calls which will overwrite 
+    # the argument registers if we setup some other argument of Printf first
+    for (idx, param) in enumerate(parameters):
+        if parameters[idx].is_HASH_VARIABLE():
+            tempReg = REG.tmpUsageRegs[-1]
+            regComp = REG.tmpUsageRegs[2]
+
+            if parameters[idx].key.is_NUMBER():
+                G.AsmText.AddText(tempReg.LoadImmediate(parameters[idx].key.value), "Load key for the hash access")
+            else:
+                regInp = TRANS.SetupRegister(parameters[idx].key, regComp)
+                G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp), "Load key for the hash access")
+
+            Translate_getValue(parameters[idx], tempReg, regComp) 
+
+            if idx <= 3:
+                G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[idx], regComp))
+            else:
+                G.AsmText.AddText(G.INDENT + "sw %s, %s"%(regComp, str(4*idx)+"($sp)"))
+
 
     for (idx, param) in enumerate(parameters):
-        if idx <= 3:
-            codeSegment += parameters[idx].CopyToRegister(REG.argRegs[idx])
+        if not parameters[idx].is_HASH_VARIABLE():
+            if idx <= 3:
+                codeSegment += parameters[idx].CopyToRegister(REG.argRegs[idx])
 
-        else:
-            codeSegment += parameters[idx].CopyToMemory(str(4*idx)+"($sp)")
+            else:
+                codeSegment += parameters[idx].CopyToMemory(str(4*idx)+"($sp)")
 
     codeSegment += G.INDENT + "jal Printf\n"
     G.AsmText.AddText(codeSegment)
