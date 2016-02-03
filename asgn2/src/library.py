@@ -50,16 +50,15 @@ def Translate_Printf(parameters):
 
     DEBUG.Assert(formatString.is_STRING(), "First argument of Printf has to be a format specifier")
 
-    G.StackSpaceRequired = max(G.StackSpaceRequired, 4*len(parameters))
+    G.StackSpaceMap[G.CurrFunction] = max(G.StackSpaceMap[G.CurrFunction], 4*len(parameters))
 
     codeSegment = ""
     
-    nHashVars = map(lambda x:x.is_HASH_VARIABLE(),parameters).count(True)
-    DEBUG.Assert(nHashVars <= 1,"Only supports printing a single hash variable at a time.")
-
     # We necessarily have to fetch the hash variable first.
     # This is because it involves function calls which will overwrite 
     # the argument registers if we setup some other argument of Printf first
+    hashRegs = [REG.s3, REG.s2, REG.s1, REG.s0]
+    hashArgs = []
     for (idx, param) in enumerate(parameters):
         if parameters[idx].is_HASH_VARIABLE():
             tempReg = REG.tmpUsageRegs[-1]
@@ -74,10 +73,17 @@ def Translate_Printf(parameters):
             Translate_getValue(parameters[idx], tempReg, regComp) 
 
             if idx <= 3:
-                G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[idx], regComp))
-            else:
-                G.AsmText.AddText(G.INDENT + "sw %s, %s"%(regComp, str(4*idx)+"($sp)"))
+                # These are callee saved registers anyway
+                reg = hashRegs.pop()
+                hashArgs += [[reg, idx]]
+                G.AsmText.AddText(G.INDENT + "move %s, %s"%(reg, regComp))
 
+            else:
+                G.AsmText.AddText(G.INDENT + "sw %s, %s"%(regComp, str(4*idx)+"($fp)"))
+
+    # We now push the values into the arg registers (if any)
+    for hashReg, idx in hashArgs:
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[idx], hashReg))
 
     for (idx, param) in enumerate(parameters):
         if not parameters[idx].is_HASH_VARIABLE():
@@ -85,7 +91,7 @@ def Translate_Printf(parameters):
                 codeSegment += parameters[idx].CopyToRegister(REG.argRegs[idx])
 
             else:
-                codeSegment += parameters[idx].CopyToMemory(str(4*idx)+"($sp)")
+                codeSegment += parameters[idx].CopyToMemory(str(4*idx)+"($fp)")
 
     codeSegment += G.INDENT + "jal Printf\n"
     G.AsmText.AddText(codeSegment)
@@ -103,7 +109,7 @@ def Translate_Scanf(parameters):
 
     DEBUG.Assert(formatString.is_STRING(), "First argument of Printf has to be a format specifier")
 
-    G.StackSpaceRequired = max(G.StackSpaceRequired, 4*len(parameters))
+    G.StackSpaceMap[G.CurrFunction] = max(G.StackSpaceMap[G.CurrFunction], 4*len(parameters))
 
     codeSegment = ""
 
@@ -112,7 +118,7 @@ def Translate_Scanf(parameters):
             codeSegment += parameters[idx].CopyAddressToRegister(REG.argRegs[idx])
 
         else:
-            codeSegment += parameters[idx].CopyAddressToMemory(str(4*idx)+"($sp)")
+            codeSegment += parameters[idx].CopyAddressToMemory(str(4*idx)+"($fp)")
 
     codeSegment += G.INDENT + "jal Scanf\n"
     G.AsmText.AddText(codeSegment)
@@ -128,7 +134,7 @@ def Translate_StrCmp(str1, str2):
     DEBUG.Assert(str1.is_STRING(), "First argument of StrCmp has to be a string")
     DEBUG.Assert(str2.is_STRING(), "Second argument of StrCmp has to be a string")
 
-    G.StackSpaceRequired = max(G.StackSpaceRequired, 4*2)
+    G.StackSpaceMap[G.CurrFunction] = max(G.StackSpaceMap[G.CurrFunction], 4*len(parameters))
 
     codeSegment = ""
 

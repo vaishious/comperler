@@ -341,6 +341,11 @@ class Entity(object):
             codeSegment += G.INDENT + "sw %s, %s\n"%(REG.tmpUsageRegs[-1], mem)
             return codeSegment
 
+        if self.is_NUMBER():
+            codeSegment = G.INDENT + "li %s, %s\n"%(REG.tmpUsageRegs[-1], str(self.value))
+            codeSegment += G.INDENT + "sw %s, %s\n"%(REG.tmpUsageRegs[-1], mem)
+            return codeSegment
+
         if self.is_HASH_VARIABLE():
             codeSegment = G.INDENT + "lw %s, %s\n"%(REG.tmpUsageRegs[-1], ASM.GetHashAddr(self))
             codeSegment = G.INDENT + "sw %s, %s\n"%(REG.tmpUsageRegs[-1], mem)

@@ -10,4 +10,4 @@
 7, =, a, d
 8, =, +, d, v, u
 9, print, "%d, %d, %d\n", v, u, d
-10, return, d
+10, return

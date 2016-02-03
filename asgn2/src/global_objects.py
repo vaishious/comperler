@@ -15,7 +15,6 @@ AsmText = None
 # For library functions like printf, we'll need to put arguments on the stack
 # For that we need to allocate some space beforehand. This variable just keeps
 # track of it
-StackSpaceRequired = 0
 
 # Indent to be used for the code
 INDENT = " "*4
@@ -27,10 +26,12 @@ CurrRegAddrTable = None
 CurrSymbolTable  = None
 CurrInstruction  = None
 NextSymbolTable  = None
+CurrFunction     = 'main'
 
 # This map provides an easier interface to see the register allocation for the current
 # instruction
 AllocMap = {}
+StackSpaceMap = {'main' : 0}
 
 # Library functions
 LibraryFunctionsUsed = set([])

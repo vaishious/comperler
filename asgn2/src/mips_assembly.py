@@ -171,7 +171,16 @@ class TextRegion(object):
             self.text += "\n" + LIB.LinkFunction(func)
 
     def WriteToFile(self):
-        self.text = ".text\nmain:\n" + self.text
+
+        stackSpaceRequired = G.StackSpaceMap['main']
+        loadSegment = ".text\nmain:\n"
+        loadSegment += G.INDENT + ".frame $fp,%d,$31\n"%(stackSpaceRequired) 
+        loadSegment += G.INDENT + "subu $sp, $sp, %d\n"%(stackSpaceRequired) 
+        loadSegment += G.INDENT + "sw $fp, %d($sp)\n"%(stackSpaceRequired-4)
+        loadSegment += G.INDENT + "sw $ra, %d($sp)\n"%(stackSpaceRequired-8)
+        loadSegment += G.INDENT + "move $fp, $sp\n"
+
+        self.text = loadSegment + self.text
         self.AddLibraryFunctions()
         print self.text
 
