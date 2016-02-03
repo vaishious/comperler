@@ -137,8 +137,10 @@ def Translate_getValue(targetVar, idxRegister, targetReg):
     G.AsmText.AddText(targetVar.CopyToRegister(REG.argRegs[0])[:-1])
 
     if G.AsmData.GetHashType(targetVar.value) == 1:
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[2], REG.zero), "Zero out the int argument")
         G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[1], idxRegister), "Load key")
     else:
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[1], REG.zero), "Zero out the char * argument")
         G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[2], idxRegister), "Load key")
 
     G.AsmText.AddText(G.HashKeyError.CopyAddressToRegister(REG.argRegs[3])[:-1])
@@ -158,8 +160,10 @@ def Translate_addElement(targetVar, idxRegister, valReg):
     G.AsmText.AddText(targetVar.CopyToRegister(REG.argRegs[0])[:-1])
 
     if G.AsmData.GetHashType(targetVar.value) == 1:
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[2], REG.zero), "Zero out the int argument")
         G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[1], idxRegister), "Load key")
     else:
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[1], REG.zero), "Zero out the char * argument")
         G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[2], idxRegister), "Load key")
 
     G.AsmText.AddText(G.INDENT + "la %s, 0(%s)"%(REG.argRegs[3], valReg), "Load value")

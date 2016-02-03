@@ -16,15 +16,18 @@ void *alloc(unsigned int size)
     return ptr;
 }
 
-void ExitWithMessage(char *message, char *reference)
+void ExitWithMessage(char *message, char *refChar, int refInt)
 {
-    if(reference != NULL) {
+    if(refChar != NULL) {
         PrintString(message);
-        PrintString(reference);
+        PrintString(refChar);
+        PrintChar('\n');
     }
-    else
+    else {
         PrintString(message);
-
+        PrintInt(refInt);
+        PrintChar('\n');
+    }
     asm("
             li $v0, 10
             syscall

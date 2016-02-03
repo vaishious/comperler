@@ -442,7 +442,7 @@ def SetupDestRegHash(dest, regComp, tempReg=REG.tmpUsageRegs[-1]):
     if dest.key.is_NUMBER():
         G.AsmText.AddText(tempReg.LoadImmediate(dest.key.value), "Load key for the hash access")
     else:
-        regInp = SetupRegister(inp.key, regComp)
+        regInp = SetupRegister(dest.key, regComp)
         G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp), "Load key for the hash access")
 
 

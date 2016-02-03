@@ -39,16 +39,23 @@ ExitWithMessage:
 	move	$fp,$sp
 	sw	$4,24($fp)
 	sw	$5,28($fp)
+	sw	$6,32($fp)
 	lw	$2,28($fp)
 	beq	$2,$0,$L3
 	lw	$4,24($fp)
 	jal	PrintString
 	lw	$4,28($fp)
 	jal	PrintString
+	li	$4,10			# 0xa
+	jal	PrintChar
 	j	$L4
 $L3:
 	lw	$4,24($fp)
 	jal	PrintString
+	lw	$4,32($fp)
+	jal	PrintInt
+	li	$4,10			# 0xa
+	jal	PrintChar
 $L4:
  #APP
 	

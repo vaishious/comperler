@@ -88,5 +88,5 @@ void *getValue(Hash *hashPtr, char *key, int keyInt, char *message)
             return elemPtr->valRef;
 
     // Raise an exception
-    ExitWithMessage(message, key);
+    ExitWithMessage(message, key, keyInt);
 }

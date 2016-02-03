@@ -52,7 +52,7 @@ class CodeGenerator(object):
         # Build Global Objects
         G.AsmText = ASM.TextRegion(fileName)
         G.AsmData = ASM.DataRegion()
-        G.HashKeyError = INSTRUCTION.Entity("\"KEY ERROR: Match not found\\n\"", stringAllocate=False)
+        G.HashKeyError = INSTRUCTION.Entity("\"KEY ERROR: Match not found for : \"", stringAllocate=False)
 
         # Create an instance of the instruction class for each line
         for line in text:
