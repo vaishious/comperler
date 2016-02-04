@@ -110,7 +110,7 @@ def Translate_Scanf(parameters):
 
     formatString = parameters[0]
 
-    DEBUG.Assert(formatString.is_STRING(), "First argument of Printf has to be a format specifier")
+    DEBUG.Assert(formatString.is_STRING(), "First argument of Scanf has to be a format specifier")
 
     G.StackSpaceMap[G.CurrFunction] = max(G.StackSpaceMap[G.CurrFunction], 4*len(parameters))
 
