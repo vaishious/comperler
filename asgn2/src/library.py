@@ -60,17 +60,17 @@ def Translate_Printf(parameters):
     hashRegs = [REG.s3, REG.s2, REG.s1, REG.s0]
     hashArgs = []
     for (idx, param) in enumerate(parameters):
-        if parameters[idx].is_HASH_VARIABLE():
+        if param.is_HASH_VARIABLE():
             tempReg = REG.tmpUsageRegs[-1]
             regComp = REG.tmpUsageRegs[2]
 
-            if parameters[idx].key.is_NUMBER():
-                G.AsmText.AddText(tempReg.LoadImmediate(parameters[idx].key.value), "Load key for the hash access")
+            if param.key.is_NUMBER():
+                G.AsmText.AddText(tempReg.LoadImmediate(param.key.value), "Load key for the hash access")
             else:
-                regInp = TRANS.SetupRegister(parameters[idx].key, regComp)
+                regInp = TRANS.SetupRegister(param.key, regComp)
                 G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp), "Load key for the hash access")
 
-            Translate_getValue(parameters[idx], tempReg, regComp) 
+            Translate_getValue(param, tempReg, regComp) 
 
             if idx <= 3:
                 # These are callee saved registers anyway
@@ -86,12 +86,12 @@ def Translate_Printf(parameters):
         G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[idx], hashReg))
 
     for (idx, param) in enumerate(parameters):
-        if not parameters[idx].is_HASH_VARIABLE():
+        if not param.is_HASH_VARIABLE():
             if idx <= 3:
-                codeSegment += parameters[idx].CopyToRegister(REG.argRegs[idx])
+                codeSegment += param.CopyToRegister(REG.argRegs[idx])
 
             else:
-                codeSegment += parameters[idx].CopyToMemory(str(4*idx)+"($fp)")
+                codeSegment += param.CopyToMemory(str(4*idx)+"($fp)")
 
     codeSegment += G.INDENT + "jal Printf\n"
     G.AsmText.AddText(codeSegment)
@@ -113,12 +113,51 @@ def Translate_Scanf(parameters):
 
     codeSegment = ""
 
+    hashRegs = [REG.s3, REG.s2, REG.s1, REG.s0]
+    hashArgs = []
     for (idx, param) in enumerate(parameters):
-        if idx <= 3:
-            codeSegment += parameters[idx].CopyAddressToRegister(REG.argRegs[idx])
+        if param.is_HASH_VARIABLE():
+            import translator as TRANS          # Top level import throws an error
+            tempReg = REG.tmpUsageRegs[-1]
+            regComp = REG.tmpUsageRegs[2]
 
-        else:
-            codeSegment += parameters[idx].CopyAddressToMemory(str(4*idx)+"($fp)")
+            if idx <= 3:
+                # These are callee saved registers anyway
+                reg = hashRegs.pop()
+                hashArgs += [[reg, idx]]
+
+                # First allocate memory and store the address returned in the callee saved register
+                # We will use this address for our Scanf call
+                Translate_alloc(reg)
+
+                TRANS.SetupDestRegHash(param, regComp, tempReg) # The value of key is stored in tempReg
+
+                # Add a new element with valRef as the pointer to the new memory allocated
+                Translate_addElement(param, tempReg, reg)
+
+            else:
+                # First allocate memory and store the address returned in the temporary register reg
+                # We will use this address for our Scanf call
+                Translate_alloc(regComp)
+
+                # Move the address to the appropriate location on the stack
+                G.AsmText.AddText(G.INDENT + "sw %s, %s"%(regComp, str(4*idx)+"($fp)"))
+
+                TRANS.SetupDestRegHash(param, REG.tmpUsageRegs[1], tempReg) # The value of key is stored in tempReg
+
+                Translate_addElement(param, tempReg, regComp)
+
+    # We now push the values into the arg registers (if any)
+    for hashReg, idx in hashArgs:
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[idx], hashReg))
+
+    for (idx, param) in enumerate(parameters):
+        if not param.is_HASH_VARIABLE():
+            if idx <= 3:
+                codeSegment += param.CopyAddressToRegister(REG.argRegs[idx])
+
+            else:
+                codeSegment += param.CopyAddressToMemory(str(4*idx)+"($fp)")
 
     codeSegment += G.INDENT + "jal Scanf\n"
     G.AsmText.AddText(codeSegment)
@@ -198,7 +237,7 @@ def Translate_addElement(targetVar, idxRegister, valReg):
         G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[1], REG.zero), "Zero out the char * argument")
         G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[2], idxRegister), "Load key")
 
-    G.AsmText.AddText(G.INDENT + "la %s, 0(%s)"%(REG.argRegs[3], valReg), "Load value")
+    G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[3], valReg), "Load value")
 
     G.AsmText.AddText(G.INDENT + "jal addElement", "Add element to the hash")
 
