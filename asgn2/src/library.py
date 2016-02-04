@@ -69,7 +69,6 @@ def Translate_Printf(parameters):
             if param.key.is_NUMBER():
                 G.AsmText.AddText(tempReg.LoadImmediate(param.key.value), "Load key for the hash access")
             else:
-                import translator as TRANS          # Top level import throws an error
                 regInp = TRANS.SetupRegister(param.key, regComp)
                 G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp), "Load key for the hash access")
 
@@ -96,6 +95,7 @@ def Translate_Printf(parameters):
             else:
                 G.AsmText.AddText(param.CopyToMemory(str(4*idx)+"($fp)")[:-1])
 
+    G.CurrRegAddrTable.DumpDirtyVars()
     G.AsmText.AddText(" ")
     G.AsmText.AddText(G.INDENT + "jal Printf")
 
@@ -163,6 +163,7 @@ def Translate_Scanf(parameters):
             else:
                 G.AsmText.AddText(param.CopyAddressToMemory(str(4*idx)+"($fp)")[:-1])
 
+    G.CurrRegAddrTable.DumpDirtyVars()
     G.AsmText.AddText(" ")
     G.AsmText.AddText(G.INDENT + "jal Scanf")
 
@@ -170,6 +171,7 @@ def Translate_Scanf(parameters):
     G.LibraryFunctionsUsed.add("Scanf")
     G.LibraryFunctionsUsed.add("ReadInt")
     G.LibraryFunctionsUsed.add("ReadChar")
+    G.LibraryFunctionsUsed.add("ReadString")
 
 def Translate_StrCmp(str1, str2):
     """ Custom version of strCmp can be found in hashlib.c in the lib/ folder """
@@ -251,15 +253,34 @@ def Translate_addElement(targetVar, idxRegister, valReg):
     G.LibraryFunctionsUsed.add("findMatch")
     G.LibraryFunctionsUsed.add("strCmp")
 
-def Translate_alloc(targetReg, size=4):
+def Translate_alloc(targetReg, sizeEntity=4):
 
-    if type(size) == int:
-        G.AsmText.AddText(G.INDENT + "li %s, %s"%(REG.argRegs[0], str(size)), "Load memory size to be allocated")
+    if type(sizeEntity) == int:
+        G.AsmText.AddText(G.INDENT + "li %s, %s"%(REG.argRegs[0], str(sizeEntity)), "Load memory size to be allocated")
     else:
-        G.AsmText.AddText(size.CopyToRegister(REG.argRegs[0])[:-1], "Load memory size to be allocated")
+        if sizeEntity.is_HASH_VARIABLE():
+            G.AsmText.AddComment("Readying hash argument for size: %s"%(sizeEntity))
+            tempReg = REG.tmpUsageRegs[-1]
+            regComp = REG.tmpUsageRegs[2]
+
+            if sizeEntity.key.is_NUMBER():
+                G.AsmText.AddText(tempReg.LoadImmediate(sizeEntity.key.value), "Load key for the hash access")
+            else:
+                regInp = TRANS.SetupRegister(sizeEntity.key, regComp)
+                G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp), "Load key for the hash access")
+
+            Translate_getValue(sizeEntity, tempReg, regComp) 
+
+            G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[0], regComp), "Load size as second argument")
+        else:
+            G.AsmText.AddComment("Readying argument : %s"%(sizeEntity))
+            G.AsmText.AddText(sizeEntity.CopyToRegister(REG.argRegs[0])[:-1])
+
+    G.CurrRegAddrTable.DumpDirtyVars()
 
     G.AsmText.AddText(G.INDENT + "jal alloc", "Call malloc")
-    G.AsmText.AddText(G.INDENT + "move %s, %s"%(targetReg, REG.v0), "Load returned pointer into targetReg")
+    if targetReg != REG.v0:
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(targetReg, REG.v0), "Load returned pointer into targetReg")
 
     # Add library for linking
     G.LibraryFunctionsUsed.add("alloc")

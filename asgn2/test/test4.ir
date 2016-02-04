@@ -15,8 +15,9 @@
 30, =, h{12}, "Hello There!"
 31, =, h{71}, 354
 36, =, b, 1
+38, alloc, l, 40
 33, print, "Enter the values of a, b, h{11}, h{-3} and h{0}: "
-34, read, "%d %d %d %d %d", a, b, h{11}, h{-3}, h{0}
+34, read, "%d %d %s %d %d", a, b, l, h{-3}, h{0}
 37, =, h{101}, 12
-32, print, "\nh{10}: %d\nh{12}: %s\nh{12}: %s\nh{11} : %d\nh{-3} : %d\nh{0} : %d\n\n%d %s %d\n", h{10}, h{12}, h{h{101}}, ,h{11},h{-3},h{0}, 10, h{12}, b
+32, print, "\nh{10}: %d\nh{12}: %s\nh{12}: %s\nh{11} : %s\nh{-3} : %d\nh{0} : %d\n\n%d %s %d\n", h{10}, h{12}, h{h{101}}, ,l,h{-3},h{0}, 10, h{12}, b
 9, return

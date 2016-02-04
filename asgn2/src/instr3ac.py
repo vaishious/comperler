@@ -24,7 +24,7 @@ class InstrType(object):
     """ 
         Instruction Types : 
     
-        Straightforward : ASSIGN, IFGOTO, GOTO, CALL, RETURN, PRINT, READ, NOP, LABEL, EXIT
+        Straightforward : ASSIGN, IFGOTO, GOTO, CALL, RETURN, PRINT, READ, NOP, LABEL, ALLOC, EXIT
 
         Custom          : Declare - Will be used to fix sizes of the arrays
 
@@ -32,7 +32,7 @@ class InstrType(object):
 
 
     # Enum for holding these values
-    ASSIGN, IFGOTO, GOTO, CALL, RETURN, PRINT, READ, LABEL, DECLARE, EXIT, NOP = range(11)
+    ASSIGN, IFGOTO, GOTO, CALL, RETURN, PRINT, READ, LABEL, DECLARE, EXIT, NOP, ALLOC = range(12)
 
     typeMap = { 
                 "="       : ASSIGN,        "assign" : ASSIGN,       "ASSIGN"   : ASSIGN,
@@ -44,6 +44,7 @@ class InstrType(object):
                 "read"    : READ,          "scanf"  : READ,         "READ"     : READ,
                 "label"   : LABEL,         "Label"  : LABEL,        "LABEL"    : LABEL,
                 "declare" : DECLARE,       "decl"   : DECLARE,      "DECLARE"  : DECLARE,
+                "alloc"   : ALLOC,         "malloc" : ALLOC,        "ALLOC"    : ALLOC,
                 "exit"    : EXIT,          "quit"   : EXIT,         "EXIT"     : EXIT,         "done" : EXIT,
                 "nop"     : NOP,           ""       : NOP,          "NOP"      : NOP
               }
@@ -63,6 +64,7 @@ class InstrType(object):
     def is_RETURN(self)  : return self.instrType == InstrType.RETURN
     def is_PRINT(self)   : return self.instrType == InstrType.PRINT
     def is_READ(self)    : return self.instrType == InstrType.READ
+    def is_ALLOC(self)    : return self.instrType == InstrType.ALLOC
     def is_LABEL(self)   : return self.instrType == InstrType.LABEL
     def is_DECLARE(self) : return self.instrType == InstrType.DECLARE
     def is_EXIT(self)    : return self.instrType == InstrType.EXIT
@@ -74,6 +76,7 @@ class InstrType(object):
                                    self.instrType == InstrType.EXIT or
                                    self.instrType == InstrType.CALL or
                                    self.instrType == InstrType.PRINT or
+                                   self.instrType == InstrType.ALLOC or
                                    self.instrType == InstrType.READ)
 
 
@@ -509,7 +512,16 @@ class Instr3AC(object):
             # Line Number, Read, Inputs                                
             DEBUG.Assert(len(inpTuple) >= 3, "Expected atleast a 3-tuple for read")
             self.IOArgs = map(Entity, map(str, inpTuple[2:]))
+            for arg in self.IOArgs:
+                if arg.is_SCALAR_VARIABLE():
+                    arg.AllocateGlobalMemory()
             
+        elif self.instrType.is_ALLOC():
+            # Line Number, alloc/malloc, targetVar, size
+            DEBUG.Assert(len(inpTuple) == 4, "Expected 4-tuple for alloc")
+            self.dest = Entity(str(inpTuple[2]))
+            self.inp1 = Entity(str(inpTuple[3]))
+
         elif self.instrType.is_LABEL():
             # Line Number, Label, LabelName
             DEBUG.Assert(len(inpTuple) == 3, "Expected 3-tuple for label") 
@@ -626,6 +638,9 @@ class Instr3AC(object):
 
         if self.instrType.is_PRINT():
             return "Print %s"%(str(self.inpTuple[2:]))
+
+        if self.instrType.is_ALLOC():
+            return "%s = malloc(%s)"%(self.dest, self.inp1)
 
         if self.instrType.is_READ():
             return "Read %s"%(str(self.inpTuple[2:]))

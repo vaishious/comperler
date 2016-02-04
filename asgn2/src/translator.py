@@ -41,12 +41,13 @@ def Translate(instr):
             GenCode_CallAssignment(instr)
 
     elif instr.instrType.is_PRINT():
-        G.CurrRegAddrTable.DumpDirtyVars()
         LIB.Translate_Printf(instr.IOArgs)
 
     elif instr.instrType.is_READ():
-        G.CurrRegAddrTable.DumpDirtyVars()
         LIB.Translate_Scanf(instr.IOArgs)
+
+    elif instr.instrType.is_ALLOC():
+        GenCode_Alloc(instr)
 
     elif instr.instrType.is_RETURN():
         if not instr.inp1.is_NONE():
@@ -452,6 +453,35 @@ def GenCode_CallAssignment(instr):
 
         LIB.Translate_alloc(REG.tmpUsageRegs[0])
         G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(REG.tmpUsageRegs[1], REG.tmpUsageRegs[0]), "Load value into allocated memory")
+
+        LIB.Translate_addElement(instr.dest, tempReg, REG.tmpUsageRegs[0]) 
+
+def GenCode_Alloc(instr):
+
+    # TODO : Handle array and hash variables in the destination
+    if instr.dest.is_SCALAR_VARIABLE():
+        LIB.Translate_alloc(REG.v0, instr.inp1)
+        G.AsmText.AddText(G.INDENT + "sw %s, %s"%(REG.v0, ASM.GetVarAddr(instr.dest)), "Store function return directly into the memory address")
+
+    elif instr.dest.is_ARRAY_VARIABLE():
+        tempReg = REG.tmpUsageRegs[-1]
+        regComp = REG.tmpUsageRegs[2]
+
+        SetupDestRegArray(instr.dest, regComp, tempReg)
+
+        LIB.Translate_alloc(REG.v0, instr.inp1)
+        # Store back the value
+        G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(REG.v0, regComp), "Store function return directly into the memory address")
+
+    elif instr.dest.is_HASH_VARIABLE():
+        tempReg = REG.tmpUsageRegs[-1]
+        regComp = REG.tmpUsageRegs[2]
+
+        SetupDestRegHash(instr.dest, regComp, tempReg) # The value of key is stored in tempReg
+
+        LIB.Translate_alloc(REG.tmpUsageRegs[0])
+        LIB.Translate_alloc(REG.v0, instr.inp1)
+        G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(REG.v0, REG.tmpUsageRegs[0]), "Load value into allocated memory")
 
         LIB.Translate_addElement(instr.dest, tempReg, REG.tmpUsageRegs[0]) 
 

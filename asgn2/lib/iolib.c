@@ -126,6 +126,8 @@ void Scanf(char *formatSpecifier, ...) {
 
     char *argChar;
 
+    char *argString;
+
     while((*formatSpecifier) != '\0') {
         if ((*formatSpecifier) == '%') {
             formatSpecifier++;
@@ -137,6 +139,10 @@ void Scanf(char *formatSpecifier, ...) {
             } else if ((*formatSpecifier) == 'c') {
                 argChar = (char *) (*((int *) argPtr));
                 (* argChar) = ReadChar();
+                argPtr += sizeof(char *);
+            } else if ((*formatSpecifier) == 's') {
+                argString = (char *) (*((int *) argPtr));
+                ReadString(argString, 1000);
                 argPtr += sizeof(char *);
             } else {
                 return;
