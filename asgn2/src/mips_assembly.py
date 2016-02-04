@@ -175,7 +175,7 @@ class TextRegion(object):
 
     def WriteFunctionStacks(self):
         for (func, space) in G.StackSpaceMap.items():
-            stackSpaceRequired = space
+            stackSpaceRequired = space + 24
 
             loadSegment = "%s:\n"%(func)
             loadSegment += G.INDENT + ".frame $fp,%d,$31\n"%(stackSpaceRequired) 
