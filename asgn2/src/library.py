@@ -14,6 +14,7 @@ import mips_assembly as ASM
 import registers as REG
 import global_objects as G
 import debug as DEBUG
+import translator as TRANS
 
 import os
 # List of Imports End
@@ -118,7 +119,6 @@ def Translate_Scanf(parameters):
     hashArgs = []
     for (idx, param) in enumerate(parameters):
         if param.is_HASH_VARIABLE():
-            import translator as TRANS          # Top level import throws an error
             tempReg = REG.tmpUsageRegs[-1]
             regComp = REG.tmpUsageRegs[2]
 

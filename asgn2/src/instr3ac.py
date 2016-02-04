@@ -12,11 +12,11 @@ Import Acronym : INSTRUCTION
 import re               # For checking type of variable
 import debug as DEBUG
 import global_objects as G
-import registers as REG
 import library as LIB
 import mips_assembly as ASM
 import basic_blocks as BB
 import translator as TRANS
+import registers as REG
 # List of Imports End
 
 
