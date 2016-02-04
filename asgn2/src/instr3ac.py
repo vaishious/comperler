@@ -168,15 +168,13 @@ class Entity(object):
     number            = r'[-]?\d+'
     identifier        = r'[a-zA-Z_][a-zA-Z0-9_]*'
     arrayAccess       = identifier + r'\[' + r'(' + number + r'|' + identifier + r')' + r'\]'
-    hashAccessNumber  = identifier + r'\{'  + r'(' + number + r'|' + identifier + r')' + r'\}'
-    hashAccessString  = identifier + r'\{'  + r'(' + string + r'|' + identifier + r')' + r'\}'
+    hashAccess        = identifier + r'\{'  + r'(.*)' + r'\}'
 
     reString         = re.compile(r'^' + string + r'$')
     reNumber         = re.compile(r'^' + number + r'$')
     reScalar         = re.compile(r'^' + identifier + r'$')
     reArray          = re.compile(r'^' + arrayAccess + r'$')
-    reHashNum        = re.compile(r'^' + hashAccessNumber + r'$')
-    reHashString     = re.compile(r'^' + hashAccessString + r'$')
+    reHash           = re.compile(r'^' + hashAccess + r'$')
 
     def __init__(self, inpString, stringAllocate=True):
         self.inpString = inpString
@@ -206,7 +204,7 @@ class Entity(object):
             self.value  = repr(inpString[:inpString.find('[')])[1:-1]
             self.key    = Entity(repr(inpString[inpString.find('[')+1:-1])[1:-1])
 
-        elif Entity.reHashNum.match(inpString) or Entity.reHashString.match(inpString): # Is a hashmap
+        elif Entity.reHash.match(inpString):
             self.entity = Entity.HASH_VARIABLE
             self.value  = repr(inpString[:inpString.find('{')])[1:-1]
             self.key    = Entity(repr(inpString[inpString.find('{')+1:-1])[1:-1])
@@ -615,7 +613,10 @@ class Instr3AC(object):
             return "GOTO %s"%(self.jmpTarget)
 
         if self.instrType.is_CALL():
-            return "call %s %s"%(str(self.jmpLabel), self.dest)
+            if self.dest.is_VARIABLE():
+                return "%s = call %s"%(self.dest, str(self.jmpLabel))
+            else:
+                return "call %s %s"%(str(self.jmpLabel), self.dest)
 
         if self.instrType.is_RETURN():
             return "return %s"%(self.inp1)

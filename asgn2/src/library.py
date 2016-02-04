@@ -62,6 +62,7 @@ def Translate_Printf(parameters):
     hashArgs = []
     for (idx, param) in enumerate(parameters):
         if param.is_HASH_VARIABLE():
+            G.AsmText.AddComment("Readying hash argument : %s"%(param))
             tempReg = REG.tmpUsageRegs[-1]
             regComp = REG.tmpUsageRegs[2]
 
@@ -85,18 +86,18 @@ def Translate_Printf(parameters):
 
     # We now push the values into the arg registers (if any)
     for hashReg, idx in hashArgs:
-        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[idx], hashReg))
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[idx], hashReg), "Moving hash parameters to argument registers")
 
     for (idx, param) in enumerate(parameters):
         if not param.is_HASH_VARIABLE():
+            G.AsmText.AddComment("Readying argument : %s"%(param))
             if idx <= 3:
-                codeSegment += param.CopyToRegister(REG.argRegs[idx])
-
+                G.AsmText.AddText(param.CopyToRegister(REG.argRegs[idx])[:-1])
             else:
-                codeSegment += param.CopyToMemory(str(4*idx)+"($fp)")
+                G.AsmText.AddText(param.CopyToMemory(str(4*idx)+"($fp)")[:-1])
 
-    codeSegment += G.INDENT + "jal Printf\n"
-    G.AsmText.AddText(codeSegment)
+    G.AsmText.AddText(" ")
+    G.AsmText.AddText(G.INDENT + "jal Printf")
 
     # Add library for linking
     G.LibraryFunctionsUsed.add("Printf")
@@ -119,6 +120,7 @@ def Translate_Scanf(parameters):
     hashArgs = []
     for (idx, param) in enumerate(parameters):
         if param.is_HASH_VARIABLE():
+            G.AsmText.AddComment("Readying hash argument : %s"%(param))
             tempReg = REG.tmpUsageRegs[-1]
             regComp = REG.tmpUsageRegs[2]
 
@@ -150,18 +152,19 @@ def Translate_Scanf(parameters):
 
     # We now push the values into the arg registers (if any)
     for hashReg, idx in hashArgs:
-        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[idx], hashReg))
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[idx], hashReg), "Copy hash parameters to arg registers")
 
     for (idx, param) in enumerate(parameters):
         if not param.is_HASH_VARIABLE():
+            G.AsmText.AddComment("Readying argument : %s"%(param))
             if idx <= 3:
-                codeSegment += param.CopyAddressToRegister(REG.argRegs[idx])
+                G.AsmText.AddText(param.CopyAddressToRegister(REG.argRegs[idx])[:-1])
 
             else:
-                codeSegment += param.CopyAddressToMemory(str(4*idx)+"($fp)")
+                G.AsmText.AddText(param.CopyAddressToMemory(str(4*idx)+"($fp)")[:-1])
 
-    codeSegment += G.INDENT + "jal Scanf\n"
-    G.AsmText.AddText(codeSegment)
+    G.AsmText.AddText(" ")
+    G.AsmText.AddText(G.INDENT + "jal Scanf")
 
     # Add library for linking
     G.LibraryFunctionsUsed.add("Scanf")
@@ -240,6 +243,7 @@ def Translate_addElement(targetVar, idxRegister, valReg):
 
     G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[3], valReg), "Load value")
 
+    G.AsmText.AddText(" ")
     G.AsmText.AddText(G.INDENT + "jal addElement", "Add element to the hash")
 
     # Add library for linking
@@ -254,7 +258,7 @@ def Translate_alloc(targetReg, size=4):
     else:
         G.AsmText.AddText(size.CopyToRegister(REG.argRegs[0])[:-1], "Load memory size to be allocated")
 
-    G.AsmText.AddText(G.INDENT + "jal alloc", " call malloc")
+    G.AsmText.AddText(G.INDENT + "jal alloc", "Call malloc")
     G.AsmText.AddText(G.INDENT + "move %s, %s"%(targetReg, REG.v0), "Load returned pointer into targetReg")
 
     # Add library for linking

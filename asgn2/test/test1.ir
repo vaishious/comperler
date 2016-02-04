@@ -1,16 +1,10 @@
 1, =, a, 2
 2, =, b, 7
-11, declare, arr[40]
-3, =, +, a, a, arr[1]
-18, =, +, arr[1], a, arr[1]
-19, =, +, a, a, 1
-4, ifgoto, leq, a, 0, 2
-10, ifgoto, eq, a, b, 14
-12, ifgoto, geq, b, 292, 13
-13, ifgoto, lt, a, b, 12
-14, ifgoto, gt, 275, a, 10
-5, call, foo
-6, exit
-7, label, foo
-8, print, "%d %d %d", a, b, c, d, e, f
-9, ret
+3, =, c, 10
+4, declare, h{0}
+5, call, foo, h{1}
+6, print, "h{1}: %d\n", h{1}
+7, ret
+8, label, foo
+9, print, "A: %d B: %d C: %d\n", a, b, c
+10, ret, 20

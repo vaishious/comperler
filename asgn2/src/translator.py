@@ -38,7 +38,7 @@ def Translate(instr):
         G.CurrRegAddrTable.DumpDirtyVars()
         G.AsmText.AddText(G.INDENT + "jal %s"%(instr.jmpLabel))
         if instr.dest.is_VARIABLE():
-            GenCode_CallAssignment(instr.dest)
+            GenCode_CallAssignment(instr)
 
     elif instr.instrType.is_PRINT():
         G.CurrRegAddrTable.DumpDirtyVars()
@@ -256,7 +256,7 @@ def Translate_ASSIGN(instr):
             GenCode_3OPASSIGN(instr, regComp, reg1, reg2)
 
             LIB.Translate_alloc(reg1) # Hack for now. Everything has been dumped anyway
-            G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(regComp, reg1), "Load key into allocated memory")
+            G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(regComp, reg1), "Load value into allocated memory")
 
             LIB.Translate_addElement(instr.dest, tempReg, reg1) 
 
@@ -307,7 +307,7 @@ def Translate_ASSIGN(instr):
                 G.AsmText.AddText(G.INDENT + "move %s, %s"%(regComp, reg1))
 
             LIB.Translate_alloc(REG.tmpUsageRegs[0])
-            G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(regComp, REG.tmpUsageRegs[0]), "Load key into allocated memory")
+            G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(regComp, REG.tmpUsageRegs[0]), "Load value into allocated memory")
 
             LIB.Translate_addElement(instr.dest, tempReg, REG.tmpUsageRegs[0]) 
 
@@ -344,7 +344,7 @@ def Translate_ASSIGN(instr):
             GenCode_2OPASSIGN(instr, regComp, reg1)
 
             LIB.Translate_alloc(REG.tmpUsageRegs[1])
-            G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(regComp, REG.tmpUsageRegs[1]), "Load key into allocated memory")
+            G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(regComp, REG.tmpUsageRegs[1]), "Load value into allocated memory")
 
             LIB.Translate_addElement(instr.dest, tempReg, REG.tmpUsageRegs[1])
 
@@ -352,69 +352,87 @@ def Translate_ASSIGN(instr):
 def GenCode_3OPASSIGN(instr, regDest, regInp1, regInp2):
     # Currently ignoring overflows everywhere
     if instr.opType.is_PLUS():
-        G.AsmText.AddText(G.INDENT + "addu %s, %s, %s"%(regDest, regInp1, regInp2))
+        G.AsmText.AddText(G.INDENT + "addu %s, %s, %s"%(regDest, regInp1, regInp2),
+                                     "%s = %s + %s"%(instr.dest, instr.inp1, instr.inp2))
 
     elif instr.opType.is_MINUS():
-        G.AsmText.AddText(G.INDENT + "subu %s, %s, %s"%(regDest, regInp1, regInp2))
+        G.AsmText.AddText(G.INDENT + "subu %s, %s, %s"%(regDest, regInp1, regInp2),
+                                     "%s = %s - %s"%(instr.dest, instr.inp1, instr.inp2))
 
     elif instr.opType.is_MULT():
         G.AsmText.AddText(G.INDENT + "multu %s, %s"%(regInp1, regInp2))
-        G.AsmText.AddText(G.INDENT + "mflo %s"%(regDest))
+        G.AsmText.AddText(G.INDENT + "mflo %s"%(regDest),
+                                     "%s = %s * %s"%(instr.dest, instr.inp1, instr.inp2))
 
     elif instr.opType.is_DIV():
         G.AsmText.AddText(G.INDENT + "divu %s, %s"%(regInp1, regInp2))
-        G.AsmText.AddText(G.INDENT + "mflo %s"%(regDest))
+        G.AsmText.AddText(G.INDENT + "mflo %s"%(regDest),
+                                     "%s = %s / %s"%(instr.dest, instr.inp1, instr.inp2))
 
     elif instr.opType.is_MOD():
         G.AsmText.AddText(G.INDENT + "divu %s, %s"%(regInp1, regInp2))
-        G.AsmText.AddText(G.INDENT + "mfhi %s"%(regDest))
+        G.AsmText.AddText(G.INDENT + "mfhi %s"%(regDest),
+                                     "%s = %s % %s"%(instr.dest, instr.inp1, instr.inp2))
 
     elif instr.opType.is_LT():
-        G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(regDest, regInp1, regInp2))
+        G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(regDest, regInp1, regInp2),
+                                     "%s = %s < %s"%(instr.dest, instr.inp1, instr.inp2))
 
     elif instr.opType.is_GT():
-        G.AsmText.AddText(G.INDENT + "sgt %s, %s, %s"%(regDest, regInp1, regInp2))
+        G.AsmText.AddText(G.INDENT + "sgt %s, %s, %s"%(regDest, regInp1, regInp2),
+                                     "%s = %s > %s"%(instr.dest, instr.inp1, instr.inp2))
 
     elif instr.opType.is_GEQ():
-        G.AsmText.AddText(G.INDENT + "sge %s, %s, %s"%(regDest, regInp1, regInp2))
+        G.AsmText.AddText(G.INDENT + "sge %s, %s, %s"%(regDest, regInp1, regInp2),
+                                     "%s = %s >= %s"%(instr.dest, instr.inp1, instr.inp2))
 
     elif instr.opType.is_LEQ():
-        G.AsmText.AddText(G.INDENT + "sle %s, %s, %s"%(regDest, regInp1, regInp2))
+        G.AsmText.AddText(G.INDENT + "sle %s, %s, %s"%(regDest, regInp1, regInp2),
+                                     "%s = %s <= %s"%(instr.dest, instr.inp1, instr.inp2))
 
     elif instr.opType.is_EQ():
-        G.AsmText.AddText(G.INDENT + "seq %s, %s, %s"%(regDest, regInp1, regInp2))
+        G.AsmText.AddText(G.INDENT + "seq %s, %s, %s"%(regDest, regInp1, regInp2),
+                                     "%s = %s == %s"%(instr.dest, instr.inp1, instr.inp2))
 
     elif instr.opType.is_NE():
-        G.AsmText.AddText(G.INDENT + "sne %s, %s, %s"%(regDest, regInp1, regInp2))
+        G.AsmText.AddText(G.INDENT + "sne %s, %s, %s"%(regDest, regInp1, regInp2),
+                                     "%s = %s != %s"%(instr.dest, instr.inp1, instr.inp2))
 
     elif instr.opType.is_BOR():
-        G.AsmText.AddText(G.INDENT + "or %s, %s, %s"%(regDest, regInp1, regInp2))
+        G.AsmText.AddText(G.INDENT + "or %s, %s, %s"%(regDest, regInp1, regInp2),
+                                     "%s = %s | %s"%(instr.dest, instr.inp1, instr.inp2))
 
     elif instr.opType.is_BAND():
-        G.AsmText.AddText(G.INDENT + "and %s, %s, %s"%(regDest, regInp1, regInp2))
+        G.AsmText.AddText(G.INDENT + "and %s, %s, %s"%(regDest, regInp1, regInp2),
+                                     "%s = %s & %s"%(instr.dest, instr.inp1, instr.inp2))
 
     elif instr.opType.is_BXOR():
-        G.AsmText.AddText(G.INDENT + "xor %s, %s, %s"%(regDest, regInp1, regInp2))
+        G.AsmText.AddText(G.INDENT + "xor %s, %s, %s"%(regDest, regInp1, regInp2),
+                                     "%s = %s ^ %s"%(instr.dest, instr.inp1, instr.inp2))
 
     elif instr.opType.is_LSHIFT():
-        G.AsmText.AddText(G.INDENT + "sllv %s, %s, %s"%(regDest, regInp1, regInp2))
+        G.AsmText.AddText(G.INDENT + "sllv %s, %s, %s"%(regDest, regInp1, regInp2),
+                                     "%s = %s << %s"%(instr.dest, instr.inp1, instr.inp2))
 
     elif instr.opType.is_RSHIFT():
-        G.AsmText.AddText(G.INDENT + "slrv %s, %s, %s"%(regDest, regInp1, regInp2))
+        G.AsmText.AddText(G.INDENT + "slrv %s, %s, %s"%(regDest, regInp1, regInp2),
+                                     "%s = %s >> %s"%(instr.dest, instr.inp1, instr.inp2))
 
 def GenCode_2OPASSIGN(instr, regDest, regInp):
     # Ignoring Overflow in negation operation
     if instr.opType.is_BNOT():
-        G.AsmText.AddText(G.INDENT + "not %s, %s"%(regDest, regInp))
+        G.AsmText.AddText(G.INDENT + "not %s, %s"%(regDest, regInp),
+                                     "%s = ~%s"%(instr.dest, instr.inp1))
 
     elif instr.opType.is_MINUS():
-        G.AsmText.AddText(G.INDENT + "negu %s, %s"%(regDest, regInp))
+        G.AsmText.AddText(G.INDENT + "negu %s, %s"%(regDest, regInp),
+                                     "%s = -%s"%(instr.dest, instr.inp1))
 
 def GenCode_CallAssignment(instr):
 
     # TODO : Handle array and hash variables in the destination
     if instr.dest.is_SCALAR_VARIABLE():
-        G.AsmText.AddText(G.INDENT + "sw %s, %s"%(reg3, ASM.GetVarAddr(instr.dest)))
+        G.AsmText.AddText(G.INDENT + "sw %s, %s"%(REG.v0, ASM.GetVarAddr(instr.dest)), "Store function return directly into the memory address")
 
     elif instr.dest.is_ARRAY_VARIABLE():
         tempReg = REG.tmpUsageRegs[-1]
@@ -423,7 +441,19 @@ def GenCode_CallAssignment(instr):
         SetupDestRegArray(instr.dest, regComp, tempReg)
 
         # Store back the value
-        G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(REG.v0, regComp))
+        G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(REG.v0, regComp), "Store function return directly into the memory address")
+
+    elif instr.dest.is_HASH_VARIABLE():
+        tempReg = REG.tmpUsageRegs[-1]
+        regComp = REG.tmpUsageRegs[2]
+
+        SetupDestRegHash(instr.dest, regComp, tempReg) # The value of key is stored in tempReg
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.tmpUsageRegs[1], REG.v0), "Store return value of function call so it is not overwritten by alloc")
+
+        LIB.Translate_alloc(REG.tmpUsageRegs[0])
+        G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(REG.tmpUsageRegs[1], REG.tmpUsageRegs[0]), "Load value into allocated memory")
+
+        LIB.Translate_addElement(instr.dest, tempReg, REG.tmpUsageRegs[0]) 
 
 def SetupDestRegScalar(dest, tmpReg=REG.tmpUsageRegs[-1]):
     return SetupRegister(dest, tmpReg)

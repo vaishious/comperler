@@ -152,6 +152,9 @@ class TextRegion(object):
         self.fileName = fileName
 
     def AddText(self, text, sideComment = ""):
+        if text == "":
+            return 
+
         if sideComment:
             self.text += '{:<30} # {}'.format(text, sideComment)
         else:
@@ -170,17 +173,24 @@ class TextRegion(object):
         for func in G.LibraryFunctionsUsed:
             self.text += "\n" + LIB.LinkFunction(func)
 
+    def WriteFunctionStacks(self):
+        for (func, space) in G.StackSpaceMap.items():
+            stackSpaceRequired = space
+
+            loadSegment = "%s:\n"%(func)
+            loadSegment += G.INDENT + ".frame $fp,%d,$31\n"%(stackSpaceRequired) 
+            loadSegment += G.INDENT + "subu $sp, $sp, %d\n"%(stackSpaceRequired) 
+            loadSegment += G.INDENT + "sw $fp, %d($sp)\n"%(stackSpaceRequired-4)
+            loadSegment += G.INDENT + "sw $ra, %d($sp)\n"%(stackSpaceRequired-8)
+            loadSegment += G.INDENT + "move $fp, $sp\n"
+
+            self.text = self.text.replace("%s:\n"%(func), loadSegment)
+
     def WriteToFile(self):
+        self.text = ".text\nmain:\n" + self.text
 
-        stackSpaceRequired = G.StackSpaceMap['main']
-        loadSegment = ".text\nmain:\n"
-        loadSegment += G.INDENT + ".frame $fp,%d,$31\n"%(stackSpaceRequired) 
-        loadSegment += G.INDENT + "subu $sp, $sp, %d\n"%(stackSpaceRequired) 
-        loadSegment += G.INDENT + "sw $fp, %d($sp)\n"%(stackSpaceRequired-4)
-        loadSegment += G.INDENT + "sw $ra, %d($sp)\n"%(stackSpaceRequired-8)
-        loadSegment += G.INDENT + "move $fp, $sp\n"
+        self.WriteFunctionStacks()
 
-        self.text = loadSegment + self.text
         self.AddLibraryFunctions()
         print self.text
 

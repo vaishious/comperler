@@ -98,8 +98,8 @@ class BasicBlock(object):
 
             # Perform register allocation
             regAllocCode = self.RegisterAllocate()
-            if regAllocCode:
-                G.AsmText.AddText(regAllocCode)
+            #if regAllocCode:
+                #G.AsmText.AddText(regAllocCode)
 
             self.UpdateRegAddrDescriptor()
 
@@ -138,10 +138,12 @@ class BasicBlock(object):
 
             # Set global details and add code for loading if necessary
             G.AllocMap[varName] = reg
+            G.AsmText.AddText(getRegCode[:-1], "Freeing space for %s"%varName)
             codeSegment += getRegCode
 
             if not isLoaded:
                 codeSegment += reg.LoadVar(varName)
+                G.AsmText.AddText(reg.LoadVar(varName)[:-1], "Load %s into %s"%(varName, reg)) 
 
 
             alreadyAllocatedRegs += [reg.regName]
@@ -153,10 +155,12 @@ class BasicBlock(object):
 
             # Set global details and add code for loading if necessary
             G.AllocMap[varName] = reg
+            G.AsmText.AddText(getRegCode[:-1], "Freeing space for %s"%varName)
             codeSegment += getRegCode
 
             if not isLoaded:
                 codeSegment += reg.LoadVar(varName)
+                G.AsmText.AddText(reg.LoadVar(varName)[:-1], "Load %s into %s"%(varName, reg)) 
 
             alreadyAllocatedRegs += [reg.regName]
 
@@ -209,6 +213,7 @@ class BasicBlock(object):
             # Set global details and add code for loading if necessary
             G.AllocMap[varName] = reg
             codeSegment += getRegCode
+            G.AsmText.AddText(getRegCode[:-1], "Freeing space for %s"%varName)
 
         return codeSegment
 
@@ -467,7 +472,7 @@ class RegAddrDescriptor(object):
 
         for (var,value) in self.addrMap.iteritems():
             if not value[0]:
-                G.AsmText.AddText(value[1].SpillVar(var))
+                G.AsmText.AddText(value[1].SpillVar(var)[:-1], "Spilling variable %s\n"%var)
 
     def Reset(self):
         # Since everything is global, all of them reside in memory
