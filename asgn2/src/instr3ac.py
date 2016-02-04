@@ -16,6 +16,7 @@ import registers as REG
 import library as LIB
 import mips_assembly as ASM
 import basic_blocks as BB
+import translator as TRANS
 # List of Imports End
 
 
@@ -166,9 +167,9 @@ class Entity(object):
     string            = r'(' + singleQuoteString + r'|' + doubleQuoteString + r')'
     number            = r'[-]?\d+'
     identifier        = r'[a-zA-Z_][a-zA-Z0-9_]*'
-    arrayAccess       = identifier + r'\[' + number + r'\]'
-    hashAccessNumber  = identifier + r'\{' + number + r'\}'
-    hashAccessString  = identifier + r'\{' + string + '\}'
+    arrayAccess       = identifier + r'\[' + r'(' + number + r'|' + identifier + r')' + r'\]'
+    hashAccessNumber  = identifier + r'\{'  + r'(' + number + r'|' + identifier + r')' + r'\}'
+    hashAccessString  = identifier + r'\{'  + r'(' + string + r'|' + identifier + r')' + r'\}'
 
     reString         = re.compile(r'^' + string + r'$')
     reNumber         = re.compile(r'^' + number + r'$')

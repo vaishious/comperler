@@ -67,6 +67,7 @@ def Translate_Printf(parameters):
             if param.key.is_NUMBER():
                 G.AsmText.AddText(tempReg.LoadImmediate(param.key.value), "Load key for the hash access")
             else:
+                import translator as TRANS          # Top level import throws an error
                 regInp = TRANS.SetupRegister(param.key, regComp)
                 G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp), "Load key for the hash access")
 
