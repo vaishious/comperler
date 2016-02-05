@@ -41,12 +41,18 @@ def Translate(instr):
             GenCode_CallAssignment(instr)
 
     elif instr.instrType.is_PRINT():
+        if instr.ContainsHashAccess():
+            G.CurrRegAddrTable.DumpDirtyVars()
         LIB.Translate_Printf(instr.IOArgs)
 
     elif instr.instrType.is_READ():
+        if instr.ContainsHashAccess():
+            G.CurrRegAddrTable.DumpDirtyVars()
         LIB.Translate_Scanf(instr.IOArgs)
 
     elif instr.instrType.is_ALLOC():
+        if instr.ContainsHashAccess():
+            G.CurrRegAddrTable.DumpDirtyVars()
         GenCode_Alloc(instr)
 
     elif instr.instrType.is_RETURN():
@@ -65,14 +71,6 @@ def Translate(instr):
     elif instr.instrType.is_IFGOTO():
         # We can safely clobber registers here because this is the last
         # instruction of the basic block
-        if (instr.dest.is_HASH_VARIABLE() or 
-            instr.inp1.is_HASH_VARIABLE() or
-            instr.inp2.is_HASH_VARIABLE()):
-
-            G.CurrRegAddrTable.DumpDirtyVars()
-            G.CurrRegAddrTable.Reset()
-            G.AllocMap = {}
-
         G.CurrRegAddrTable.DumpDirtyVars()
         Translate_IFGOTO(instr)
 

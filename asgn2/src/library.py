@@ -58,8 +58,8 @@ def Translate_Printf(parameters):
     # We necessarily have to fetch the hash variable first.
     # This is because it involves function calls which will overwrite 
     # the argument registers if we setup some other argument of Printf first
-    hashRegs = [REG.s3, REG.s2, REG.s1, REG.s0]
-    hashArgs = []
+    extraRegs = [REG.s3, REG.s2, REG.s1, REG.s0]
+    criticalArgs = []
     for (idx, param) in enumerate(parameters):
         if param.is_HASH_VARIABLE():
             G.AsmText.AddComment("Readying hash argument : %s"%(param))
@@ -76,19 +76,28 @@ def Translate_Printf(parameters):
 
             if idx <= 3:
                 # These are callee saved registers anyway
-                reg = hashRegs.pop()
-                hashArgs += [[reg, idx]]
+                reg = extraRegs.pop()
+                criticalArgs += [[reg, idx]]
                 G.AsmText.AddText(G.INDENT + "move %s, %s"%(reg, regComp))
 
             else:
                 G.AsmText.AddText(G.INDENT + "sw %s, %s"%(regComp, str(4*idx)+"($fp)"))
 
+        elif param.ContainsHashAccess():
+            G.AsmText.AddComment("Readying argument : %s"%(param))
+            if idx <= 3:
+                reg = extraRegs.pop()
+                criticalArgs += [[reg, idx]]
+                G.AsmText.AddText(param.CopyToRegister(reg)[:-1])
+            else:
+                G.AsmText.AddText(param.CopyToMemory(str(4*idx)+"($fp)")[:-1])
+
     # We now push the values into the arg registers (if any)
-    for hashReg, idx in hashArgs:
-        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[idx], hashReg), "Moving hash parameters to argument registers")
+    for extraReg, idx in criticalArgs:
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[idx], extraReg), "Moving critical parameters to argument registers")
 
     for (idx, param) in enumerate(parameters):
-        if not param.is_HASH_VARIABLE():
+        if not param.ContainsHashAccess():
             G.AsmText.AddComment("Readying argument : %s"%(param))
             if idx <= 3:
                 G.AsmText.AddText(param.CopyToRegister(REG.argRegs[idx])[:-1])
@@ -116,8 +125,8 @@ def Translate_Scanf(parameters):
 
     codeSegment = ""
 
-    hashRegs = [REG.s3, REG.s2, REG.s1, REG.s0]
-    hashArgs = []
+    extraRegs = [REG.s3, REG.s2, REG.s1, REG.s0]
+    criticalArgs = []
     for (idx, param) in enumerate(parameters):
         if param.is_HASH_VARIABLE():
             G.AsmText.AddComment("Readying hash argument : %s"%(param))
@@ -126,8 +135,8 @@ def Translate_Scanf(parameters):
 
             if idx <= 3:
                 # These are callee saved registers anyway
-                reg = hashRegs.pop()
-                hashArgs += [[reg, idx]]
+                reg = extraRegs.pop()
+                criticalArgs += [[reg, idx]]
 
                 # First allocate memory and store the address returned in the callee saved register
                 # We will use this address for our Scanf call
@@ -150,12 +159,21 @@ def Translate_Scanf(parameters):
 
                 Translate_addElement(param, tempReg, regComp)
 
+        elif param.ContainsHashAccess():
+            G.AsmText.AddComment("Readying argument : %s"%(param))
+            if idx <= 3:
+                reg = extraRegs.pop()
+                criticalArgs += [[reg, idx]]
+                G.AsmText.AddText(param.CopyAddressToRegister(reg)[:-1])
+            else:
+                G.AsmText.AddText(param.CopyAddressToMemory(str(4*idx)+"($fp)")[:-1])
+
     # We now push the values into the arg registers (if any)
-    for hashReg, idx in hashArgs:
-        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[idx], hashReg), "Copy hash parameters to arg registers")
+    for extraReg, idx in criticalArgs:
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[idx], extraReg), "Copy critical parameters to arg registers")
 
     for (idx, param) in enumerate(parameters):
-        if not param.is_HASH_VARIABLE():
+        if not param.ContainsHashAccess():
             G.AsmText.AddComment("Readying argument : %s"%(param))
             if idx <= 3:
                 G.AsmText.AddText(param.CopyAddressToRegister(REG.argRegs[idx])[:-1])

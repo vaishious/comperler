@@ -1,11 +1,11 @@
 1, =, a, 2
-2, =, i, 1000
+2, =, i, 10
 5, call, fact, a
 7, ret
 8, label, fact
 9, print, "%d\n", i
 11, =, -, i, i, 1
 12, ifgoto, >, i, 0, 14
-13, label, ret
 10, ret, 0
 14, call, fact, a
+15, ret

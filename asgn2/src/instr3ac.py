@@ -410,6 +410,15 @@ class Entity(object):
         else:
             return []
 
+    def ContainsHashAccess(self):
+        if self.is_HASH_VARIABLE():
+            return True
+
+        if self.is_ARRAY_VARIABLE():
+            return self.key.ContainsHashAccess()
+
+        return False
+
 class Instr3AC(object):
     """ 
         An object of this class represents a single instruction in 3AC format
@@ -616,6 +625,22 @@ class Instr3AC(object):
 
 
         self.symTable = BB.SymSetProperties(oldTable, newProperties)
+
+    def ContainsHashAccess(self):
+        if self.dest.ContainsHashAccess():
+            return True
+
+        if self.inp1.ContainsHashAccess():
+            return True
+
+        if self.inp2.ContainsHashAccess():
+            return True
+
+        for arg in self.IOArgs:
+            if arg.ContainsHashAccess():
+                return True
+
+        return False
 
     def PrettyPrint(self):
         if self.instrType.is_IFGOTO():

@@ -1,4 +1,4 @@
-8, declare, g[10]
+8, declare, g[11]
 9, declare, h{0}
 2, declare, i{""}
 1, =, a, 10
@@ -11,4 +11,7 @@
 14, print, "The %d, i.e. g[%d]=%d\n", a, h{a}, g[h{a}]
 16, =, -, a, a, 1
 17, ifgoto, >, a, 0, 14
-10, exit
+39, print, "Enter a number from 1-10 : "
+40, read, "%d", h{5}
+41, print, "Square of %d is %d\n", h{5}, g[h{5}] 
+10, return
