@@ -170,7 +170,7 @@ class Entity(object):
     string            = r'(' + singleQuoteString + r'|' + doubleQuoteString + r')'
     number            = r'[-]?\d+'
     identifier        = r'[a-zA-Z_][a-zA-Z0-9_]*'
-    arrayAccess       = identifier + r'\[' + r'(' + number + r'|' + identifier + r')' + r'\]'
+    arrayAccess       = identifier + r'\[' + r'(.*)' + r'\]'
     hashAccess        = identifier + r'\{'  + r'(.*)' + r'\}'
 
     reString         = re.compile(r'^' + string + r'$')

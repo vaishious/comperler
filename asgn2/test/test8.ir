@@ -1,0 +1,14 @@
+8, declare, g[10]
+9, declare, h{0}
+2, declare, i{""}
+1, =, a, 10
+12, =, h{a}, a
+20, =, *, b, a, a
+15, =, g[h{a}], b
+13, =, -, a, a, 1
+11, ifgoto, >, a, 0, 12
+18, =, a, 10
+14, print, "The %d, i.e. g[%d]=%d\n", a, h{a}, g[h{a}]
+16, =, -, a, a, 1
+17, ifgoto, >, a, 0, 14
+10, exit
