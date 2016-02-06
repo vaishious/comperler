@@ -71,6 +71,14 @@ def Translate(instr):
     elif instr.instrType.is_IFGOTO():
         # We can safely clobber registers here because this is the last
         # instruction of the basic block
+        if (instr.dest.is_HASH_VARIABLE() or 
+            instr.inp1.is_HASH_VARIABLE() or
+            instr.inp2.is_HASH_VARIABLE()):
+
+            G.CurrRegAddrTable.DumpDirtyVars()
+            G.CurrRegAddrTable.Reset()
+            G.AllocMap = {}
+
         G.CurrRegAddrTable.DumpDirtyVars()
         Translate_IFGOTO(instr)
 
@@ -370,7 +378,7 @@ def GenCode_3OPASSIGN(instr, regDest, regInp1, regInp2):
     elif instr.opType.is_MOD():
         G.AsmText.AddText(G.INDENT + "divu %s, %s"%(regInp1, regInp2))
         G.AsmText.AddText(G.INDENT + "mfhi %s"%(regDest),
-                                     "%s = %s % %s"%(instr.dest, instr.inp1, instr.inp2))
+                                     "%s = %s mod %s"%(instr.dest, instr.inp1, instr.inp2))
 
     elif instr.opType.is_LT():
         G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(regDest, regInp1, regInp2),
@@ -416,6 +424,9 @@ def GenCode_3OPASSIGN(instr, regDest, regInp1, regInp2):
         G.AsmText.AddText(G.INDENT + "slrv %s, %s, %s"%(regDest, regInp1, regInp2),
                                      "%s = %s >> %s"%(instr.dest, instr.inp1, instr.inp2))
 
+    else:
+        raise Exception("%s : Instruction not recognized in 3OPAssign"%(instr))
+
 def GenCode_2OPASSIGN(instr, regDest, regInp):
     # Ignoring Overflow in negation operation
     if instr.opType.is_BNOT():
@@ -425,6 +436,9 @@ def GenCode_2OPASSIGN(instr, regDest, regInp):
     elif instr.opType.is_MINUS():
         G.AsmText.AddText(G.INDENT + "negu %s, %s"%(regDest, regInp),
                                      "%s = -%s"%(instr.dest, instr.inp1))
+    
+    else:
+        raise Exception("%s : Instruction not recognized in 2OPAssign"%(instr))
 
 def GenCode_CallAssignment(instr):
 
