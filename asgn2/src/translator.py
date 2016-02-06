@@ -421,7 +421,7 @@ def GenCode_3OPASSIGN(instr, regDest, regInp1, regInp2):
                                      "%s = %s << %s"%(instr.dest, instr.inp1, instr.inp2))
 
     elif instr.opType.is_RSHIFT():
-        G.AsmText.AddText(G.INDENT + "slrv %s, %s, %s"%(regDest, regInp1, regInp2),
+        G.AsmText.AddText(G.INDENT + "srlv %s, %s, %s"%(regDest, regInp1, regInp2),
                                      "%s = %s >> %s"%(instr.dest, instr.inp1, instr.inp2))
 
     else:
