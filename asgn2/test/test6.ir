@@ -1,11 +1,11 @@
 1, =, a, 2
-2, =, i, 10
+2, =, i, 10							# Depth of recursion of the function.
 5, call, fact, a
 7, ret
 8, label, fact
-9, print, "%d\n", i
+9, print, "%d\n", i					# Print the depth from this function
 11, =, -, i, i, 1
-12, ifgoto, >, i, 0, 14
+12, ifgoto, >, i, 0, 14				# Jump to the call of the recursive function if i>0
 10, ret, 0
-14, call, fact, a
-15, ret
+14, call, fact, a					# Call the function recursively
+15, ret, 0

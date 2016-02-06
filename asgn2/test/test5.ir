@@ -1,4 +1,4 @@
-0, declare, h{''} #Declare as string
+0, declare, h{''} #Declare keys are strings
 1, =, h{"abcd"}, 2
 2, =, *, h{"abcd"}, 9, h{"abcd"} 
 3, =, a, h{"abcde"}
