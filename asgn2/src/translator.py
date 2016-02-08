@@ -231,7 +231,7 @@ def Translate_ASSIGN(instr):
         # dest = inp1 OP inp2
 
         reg1 = SetupRegister(instr.inp1,REG.tmpUsageRegs[0])
-        if (instr.opType.is_DIV() or instr.opType.is_MULT):
+        if (instr.opType.is_DIV() or instr.opType.is_MULT() or instr.opType.is_MOD()):
             reg2 = SetupRegister(instr.inp2,REG.tmpUsageRegs[1])
         else:
             reg2 = SetupRegister(instr.inp2,REG.tmpUsageRegs[1], useImmediate=True)
@@ -375,7 +375,7 @@ def GenCode_3OPASSIGN(instr, regDest, regInp1, regInp2):
                                      "%s = %s / %s"%(instr.dest, instr.inp1, instr.inp2))
 
     elif instr.opType.is_MOD():
-        G.AsmText.AddText(G.INDENT + "divu %s, %s"%(regInp1, regInp2))
+        G.AsmText.AddText(G.INDENT + "div %s, %s"%(regInp1, regInp2))
         G.AsmText.AddText(G.INDENT + "mfhi %s"%(regDest),
                                      "%s = %s mod %s"%(instr.dest, instr.inp1, instr.inp2))
 
