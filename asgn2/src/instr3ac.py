@@ -32,21 +32,22 @@ class InstrType(object):
 
 
     # Enum for holding these values
-    ASSIGN, IFGOTO, GOTO, CALL, RETURN, PRINT, READ, LABEL, DECLARE, EXIT, NOP, ALLOC = range(12)
+    ASSIGN, IFGOTO, STRIFGOTO, GOTO, CALL, RETURN, PRINT, READ, LABEL, DECLARE, EXIT, NOP, ALLOC = range(13)
 
     typeMap = { 
-                "="       : ASSIGN,        "assign" : ASSIGN,       "ASSIGN"   : ASSIGN,
-                "ifgoto"  : IFGOTO,                                 "IFGOTO"   : IFGOTO,
-                "goto"    : GOTO,          "jmp"    : GOTO,         "GOTO"     : GOTO, 
-                "call"    : CALL,                                   "CALL"     : CALL,
-                "ret"     : RETURN,        "return" : RETURN,       "RETURN"   : RETURN,       "RET" : RETURN,
-                "print"   : PRINT,         "printf" : PRINT,        "PRINT"    : PRINT,
-                "read"    : READ,          "scanf"  : READ,         "READ"     : READ,
-                "label"   : LABEL,         "Label"  : LABEL,        "LABEL"    : LABEL,
-                "declare" : DECLARE,       "decl"   : DECLARE,      "DECLARE"  : DECLARE,
-                "alloc"   : ALLOC,         "malloc" : ALLOC,        "ALLOC"    : ALLOC,
-                "exit"    : EXIT,          "quit"   : EXIT,         "EXIT"     : EXIT,         "done" : EXIT,
-                "nop"     : NOP,           ""       : NOP,          "NOP"      : NOP
+                "="          : ASSIGN,        "assign" : ASSIGN,       "ASSIGN"    : ASSIGN,
+                "ifgoto"     : IFGOTO,                                 "IFGOTO"    : IFGOTO,
+                "strifgoto"  : STRIFGOTO,                              "STRIFGOTO" : STRIFGOTO,    "str_ifgoto" : STRIFGOTO,
+                "goto"       : GOTO,          "jmp"    : GOTO,         "GOTO"      : GOTO, 
+                "call"       : CALL,                                   "CALL"      : CALL,
+                "ret"        : RETURN,        "return" : RETURN,       "RETURN"    : RETURN,       "RET" : RETURN,
+                "print"      : PRINT,         "printf" : PRINT,        "PRINT"     : PRINT,
+                "read"       : READ,          "scanf"  : READ,         "READ"      : READ,
+                "label"      : LABEL,         "Label"  : LABEL,        "LABEL"     : LABEL,
+                "declare"    : DECLARE,       "decl"   : DECLARE,      "DECLARE"   : DECLARE,
+                "alloc"      : ALLOC,         "malloc" : ALLOC,        "ALLOC"     : ALLOC,
+                "exit"       : EXIT,          "quit"   : EXIT,         "EXIT"      : EXIT,         "done" : EXIT,
+                "nop"        : NOP,           ""       : NOP,          "NOP"       : NOP
               }
 
     def __init__(self, inpType):
@@ -57,20 +58,22 @@ class InstrType(object):
         
         self.instrType = InstrType.typeMap[inpType]
 
-    def is_ASSIGN(self)  : return self.instrType == InstrType.ASSIGN
-    def is_IFGOTO(self)  : return self.instrType == InstrType.IFGOTO
-    def is_GOTO(self)    : return self.instrType == InstrType.GOTO
-    def is_CALL(self)    : return self.instrType == InstrType.CALL
-    def is_RETURN(self)  : return self.instrType == InstrType.RETURN
-    def is_PRINT(self)   : return self.instrType == InstrType.PRINT
-    def is_READ(self)    : return self.instrType == InstrType.READ
-    def is_ALLOC(self)    : return self.instrType == InstrType.ALLOC
-    def is_LABEL(self)   : return self.instrType == InstrType.LABEL
-    def is_DECLARE(self) : return self.instrType == InstrType.DECLARE
-    def is_EXIT(self)    : return self.instrType == InstrType.EXIT
-    def is_NOP(self)     : return self.instrType == InstrType.NOP
+    def is_ASSIGN(self)     : return self.instrType == InstrType.ASSIGN
+    def is_IFGOTO(self)     : return self.instrType == InstrType.IFGOTO
+    def is_STRIFGOTO(self)  : return self.instrType == InstrType.STRIFGOTO
+    def is_GOTO(self)       : return self.instrType == InstrType.GOTO
+    def is_CALL(self)       : return self.instrType == InstrType.CALL
+    def is_RETURN(self)     : return self.instrType == InstrType.RETURN
+    def is_PRINT(self)      : return self.instrType == InstrType.PRINT
+    def is_READ(self)       : return self.instrType == InstrType.READ
+    def is_ALLOC(self)      : return self.instrType == InstrType.ALLOC
+    def is_LABEL(self)      : return self.instrType == InstrType.LABEL
+    def is_DECLARE(self)    : return self.instrType == InstrType.DECLARE
+    def is_EXIT(self)       : return self.instrType == InstrType.EXIT
+    def is_NOP(self)        : return self.instrType == InstrType.NOP
 
     def is_JMP(self)     : return (self.instrType == InstrType.IFGOTO or
+                                   self.instrType == InstrType.STRIFGOTO or
                                    self.instrType == InstrType.GOTO or
                                    self.instrType == InstrType.RETURN or
                                    self.instrType == InstrType.EXIT or
@@ -475,7 +478,7 @@ class Instr3AC(object):
         # Set instruction type
         self.instrType = InstrType(str(inpTuple[1]))         # Custom exception raised in case of error
 
-        if self.instrType.is_IFGOTO(): 
+        if self.instrType.is_IFGOTO() or self.instrType.is_STRIFGOTO(): 
             # Line Number, IFGOTO, OP, inp1, inp2, Target
             DEBUG.Assert(len(inpTuple) == 6, "Expected 6-tuple for ifgoto") 
             self.opType     =  OperationType(str(inpTuple[2]))
@@ -643,7 +646,7 @@ class Instr3AC(object):
         return False
 
     def PrettyPrint(self):
-        if self.instrType.is_IFGOTO():
+        if self.instrType.is_IFGOTO() or self.instrType.is_STRIFGOTO():
             return "If ( %s %s %s ) GOTO %s"%(self.inp1, self.opType, self.inp2, self.jmpTarget)
 
         if self.instrType.is_GOTO():

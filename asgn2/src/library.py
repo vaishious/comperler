@@ -194,10 +194,10 @@ def Translate_Scanf(parameters):
 def Translate_StrCmp(str1, str2):
     """ Custom version of strCmp can be found in hashlib.c in the lib/ folder """
 
-    DEBUG.Assert(str1.is_STRING(), "First argument of StrCmp has to be a string")
-    DEBUG.Assert(str2.is_STRING(), "Second argument of StrCmp has to be a string")
+    DEBUG.Assert(str1.is_VARIABLE(), "First argument of StrCmp has to be a variable")
+    DEBUG.Assert(str2.is_VARIABLE(), "Second argument of StrCmp has to be a variable")
 
-    G.StackSpaceMap[G.CurrFunction] = max(G.StackSpaceMap[G.CurrFunction], 4*len(parameters))
+    G.StackSpaceMap[G.CurrFunction] = max(G.StackSpaceMap[G.CurrFunction], 2)
 
     codeSegment = ""
 

@@ -1,4 +1,4 @@
-	.file	1 "libstring.c"
+	.file	1 "../asgn2/lib/libstring.c"
 	.text
 	.align	2
 	.globl	strCmp
@@ -12,48 +12,56 @@ strCmp:
 	move	$fp,$sp
 	sw	$4,16($fp)
 	sw	$5,20($fp)
+	sw	$0,0($fp)
 $L2:
-	lw	$2,16($fp)
-	lw	$3,20($fp)
-	lb	$4,0($2)
-	lb	$2,0($3)
-	bne	$4,$2,$L3
-	lw	$2,16($fp)
+	lw	$3,16($fp)
+	lw	$2,0($fp)
+	addu	$2,$3,$2
 	lb	$2,0($2)
-	bne	$2,$0,$L4
-	j	$L3
-$L4:
-	lw	$2,16($fp)
-	addu	$2,$2,1
-	sw	$2,16($fp)
-	lw	$2,20($fp)
-	addu	$2,$2,1
-	sw	$2,20($fp)
-	j	$L2
-$L3:
-	lw	$2,16($fp)
+	bne	$2,$0,$L5
 	lw	$3,20($fp)
-	lb	$4,0($2)
-	lb	$2,0($3)
-	slt	$2,$2,$4
+	lw	$2,0($fp)
+	addu	$2,$3,$2
+	lb	$2,0($2)
+	bne	$2,$0,$L5
+	j	$L3
+$L5:
+	lw	$3,16($fp)
+	lw	$2,0($fp)
+	addu	$4,$3,$2
+	lw	$3,20($fp)
+	lw	$2,0($fp)
+	addu	$2,$3,$2
+	lb	$3,0($4)
+	lb	$2,0($2)
+	slt	$2,$2,$3
 	beq	$2,$0,$L6
 	li	$2,1			# 0x1
-	sw	$2,0($fp)
+	sw	$2,4($fp)
 	j	$L1
 $L6:
-	lw	$2,16($fp)
-	lw	$3,20($fp)
-	lb	$4,0($2)
-	lb	$2,0($3)
-	slt	$2,$4,$2
-	beq	$2,$0,$L7
-	li	$2,-1			# 0xffffffffffffffff
-	sw	$2,0($fp)
-	j	$L1
-$L7:
-	sw	$0,0($fp)
-$L1:
+	lw	$3,16($fp)
 	lw	$2,0($fp)
+	addu	$4,$3,$2
+	lw	$3,20($fp)
+	lw	$2,0($fp)
+	addu	$2,$3,$2
+	lb	$3,0($4)
+	lb	$2,0($2)
+	slt	$2,$3,$2
+	beq	$2,$0,$L4
+	li	$2,-1			# 0xffffffffffffffff
+	sw	$2,4($fp)
+	j	$L1
+$L4:
+	lw	$2,0($fp)
+	addu	$2,$2,1
+	sw	$2,0($fp)
+	j	$L2
+$L3:
+	sw	$0,4($fp)
+$L1:
+	lw	$2,4($fp)
 	move	$sp,$fp
 	lw	$fp,8($sp)
 	addu	$sp,$sp,16

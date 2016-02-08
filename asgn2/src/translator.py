@@ -68,7 +68,7 @@ def Translate(instr):
         G.AsmText.AddText(G.INDENT + "lw $ra, %d($sp)"%(stackSpaceRequired-8), "Reload the ra of current call")
         G.AsmText.AddText(G.INDENT + "jr $ra")
 
-    elif instr.instrType.is_IFGOTO():
+    elif instr.instrType.is_IFGOTO() or instr.instrType.is_STRIFGOTO():
         # We can safely clobber registers here because this is the last
         # instruction of the basic block
         if (instr.dest.is_HASH_VARIABLE() or 
@@ -95,7 +95,6 @@ def Translate(instr):
 
 def SetupRegister(inp, regComp, tempReg=REG.t9, useImmediate=False):
     # Setup the input in a register, using regComp, if required
-    # TODO : Handle Array and Hash Variables
 
     reg = None
     if inp.is_SCALAR_VARIABLE():
@@ -210,7 +209,7 @@ def Translate_IFGOTO(instr):
             G.AsmText.AddText(G.INDENT + "bgtz %s, %s"%(reg1, instr.jmpTarget))
 
 def StrTranslate_IFGOTO(instr):
-    if instr.inp1.is_STRING() and instr.inp2.is_STRING():
+    if instr.instrType.is_STRIFGOTO():
         LIB.Translate_StrCmp(instr.inp1,instr.inp2)
         if instr.opType.is_EQ():
             G.AsmText.AddText(G.INDENT + "beqz $v0, %s"%(instr.jmpTarget))
@@ -237,7 +236,6 @@ def Translate_ASSIGN(instr):
         else:
             reg2 = SetupRegister(instr.inp2,REG.tmpUsageRegs[1], useImmediate=True)
 
-        # TODO : Handle array and hash variables in the destination
         if instr.dest.is_SCALAR_VARIABLE():
             reg3 = SetupDestRegScalar(instr.dest, REG.tmpUsageRegs[-1])
             GenCode_3OPASSIGN(instr, reg3, reg1, reg2)
@@ -272,7 +270,6 @@ def Translate_ASSIGN(instr):
     elif instr.opType.is_NONE():
         # dest = inp1
 
-        # TODO : Handle array and hash variables in the destination
         if instr.dest.is_SCALAR_VARIABLE():
             reg3 = SetupDestRegScalar(instr.dest, REG.tmpUsageRegs[-1])
             if instr.inp1.is_NUMBER():
@@ -324,7 +321,6 @@ def Translate_ASSIGN(instr):
         # dest = OP inp1
         reg1 = SetupRegister(instr.inp1,REG.tmpUsageRegs[0])
 
-        # TODO : Handle array and hash variables in the destination
         if instr.dest.is_SCALAR_VARIABLE():
             reg3 = SetupDestRegScalar(instr.dest, REG.tmpUsageRegs[-1])
             GenCode_2OPASSIGN(instr, reg3, reg1)
@@ -445,7 +441,6 @@ def GenCode_2OPASSIGN(instr, regDest, regInp):
 
 def GenCode_CallAssignment(instr):
 
-    # TODO : Handle array and hash variables in the destination
     if instr.dest.is_SCALAR_VARIABLE():
         G.AsmText.AddText(G.INDENT + "sw %s, %s"%(REG.v0, ASM.GetVarAddr(instr.dest)), "Store function return directly into the memory address")
 
@@ -472,7 +467,6 @@ def GenCode_CallAssignment(instr):
 
 def GenCode_Alloc(instr):
 
-    # TODO : Handle array and hash variables in the destination
     if instr.dest.is_SCALAR_VARIABLE():
         LIB.Translate_alloc(REG.v0, instr.inp1)
         G.AsmText.AddText(G.INDENT + "sw %s, %s"%(REG.v0, ASM.GetVarAddr(instr.dest)), "Store function return directly into the memory address")

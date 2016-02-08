@@ -224,7 +224,6 @@ class BasicBlock(object):
             # No allocation has been performed
             return
 
-
         if G.CurrInstruction.inp1.is_SCALAR_VARIABLE():
             varName = G.CurrInstruction.inp1.value
             G.CurrRegAddrTable.SetRegister(varName, G.AllocMap[varName])
@@ -234,6 +233,11 @@ class BasicBlock(object):
             G.CurrRegAddrTable.SetRegister(varName, G.AllocMap[varName])
 
         if G.CurrInstruction.dest.is_SCALAR_VARIABLE():
+
+            if G.CurrInstruction.instrType.is_CALL() or G.CurrInstruction.instrType.is_ALLOC():
+                # End of a basic block anyway. Don't update anything
+                return
+
             varName = G.CurrInstruction.dest.value
 
             if G.CurrInstruction.isCopy:
