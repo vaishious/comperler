@@ -246,6 +246,15 @@ class Register(object):
         codeStore = G.INDENT + "sw %s, %s\n"%(self, GetVarAddr(var))
         return codeStore
 
+    def GetEarliestNextUse(self):
+        regVars = G.CurrRegAddrTable.GetVars(self)
+        minNextUse = G.CurrSymbolTable.GetNextUse(regVars[0])
+
+        for i in xrange(1, len(regVars)):
+            minNextUse = min(minNextUse, G.CurrSymbolTable.GetNextUse(regVars[i]))
+
+        return minNextUse
+
     def Score(self, targetVar, isInputVar=True, ):
         """ Use the current global reg-addr descriptor to calculate scores """
 
@@ -272,8 +281,13 @@ class Register(object):
                 if not G.CurrRegAddrTable.IsElsewhere(var, self.regName):
 
                     # Variables are global. We need to write it back
-                    codeSegment += self.SpillVar(var)
-                    score += 1
+
+                    if G.CurrSymbolTable.IsLiveOnExit(var):
+                        # However we need to write it back only if it is live on exit
+                        # If not, it means that it is overwritten in this block itself
+
+                        codeSegment += self.SpillVar(var)
+                        score += 1
 
                 continue
 

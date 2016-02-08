@@ -291,6 +291,13 @@ def FindBestRegister(varName, alreadyAllocatedRegs, alreadyLoadedReg=None):
             currCodeSegment = regCodeSeg
             currRemoveSet = regRemoveSet[:]
 
+        elif score == currMinScore:
+             #Compare next use values
+            if currReg.GetEarliestNextUse() < reg.GetEarliestNextUse():
+                currReg = reg
+                currCodeSegment = regCodeSeg
+                currRemoveSet = regRemoveSet[:]
+
     for removeVar in currRemoveSet:
         # Update Register-Address-Table 
         #print "REMOVING : ", removeVar
@@ -340,6 +347,13 @@ class SymbolTable(object):
             varName = varName.value
 
         return self.symTable[varName][0] and (self.symTable[varName][1] != -1)
+
+    def IsLiveOnExit(self, varName):
+        if type(varName) == INSTRUCTION.Entity:
+            DEBUG.Assert(varName.is_SCALAR_VARIABLE(), "Entity is not a scalar variable")
+            varName = varName.value
+
+        return self.symTable[varName][0]
 
     def PrettyPrint(self):
         """ For debugging purposes """
