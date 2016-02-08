@@ -1,6 +1,7 @@
+# Test string keys for hashes
 0, declare, h{''} #Declare keys are strings
 1, =, h{"abcd"}, 2
 2, =, *, h{"abcd"}, 9, h{"abcd"} 
-3, =, a, h{"abcde"}
+3, =, a, h{"abcd"}
 4, print, "%d\n", a
 5, exit

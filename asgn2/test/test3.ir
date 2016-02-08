@@ -1,11 +1,50 @@
-2, =, a, 23
-3, =, b, 37
-4, =, /, a, a, b
-5, call, foo
-6, ret
-7, label, foo
-8, =, *, a, a, b
-9, =, <=, a, a, a
-10, =, <<, b, b, 4
-11, =, ^, a, a, b
-12, ret
+# Test for all arithmetic functions
+0, =, e, 2
+1, =, a, 20
+2, =, b, 50
+3, =, c, -40
+
+
+4, =, +, d, a, b
+5, print, "%d + %d : %d\n", a, b, d
+
+6, =, +, d, a, c
+7, print, "%d + %d : %d\n", a, c, d
+
+8, =, -, d, a, b
+9, print, "%d - %d : %d\n", a, b, d
+
+10, =, -, d, a, c
+11, print, "%d - %d : %d\n", a, c, d
+
+12, =, *, d, a, b
+13, print, "%d * %d : %d\n", a, b, d
+
+14, =, *, d, a, b
+15, print, "%d * %d : %d\n", a, b, d
+
+16, =, /, d, c, a
+17, print, "%d / %d : %d\n", c, a, d
+
+18, =, /, d, b, a
+19, print, "%d / %d : %d\n", b, a, d
+
+20, =, %, d, b, a
+21, print, "%d mod %d : %d\n", b, a, d
+
+22, =, |, d, b, a
+23, print, "%d | %d : %d\n", b, a, d
+
+24, =, &, d, b, a
+25, print, "%d & %d : %d\n", b, a, d
+
+26, =, ^, d, b, a
+27, print, "%d ^ %d : %d\n", b, a, d
+
+28, =, <<, d, b, e
+29, print, "%d << %d : %d\n", b, e, d
+
+30, =, >>, d, b, e
+31, print, "%d >> %d : %d\n", b, e, d
+
+32, return

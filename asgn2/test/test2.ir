@@ -1,6 +1,8 @@
+# Test for scalar, hash, and array assignments and basic arithmetic.
+# Test for library function performance with hash and array arguments
 1, declare, g[6]
-2, declare, h{0}
-3, declare, i{""}
+2, declare, h{0}  # Declare hash "h" with only integer values as keys
+3, declare, i{""} # Declare hash "i" with only string values as keys
 4, =, i{"a"}, 10
 5, =, i{"b"}, 20
 6, =, i{"c"}, 40
@@ -16,10 +18,10 @@
 15, =, -, g[3], i{"e"}, i{"f"}
 16, =, /, g[4], i{"g"}, i{"h"}
 17, =, %, g[5], i{"i"}, i{"j"}
-18, =, <<, h{g[1]}, g[2], 1					# hash keys as array values
-19, =, >>, h{g[3]}, g[4], 1
+18, =, <<, h{g[1]}, g[2], 1    # Multiply by 2
+19, =, >>, h{g[3]}, g[5], 1    # Divide by 2
 20, =, a, 1
-21, ifgoto, ==, a, 6, 25
+21, ifgoto, ==, a, 6, 25       # Loop from 1 to 5
 22, print, "g[%d] = %d\n", a, g[a]
 23, =, +, a, a, 1
 24, goto, 21

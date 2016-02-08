@@ -1,14 +1,14 @@
 8, declare, g[11]
 9, declare, h{0}
 2, declare, i{""}
-1, =, a, 10							# Compute the first 10 squares
+1, =, a, 10        # Compute the first 10 squares
 12, =, h{a}, a
 20, =, *, b, a, a
 15, =, g[h{a}], b
 13, =, -, a, a, 1
 11, ifgoto, >, a, 0, 12
 18, =, a, 10
-14, print, "The %d, i.e. g[%d]=%d\n", a, h{a}, g[h{a}]			# Hash value as array index used
+14, print, "The square of %d, i.e. g[%d]=%d\n", a, h{a}, g[h{a}] # Hash value as array index used
 16, =, -, a, a, 1
 17, ifgoto, >, a, 0, 14
 39, print, "Enter a number from 1-10 : "

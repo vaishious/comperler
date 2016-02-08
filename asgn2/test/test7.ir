@@ -1,3 +1,4 @@
+# Program to stress register allocation
 1, =, b, 1
 2, =, c, 2
 3, =, d, 3
@@ -997,5 +998,8 @@
 997, =, jmb, 997
 998, =, kmb, 998
 999, =, lmb, 999
+1002, =, +, z, z, ab
+1003, =, +, z, z, p
+1004, =, +, z, z, fmb
 1001, print, "%d\n", z
 1000, return

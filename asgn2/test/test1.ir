@@ -1,3 +1,4 @@
+# TEST1 : Simple test for scalar and hash assignments
 1, =, a, 2
 2, =, b, 7
 3, =, c, 10

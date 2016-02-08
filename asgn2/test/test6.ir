@@ -1,3 +1,4 @@
+# Program to test recursion
 1, =, a, 2
 2, =, i, 10							# Depth of recursion of the function.
 5, call, fact, a

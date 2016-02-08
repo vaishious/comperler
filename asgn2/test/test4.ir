@@ -1,3 +1,4 @@
+# Program to print factorial
 1, print, "Enter a number : "
 2, read, "%d", a
 3, =, f, 1
