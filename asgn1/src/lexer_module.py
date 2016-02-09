@@ -73,20 +73,41 @@ class Lexer(object): # Inheriting from object provides extra functionality
        'LBLOCK', 'RBLOCK',
        'LBRACKET', 'RBRACKET',
        'SEMICOLON', 'COLON',
-       'COMMA'
+       'COMMA',
+
+       # For error checking
+       'WRONG_ID'
+
     ) + keywords + string_relops
 
     # Tokens which are passed to functions
-    identifier  = r'[a-zA-Z_][a-zA-Z0-9_]*'
-    variable    = r'[$@%][ ]*' + identifier
-    dereference = r'[$@%][$ ]*' + identifier
-    reference   = r'[\\][ ]*' + dereference
-    octal       = r'0[0-7]+'
-    hexadecimal = r'0[xX][0-9a-fA-F]+'
-    binary      = r'0[bB][01]+'
-    number      = r'\d+'
+    wrong_identifier = r'[0-9]+[a-zA-Z_][a-zA-Z0-9_]*'
+    identifier       = r'[a-zA-Z_][a-zA-Z0-9_]*'
+    variable         = r'[$@%][ ]*' + identifier
+    dereference      = r'[$@%][$ ]*' + identifier
+    reference        = r'[\\][ ]*' + dereference
+    octal            = r'0[0-7]+'
+    hexadecimal      = r'0[xX][0-9a-fA-F]+'
+    binary           = r'0[bB][01]+'
+    number           = r'\d+'
 
     # Variables (Let's work with this for now)
+    @lex.TOKEN(hexadecimal)
+    def t_HEXADECIMAL(self, t):
+        t.value = int(t.value, 16)
+        return t
+
+    @lex.TOKEN(binary)
+    def t_BINARY(self, t):
+        t.value = int(t.value, 2)
+        return t
+
+    # Incorrect identifier checking at the highest priority
+    @lex.TOKEN(wrong_identifier)
+    def t_WRONG_ID(self, t):
+        print("Illegal identifier '%s' at line %d" % (t.value, t.lexer.lineno))
+        sys.exit(1)
+
     # Adding these as functions as we can play with priority
     @lex.TOKEN(variable)
     def t_VARIABLE(self, t):
@@ -121,16 +142,6 @@ class Lexer(object): # Inheriting from object provides extra functionality
     @lex.TOKEN(octal)
     def t_OCTAL(self, t):
         t.value = int(t.value, 8)
-        return t
-
-    @lex.TOKEN(hexadecimal)
-    def t_HEXADECIMAL(self, t):
-        t.value = int(t.value, 16)
-        return t
-
-    @lex.TOKEN(binary)
-    def t_BINARY(self, t):
-        t.value = int(t.value, 2)
         return t
 
     @lex.TOKEN(number)
