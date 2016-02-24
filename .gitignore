@@ -24,3 +24,7 @@ nytprof.out
 #Python stuff
 
 *.pyc
+
+# Parsing
+parser.out
+parsetab.py
