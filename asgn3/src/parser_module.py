@@ -27,16 +27,36 @@ class Parser(object):
         ''' empty : '''
 
     def p_statement(self, p):
-        ''' statement : assignment 
+        ''' statement : assignment SEMICOLON
                       | branch 
+                      | loop
         '''
 
-    # Dummy rule for now
+    # assignment -> empty is the no assignment. Can be used in init of for loops
     def p_assignment(self, p):
-        ''' assignment : VARIABLE EQUALS expression SEMICOLON '''
+        ''' assignment : var assign-sep expression
+                       | var assign-sep expression COMMA assignment
+                       | empty
+        '''
+
+    def p_assign_sep(self, p):
+        ''' assign-sep : EQUALS
+                       | TIMESEQUAL
+                       | DIVEQUAL
+                       | MODEQUAL
+                       | PLUSEQUAL
+                       | MINUSEQUAL
+                       | LSHIFTEQUAL
+                       | RSHIFTEQUAL
+                       | ANDEQUAL
+                       | XOREQUAL
+                       | OREQUAL
+                       | EXPEQUAL
+        '''
 
     def p_expression(self, p):
-        ''' expression : expression PLUS expression
+        ''' expression : LPAREN expression RPAREN
+                       | expression PLUS expression
                        | expression MINUS expression
                        | expression TIMES expression
                        | expression DIVIDE expression
@@ -47,14 +67,15 @@ class Parser(object):
                        | expression BXOR expression
                        | expression LSHIFT expression
                        | expression RSHIFT expression
-                       | LPAREN expression RPAREN
                        | function-call
                        | var
                        | const
         '''
 
+    # Add parentheses to this
     def p_condition(self, p):
-        ''' condition : condition AND condition
+        ''' condition : LPAREN condition RPAREN
+                      | condition AND condition
                       | condition OR condition
                       | expression LT expression
                       | expression GT expression
@@ -94,7 +115,16 @@ class Parser(object):
         '''
 
     def p_unless(self, p):
-        ''' unless : UNLESS LPAREN condition RPAREN codeblock else '''
+        ''' unless : UNLESS LPAREN condition RPAREN codeblock elsif '''
+
+    # Foreach-loop semantics need to be good
+    def p_loop(self, p):
+        ''' loop : WHILE LPAREN condition RPAREN codeblock
+                 | UNTIL LPAREN condition RPAREN codeblock
+                 | FOR LPAREN assignment SEMICOLON condition SEMICOLON assignment RPAREN codeblock
+                 | FOREACH var LPAREN var RPAREN codeblock
+                 | DO codeblock WHILE LPAREN condition RPAREN SEMICOLON
+        '''
 
     # Need to handle many other cases
     def p_variable(self, p):
@@ -119,6 +149,9 @@ class Parser(object):
 
     def p_function_call(self, p):
         ''' function-call : ID LPAREN expression RPAREN '''
+
+    def p_function_def(self, p):
+        ''' function-def : SUB ID codeblock '''
 
     # Error rule for syntax errors
     def p_error(self, p):
