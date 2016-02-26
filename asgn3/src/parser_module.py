@@ -5,14 +5,19 @@ class Parser(object):
     precedence = (
         ('left', 'OR'),
         ('left', 'AND'),
+        ('left', 'COMMA', 'HASHARROW'),
+        ('right', 'EQUALS', 'TIMESEQUAL', 'DIVEQUAL', 'MODEQUAL', 'PLUSEQUAL', 'MINUSEQUAL',
+                  'LSHIFTEQUAL','RSHIFTEQUAL', 'ANDEQUAL', 'XOREQUAL', 'OREQUAL', 'EXPEQUAL'),
         ('left', 'BOR', 'BXOR'),
         ('left', 'BAND'),
         ('nonassoc', 'EQ', 'NE', 'CMP', 'STREQ', 'STRNE', 'STRCMP'),
         ('nonassoc', 'LT', 'GT', 'LE', 'GE', 'STRLT', 'STRGT', 'STRLE', 'STRGE'),
         ('left', 'LSHIFT', 'RSHIFT'),
-        ('left', 'PLUS', 'MINUS'),
-        ('left', 'TIMES','DIVIDE', 'MODULUS'),
+        ('left', 'PLUS', 'MINUS', 'DOT'),
+        ('left', 'TIMES','DIVIDE', 'MODULUS', 'REPEAT'),
         ('right', 'EXPONENT'),
+        ('nonassoc', 'INC', 'DEC'),
+        ('left', 'ARROW'),
     )
 
     def p_statements(self, p):
@@ -27,16 +32,9 @@ class Parser(object):
         ''' empty : '''
 
     def p_statement(self, p):
-        ''' statement : assignment SEMICOLON
+        ''' statement : expression SEMICOLON
                       | branch 
                       | loop
-        '''
-
-    # assignment -> empty is the no assignment. Can be used in init of for loops
-    def p_assignment(self, p):
-        ''' assignment : var assign-sep expression
-                       | var assign-sep expression COMMA assignment
-                       | empty
         '''
 
     def p_assign_sep(self, p):
@@ -54,6 +52,8 @@ class Parser(object):
                        | EXPEQUAL
         '''
 
+    # (expression -> var assign-sep expression) corresponds to scalar assignment expression
+    # (expression -> var EQUALS LPAREN expression RPAREN) corresponds to array and hash assignment expressions
     def p_expression(self, p):
         ''' expression : LPAREN expression RPAREN
                        | expression PLUS expression
@@ -67,9 +67,30 @@ class Parser(object):
                        | expression BXOR expression
                        | expression LSHIFT expression
                        | expression RSHIFT expression
+                       | expression DOT expression
+                       | expression REPEAT expression
+                       | expression HASHARROW expression
+                       | expression RANGE expression
+
+                       | var INC
+                       | INC var
+                       | var DEC
+                       | DEC var
+                       | MINUS expression
+                       | PLUS expression
+
+                       | expression COMMA expression
+                       | expression COMMA empty
+
                        | function-call
-                       | var
                        | const
+                       | var
+                       | var ARROW var
+                       | var LBRACKET expression RBRACKET
+                       | var LBLOCK expression RBLOCK
+
+                       | var assign-sep expression
+                       | var EQUALS LPAREN expression RPAREN
         '''
 
     # Add parentheses to this
@@ -121,7 +142,7 @@ class Parser(object):
     def p_loop(self, p):
         ''' loop : WHILE LPAREN condition RPAREN codeblock
                  | UNTIL LPAREN condition RPAREN codeblock
-                 | FOR LPAREN assignment SEMICOLON condition SEMICOLON assignment RPAREN codeblock
+                 | FOR LPAREN expression SEMICOLON condition SEMICOLON expression RPAREN codeblock
                  | FOREACH var LPAREN var RPAREN codeblock
                  | DO codeblock WHILE LPAREN condition RPAREN SEMICOLON
         '''
