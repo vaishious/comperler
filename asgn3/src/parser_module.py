@@ -8,6 +8,7 @@ class Parser(object):
         ('left', 'COMMA', 'HASHARROW'),
         ('right', 'EQUALS', 'TIMESEQUAL', 'DIVEQUAL', 'MODEQUAL', 'PLUSEQUAL', 'MINUSEQUAL',
                   'LSHIFTEQUAL','RSHIFTEQUAL', 'ANDEQUAL', 'XOREQUAL', 'OREQUAL', 'EXPEQUAL'),
+        ('nonassoc', 'RANGE'),
         ('left', 'BOR', 'BXOR'),
         ('left', 'BAND'),
         ('nonassoc', 'EQ', 'NE', 'CMP', 'STREQ', 'STRNE', 'STRCMP'),
@@ -33,6 +34,7 @@ class Parser(object):
 
     def p_statement(self, p):
         ''' statement : expression SEMICOLON
+                      | function-def
                       | branch 
                       | loop
         '''
@@ -89,8 +91,7 @@ class Parser(object):
                        | var LBRACKET expression RBRACKET
                        | var LBLOCK expression RBLOCK
 
-                       | var assign-sep expression
-                       | var EQUALS LPAREN expression RPAREN
+                       | var assign-sep expression %prec EQUALS
         '''
 
     # Add parentheses to this
@@ -136,7 +137,7 @@ class Parser(object):
         '''
 
     def p_unless(self, p):
-        ''' unless : UNLESS LPAREN condition RPAREN codeblock elsif '''
+        ''' unless : UNLESS LPAREN condition RPAREN codeblock elsif else '''
 
     # Foreach-loop semantics need to be good
     def p_loop(self, p):
