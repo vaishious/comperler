@@ -10,7 +10,8 @@ else {
 	$mno = 5;
 }
 
-unless ($abc == $pqr) {
+$a = $b < $c;
+unless (($abc == $pqr) || !($ab && $cd)) {
 	$mno = 6;
 }
 else {

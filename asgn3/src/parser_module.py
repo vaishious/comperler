@@ -40,6 +40,7 @@ class Parser(object):
     def p_statement(self, p):
         ''' statement : expression SEMICOLON
                       | function-def
+                      | function-ret
                       | branch 
                       | loop
         '''
@@ -78,6 +79,30 @@ class Parser(object):
                        | expression REPEAT expression
                        | expression HASHARROW expression
                        | expression RANGE expression
+                       | BNOT expression
+
+                       | expression LAND expression
+                       | expression AND expression
+                       | expression LOR expression
+                       | expression OR expression
+                       | expression XOR expression
+                       | LNOT expression
+                       | NOT expression
+
+                       | expression LT expression
+                       | expression GT expression
+                       | expression LE expression
+                       | expression GE expression
+                       | expression EQ expression
+                       | expression NE expression
+                       | expression CMP expression
+                       | expression STRLT expression
+                       | expression STRGT expression
+                       | expression STRLE expression
+                       | expression STRGE expression
+                       | expression STREQ expression
+                       | expression STRNE expression
+                       | expression STRCMP expression
 
                        | var INC
                        | INC var
@@ -88,6 +113,7 @@ class Parser(object):
 
                        | expression COMMA expression
                        | expression COMMA empty
+                       | ternary-op
 
                        | function-call
                        | const
@@ -99,27 +125,6 @@ class Parser(object):
                        | var assign-sep expression %prec EQUALS
         '''
 
-    # Add parentheses to this
-    def p_condition(self, p):
-        ''' condition : LPAREN condition RPAREN
-                      | condition AND condition
-                      | condition OR condition
-                      | expression LT expression
-                      | expression GT expression
-                      | expression LE expression
-                      | expression GE expression
-                      | expression EQ expression
-                      | expression NE expression
-                      | expression CMP expression
-                      | expression STRLT expression
-                      | expression STRGT expression
-                      | expression STRLE expression
-                      | expression STRGE expression
-                      | expression STREQ expression
-                      | expression STRNE expression
-                      | expression STRCMP expression
-        '''
-
     def p_branch(self, p):
         ''' branch : if-elsif-else
                    | unless
@@ -129,10 +134,10 @@ class Parser(object):
         ''' if-elsif-else : if-elsif else '''
 
     def p_if_elsif(self, p):
-        ''' if-elsif : IF LPAREN condition RPAREN codeblock elsif '''
+        ''' if-elsif : IF LPAREN expression RPAREN codeblock elsif '''
 
     def p_elsif(self, p):
-        ''' elsif : ELSIF LPAREN condition RPAREN codeblock elsif
+        ''' elsif : ELSIF LPAREN expression RPAREN codeblock elsif
                   | empty
         '''
 
@@ -142,15 +147,15 @@ class Parser(object):
         '''
 
     def p_unless(self, p):
-        ''' unless : UNLESS LPAREN condition RPAREN codeblock elsif else '''
+        ''' unless : UNLESS LPAREN expression RPAREN codeblock elsif else '''
 
     # Foreach-loop semantics need to be good
     def p_loop(self, p):
-        ''' loop : WHILE LPAREN condition RPAREN codeblock
-                 | UNTIL LPAREN condition RPAREN codeblock
-                 | FOR LPAREN expression SEMICOLON condition SEMICOLON expression RPAREN codeblock
+        ''' loop : WHILE LPAREN expression RPAREN codeblock
+                 | UNTIL LPAREN expression RPAREN codeblock
+                 | FOR LPAREN expression SEMICOLON expression SEMICOLON expression RPAREN codeblock
                  | FOREACH var LPAREN var RPAREN codeblock
-                 | DO codeblock WHILE LPAREN condition RPAREN SEMICOLON
+                 | DO codeblock WHILE LPAREN expression RPAREN SEMICOLON
         '''
 
     # Need to handle many other cases
@@ -179,6 +184,12 @@ class Parser(object):
 
     def p_function_def(self, p):
         ''' function-def : SUB ID codeblock '''
+
+    def p_function_return(self, p):
+        ''' function-ret : RETURN expression SEMICOLON '''
+
+    def p_ternary_operator(self, p):
+        ''' ternary-op : expression TERNARY_CONDOP expression COLON expression '''
 
     # Error rule for syntax errors
     def p_error(self, p):
