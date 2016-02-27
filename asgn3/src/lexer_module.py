@@ -6,7 +6,7 @@ class Lexer(object): # Inheriting from object provides extra functionality
     # List of keywords
     keywords = (
     # Logical Operator Keywords
-    'AND', 'OR',
+    'AND', 'OR', 'XOR',
 
     # Branch Keywords
     'IF', 'ELSE', 'ELSIF', 'UNLESS', 'SWITCH',
@@ -54,6 +54,9 @@ class Lexer(object): # Inheriting from object provides extra functionality
        # Arithmetic Operators
        'PLUS', 'MINUS', 'TIMES', 'DIVIDE', 'MODULUS', 'EXPONENT',
        'BOR', 'BAND', 'BNOT', 'BXOR', 'LSHIFT', 'RSHIFT',
+
+       # Logical Operators
+       'LOR', 'LAND', 'LNOT',
 
        # Relational Operators
        'LT', 'GT', 'LE', 'GE', 'EQ', 'NE', 'CMP', 'TERNARY_CONDOP',
@@ -164,6 +167,11 @@ class Lexer(object): # Inheriting from object provides extra functionality
     t_DIVIDE         = r'/'
     t_MODULUS        = r'%'
     t_EXPONENT       = r'\*\*'
+
+    # Logical Operators
+    t_LOR            = r'\|\|'
+    t_LAND           = r'&&'
+    t_LNOT           = r'!'
 
     # Bitwise Operators
     t_BOR            = r'\|'

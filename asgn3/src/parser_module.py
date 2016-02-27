@@ -3,12 +3,16 @@ import ply.yacc as yacc
 class Parser(object):
 
     precedence = (
-        ('left', 'OR'),
+        ('left', 'OR', 'XOR'),
         ('left', 'AND'),
+        ('right', 'NOT'),
         ('left', 'COMMA', 'HASHARROW'),
         ('right', 'EQUALS', 'TIMESEQUAL', 'DIVEQUAL', 'MODEQUAL', 'PLUSEQUAL', 'MINUSEQUAL',
                   'LSHIFTEQUAL','RSHIFTEQUAL', 'ANDEQUAL', 'XOREQUAL', 'OREQUAL', 'EXPEQUAL'),
+        ('right', 'TERNARY_CONDOP', 'COLON'),
         ('nonassoc', 'RANGE'),
+        ('left', 'LOR'),
+        ('left', 'LAND'),
         ('left', 'BOR', 'BXOR'),
         ('left', 'BAND'),
         ('nonassoc', 'EQ', 'NE', 'CMP', 'STREQ', 'STRNE', 'STRCMP'),
@@ -16,6 +20,7 @@ class Parser(object):
         ('left', 'LSHIFT', 'RSHIFT'),
         ('left', 'PLUS', 'MINUS', 'DOT'),
         ('left', 'TIMES','DIVIDE', 'MODULUS', 'REPEAT'),
+        ('right', 'BNOT', 'LNOT'),
         ('right', 'EXPONENT'),
         ('nonassoc', 'INC', 'DEC'),
         ('left', 'ARROW'),
