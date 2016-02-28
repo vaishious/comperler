@@ -26,16 +26,24 @@ class Parser(object):
         ('left', 'ARROW'),
     )
 
+    def p_start_state(self, p):
+        ''' start-state : statements '''
+        p[0] = ('start-state', self.get_children(p))
+        self.gen_rightmost(p[0])
+
     def p_statements(self, p):
         ''' statements : statement statements
                        | statement
         '''
+        p[0] = ('statements', self.get_children(p))
 
     def p_codeblock(self, p):
         ''' codeblock : LBLOCK statements RBLOCK '''
+        p[0] = ('codeblock', self.get_children(p))
 
     def p_empty(self, p):
         ''' empty : '''
+        p[0] = ('empty', self.get_children(p))
 
     def p_statement(self, p):
         ''' statement : expression SEMICOLON
@@ -46,6 +54,7 @@ class Parser(object):
                       | labelled-loop
                       | loop-control SEMICOLON
         '''
+        p[0] = ('statement', self.get_children(p))
 
     def p_assign_sep(self, p):
         ''' assign-sep : EQUALS
@@ -61,6 +70,7 @@ class Parser(object):
                        | OREQUAL
                        | EXPEQUAL
         '''
+        p[0] = ('assign-sep', self.get_children(p))
 
     # (expression -> var assign-sep expression) corresponds to scalar assignment expression
     # (expression -> var EQUALS LPAREN expression RPAREN) corresponds to array and hash assignment expressions
@@ -123,35 +133,43 @@ class Parser(object):
 
                        | var assign-sep expression %prec EQUALS
         '''
+        p[0] = ('expression', self.get_children(p))
 
     def p_branch(self, p):
         ''' branch : if-elsif-else
                    | unless
         '''
+        p[0] = ('branch', self.get_children(p))
 
     def p_if_elsif_else(self, p):
         ''' if-elsif-else : if-elsif else '''
+        p[0] = ('if-elsif-else', self.get_children(p))
 
     def p_if_elsif(self, p):
         ''' if-elsif : IF LPAREN expression RPAREN codeblock elsif '''
+        p[0] = ('if-elsif', self.get_children(p))
 
     def p_elsif(self, p):
         ''' elsif : ELSIF LPAREN expression RPAREN codeblock elsif
                   | empty
         '''
+        p[0] = ('elsif', self.get_children(p))
 
     def p_else(self, p):
         ''' else : ELSE codeblock
                  | empty
         '''
+        p[0] = ('else', self.get_children(p))
 
     def p_unless(self, p):
         ''' unless : UNLESS LPAREN expression RPAREN codeblock elsif else '''
+        p[0] = ('unless', self.get_children(p))
 
     def p_continue_block(self, p):
         ''' continue : CONTINUE codeblock
                      | empty
         '''
+        p[0] = ('continue', self.get_children(p))
 
     # Foreach-loop semantics need to be good
     def p_loop(self, p):
@@ -161,9 +179,11 @@ class Parser(object):
                  | FOREACH var LPAREN var RPAREN codeblock continue
                  | DO codeblock WHILE LPAREN expression RPAREN SEMICOLON
         '''
+        p[0] = ('loop', self.get_children(p))
 
     def p_labelled_loop(self, p):
         ''' labelled-loop : ID COLON loop '''
+        p[0] = ('labelled-loop', self.get_children(p))
 
     def p_loop_control_statement(self, p):
         ''' loop-control : NEXT
@@ -174,18 +194,21 @@ class Parser(object):
                          | REDO ID
                          | GOTO ID
         '''
+        p[0] = ('loop-control', self.get_children(p))
 
     def p_variable_name(self, p):
         ''' var-name : VARIABLE
                      | REFERENCE
                      | DEREFERENCE
         '''
+        p[0] = ('var-name', self.get_children(p))
 
     # For array and hash access
     def p_access(self, p):
         ''' access : LBRACKET expression RBRACKET
                    | LBLOCK expression RBLOCK
         '''
+        p[0] = ('access', self.get_children(p))
 
     # ARROW is used as follows with references
     #   $arrayref->[0] = "January";   # Array element
@@ -195,6 +218,7 @@ class Parser(object):
                 | var ARROW access
                 | var access
         '''
+        p[0] = ('var', self.get_children(p))
         # Needs verification
 
     def p_constant(self, p):
@@ -202,6 +226,7 @@ class Parser(object):
                   | SINGQUOTSTR
                   | DOUBQUOTSTR
         '''
+        p[0] = ('const', self.get_children(p))
 
     def p_numeric(self, p):
         ''' numeric : NUMBER
@@ -209,6 +234,7 @@ class Parser(object):
                     | OCTAL
                     | HEXADECIMAL
         '''
+        p[0] = ('numeric', self.get_children(p))
 
     def p_builtin_function(self, p):
         ''' builtin-func : PRINTF
@@ -218,6 +244,7 @@ class Parser(object):
                          | EXISTS
                          | DELETE
         '''
+        p[0] = ('builtin-func', self.get_children(p))
 
     # In Perl, built-in functions or functions which are declared before 
     # calling can be called without parentheses. For now, our implementation
@@ -230,15 +257,19 @@ class Parser(object):
                           | builtin-func expression %prec COMMA
         '''
         # This has gotten messy. We should handle this more cleanly.
+        p[0] = ('function-call', self.get_children(p))
 
     def p_function_def(self, p):
         ''' function-def : SUB ID codeblock '''
+        p[0] = ('function-def', self.get_children(p))
 
     def p_function_return(self, p):
         ''' function-ret : RETURN expression '''
+        p[0] = ('function-ret', self.get_children(p))
 
     def p_ternary_operator(self, p):
         ''' ternary-op : expression TERNARY_CONDOP expression COLON expression '''
+        p[0] = ('ternary-op', self.get_children(p))
 
     # Error rule for syntax errors
     def p_error(self, p):
@@ -255,3 +286,35 @@ class Parser(object):
     # A wrapper
     def parse(self, input):
         return self.parser.parse(input)
+
+    def get_children(self, p):
+        children = []
+        for i in xrange(1,len(p)):
+            children.append(p[i])
+        return children
+
+    def gen_rightmost(self, ast):
+        print "<html><body>"
+        left_symbols = [ast]
+        right_derived = []
+        while left_symbols:
+            while left_symbols and type(left_symbols[-1]) is not tuple:
+                right_derived.append(left_symbols.pop())
+
+            if left_symbols:
+                reduce_nt = left_symbols.pop()
+                for sym in left_symbols:
+                    if type(sym) is tuple:
+                        print sym[0],
+                    else:
+                        print sym,
+                print "<b>",reduce_nt[0],"</b>"
+                left_symbols += reduce_nt[1]
+
+            for term in reversed(right_derived):
+                if type(term) is tuple:
+                    print term[0],
+                else:
+                    print term,
+            print "<br><br><br>"
+        print "</body></html>"
