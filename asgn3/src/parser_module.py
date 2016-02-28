@@ -226,10 +226,10 @@ class Parser(object):
     def p_function_call(self, p):
         ''' function-call : ID LPAREN expression RPAREN
                           | ID LPAREN RPAREN
-                          | builtin-func LPAREN expression RPAREN
                           | builtin-func LPAREN RPAREN
                           | builtin-func expression %prec COMMA
         '''
+        # This has gotten messy. We should handle this more cleanly.
 
     def p_function_def(self, p):
         ''' function-def : SUB ID codeblock '''
