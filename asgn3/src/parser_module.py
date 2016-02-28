@@ -40,9 +40,11 @@ class Parser(object):
     def p_statement(self, p):
         ''' statement : expression SEMICOLON
                       | function-def
-                      | function-ret
+                      | function-ret SEMICOLON
                       | branch 
                       | loop
+                      | labelled-loop
+                      | loop-control SEMICOLON
         '''
 
     def p_assign_sep(self, p):
@@ -118,9 +120,6 @@ class Parser(object):
                        | function-call
                        | const
                        | var
-                       | var ARROW var
-                       | var LBRACKET expression RBRACKET
-                       | var LBLOCK expression RBLOCK
 
                        | var assign-sep expression %prec EQUALS
         '''
@@ -149,23 +148,55 @@ class Parser(object):
     def p_unless(self, p):
         ''' unless : UNLESS LPAREN expression RPAREN codeblock elsif else '''
 
+    def p_continue_block(self, p):
+        ''' continue : CONTINUE codeblock
+                     | empty
+        '''
+
     # Foreach-loop semantics need to be good
     def p_loop(self, p):
-        ''' loop : WHILE LPAREN expression RPAREN codeblock
+        ''' loop : WHILE LPAREN expression RPAREN codeblock continue
                  | UNTIL LPAREN expression RPAREN codeblock
                  | FOR LPAREN expression SEMICOLON expression SEMICOLON expression RPAREN codeblock
-                 | FOREACH var LPAREN var RPAREN codeblock
+                 | FOREACH var LPAREN var RPAREN codeblock continue
                  | DO codeblock WHILE LPAREN expression RPAREN SEMICOLON
         '''
 
-    # Need to handle many other cases
-    def p_variable(self, p):
-        ''' var : VARIABLE
-                | REFERENCE
-                | DEREFERENCE
+    def p_labelled_loop(self, p):
+        ''' labelled-loop : ID COLON loop '''
+
+    def p_loop_control_statement(self, p):
+        ''' loop-control : NEXT
+                         | NEXT ID
+                         | LAST 
+                         | LAST ID
+                         | REDO
+                         | REDO ID
+                         | GOTO ID
         '''
 
-    # Need to handle many other cases
+    def p_variable_name(self, p):
+        ''' var-name : VARIABLE
+                     | REFERENCE
+                     | DEREFERENCE
+        '''
+
+    # For array and hash access
+    def p_access(self, p):
+        ''' access : LBRACKET expression RBRACKET
+                   | LBLOCK expression RBLOCK
+        '''
+
+    # ARROW is used as follows with references
+    #   $arrayref->[0] = "January";   # Array element
+    #   $hashref->{"KEY"} = "VALUE";  # Hash element
+    def p_variable(self, p):
+        ''' var : var-name
+                | var ARROW access
+                | var access
+        '''
+        # Needs verification
+
     def p_constant(self, p):
         ''' const : numeric
                   | SINGQUOTSTR
@@ -179,14 +210,32 @@ class Parser(object):
                     | HEXADECIMAL
         '''
 
+    def p_builtin_function(self, p):
+        ''' builtin-func : PRINTF
+                         | PRINT
+                         | KEYS
+                         | VALUES
+                         | EXISTS
+                         | DELETE
+        '''
+
+    # In Perl, built-in functions or functions which are declared before 
+    # calling can be called without parentheses. For now, our implementation
+    # of function calls necessarily requires parentheses to be supplied for all
+    # functions except the builtin ones. They may be called without parentheses.
     def p_function_call(self, p):
-        ''' function-call : ID LPAREN expression RPAREN '''
+        ''' function-call : ID LPAREN expression RPAREN
+                          | ID LPAREN RPAREN
+                          | builtin-func LPAREN expression RPAREN
+                          | builtin-func LPAREN RPAREN
+                          | builtin-func expression %prec COMMA
+        '''
 
     def p_function_def(self, p):
         ''' function-def : SUB ID codeblock '''
 
     def p_function_return(self, p):
-        ''' function-ret : RETURN expression SEMICOLON '''
+        ''' function-ret : RETURN expression '''
 
     def p_ternary_operator(self, p):
         ''' ternary-op : expression TERNARY_CONDOP expression COLON expression '''
