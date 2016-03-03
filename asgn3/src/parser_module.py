@@ -319,18 +319,24 @@ class Parser(object):
         '''
         p[0] = ('builtin-func', self.get_children(p))
 
-    # In Perl, built-in functions or functions which are declared before 
-    # calling can be called without parentheses. For now, our implementation
-    # of function calls necessarily requires parentheses to be supplied for all
-    # functions except the builtin ones. They may be called without parentheses.
+    # Our implementation of function calls necessarily requires parentheses
+    # to be supplied for all functions.
     def p_function_call(self, p):
         ''' function-call : ID LPAREN expression RPAREN
                           | ID LPAREN RPAREN
+                          | builtin-func LPAREN expression RPAREN
                           | builtin-func LPAREN RPAREN
-                          | builtin-func expression %prec COMMA
         '''
-        # This has gotten messy. We should handle this more cleanly.
         p[0] = ('function-call', self.get_children(p))
+
+    def p_function_call_error(self, p):
+        ''' function-call : ID LPAREN error RPAREN
+                          | builtin-func LPAREN error RPAREN
+        '''
+        start, end = p.linespan(3)
+        starti, endi = p.lexspan(3)
+        self.error_seen = True
+        print "Error in statement from Line %d, Column %d to Line %d, Column %d"%(start, end, starti, endi)
 
     def p_function_def(self, p):
         ''' function-def : SUB ID codeblock '''
