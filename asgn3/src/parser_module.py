@@ -29,7 +29,8 @@ class Parser(object):
     def p_start_state(self, p):
         ''' start-state : statements '''
         p[0] = ('start-state', self.get_children(p))
-        self.gen_rightmost(p[0])
+        if self.error_seen is False:
+            self.gen_rightmost(p[0])
 
     def p_statements(self, p):
         ''' statements : statement statements
@@ -40,6 +41,14 @@ class Parser(object):
     def p_codeblock(self, p):
         ''' codeblock : LBLOCK statements RBLOCK '''
         p[0] = ('codeblock', self.get_children(p))
+
+    def p_codeblock_error(self, p):
+        ''' codeblock : LBLOCK error RBLOCK
+        '''
+        start, end = p.linespan(2)
+        starti, endi = p.lexspan(2)
+        self.error_seen = True
+        print "Error in statement from Line %d, Column %d to Line %d, Column %d"%(start, end, starti, endi)
 
     def p_empty(self, p):
         ''' empty : '''
@@ -55,6 +64,14 @@ class Parser(object):
                       | loop-control SEMICOLON
         '''
         p[0] = ('statement', self.get_children(p))
+
+    def p_statement_error(self, p):
+        ''' statement : error SEMICOLON
+        '''
+        start, end = p.linespan(1)
+        starti, endi = p.lexspan(1)
+        self.error_seen = True
+        print "Error in statement from Line %d, Column %d to Line %d, Column %d"%(start, end, starti, endi)
 
     def p_assign_sep(self, p):
         ''' assign-sep : EQUALS
@@ -73,7 +90,6 @@ class Parser(object):
         p[0] = ('assign-sep', self.get_children(p))
 
     # (expression -> var assign-sep expression) corresponds to scalar assignment expression
-    # (expression -> var EQUALS LPAREN expression RPAREN) corresponds to array and hash assignment expressions
     def p_expression(self, p):
         ''' expression : LPAREN expression RPAREN
                        | expression PLUS expression
@@ -149,11 +165,26 @@ class Parser(object):
         ''' if-elsif : IF LPAREN expression RPAREN codeblock elsif '''
         p[0] = ('if-elsif', self.get_children(p))
 
+    def p_if_elsif_error(self, p):
+        ''' if-elsif : IF LPAREN error RPAREN codeblock elsif '''
+        start, end = p.linespan(3)
+        starti, endi = p.lexspan(3)
+        self.error_seen = True
+        print "Error in statement from Line %d, Column %d to Line %d, Column %d"%(start, end, starti, endi)
+
     def p_elsif(self, p):
         ''' elsif : ELSIF LPAREN expression RPAREN codeblock elsif
                   | empty
         '''
         p[0] = ('elsif', self.get_children(p))
+
+    def p_elsif_error(self, p):
+        ''' elsif : ELSIF LPAREN error RPAREN codeblock elsif
+        '''
+        start, end = p.linespan(3)
+        starti, endi = p.lexspan(3)
+        self.error_seen = True
+        print "Error in statement from Line %d, Column %d to Line %d, Column %d"%(start, end, starti, endi)
 
     def p_else(self, p):
         ''' else : ELSE codeblock
@@ -164,6 +195,13 @@ class Parser(object):
     def p_unless(self, p):
         ''' unless : UNLESS LPAREN expression RPAREN codeblock elsif else '''
         p[0] = ('unless', self.get_children(p))
+
+    def p_unless_error(self, p):
+        ''' unless : UNLESS LPAREN error RPAREN codeblock elsif else '''
+        start, end = p.linespan(3)
+        starti, endi = p.lexspan(3)
+        self.error_seen = True
+        print "Error in statement from Line %d, Column %d to Line %d, Column %d"%(start, end, starti, endi)
 
     def p_continue_block(self, p):
         ''' continue : CONTINUE codeblock
@@ -180,6 +218,32 @@ class Parser(object):
                  | DO codeblock WHILE LPAREN expression RPAREN SEMICOLON
         '''
         p[0] = ('loop', self.get_children(p))
+
+    def p_loop_error_a(self, p):
+        ''' loop : WHILE LPAREN error RPAREN codeblock continue
+                 | UNTIL LPAREN error RPAREN codeblock
+                 | FOR LPAREN error RPAREN codeblock
+        '''
+        start, end = p.linespan(3)
+        starti, endi = p.lexspan(3)
+        self.error_seen = True
+        print "Error in statement from Line %d, Column %d to Line %d, Column %d"%(start, end, starti, endi)
+
+    def p_loop_error_b(self, p):
+        ''' loop : FOREACH var LPAREN error RPAREN codeblock continue
+        '''
+        start, end = p.linespan(4)
+        starti, endi = p.lexspan(4)
+        self.error_seen = True
+        print "Error in statement from Line %d, Column %d to Line %d, Column %d"%(start, end, starti, endi)
+
+    def p_loop_error_c(self, p):
+        ''' loop : DO codeblock WHILE LPAREN error RPAREN SEMICOLON
+        '''
+        start, end = p.linespan(5)
+        starti, endi = p.lexspan(5)
+        self.error_seen = True
+        print "Error in statement from Line %d, Column %d to Line %d, Column %d"%(start, end, starti, endi)
 
     def p_labelled_loop(self, p):
         ''' labelled-loop : ID COLON loop '''
@@ -209,6 +273,15 @@ class Parser(object):
                    | LBLOCK expression RBLOCK
         '''
         p[0] = ('access', self.get_children(p))
+
+    def p_access_error(self, p):
+        ''' access : LBRACKET error RBRACKET
+                   | LBLOCK error RBLOCK
+        '''
+        start, end = p.linespan(2)
+        starti, endi = p.lexspan(2)
+        self.error_seen = True
+        print "Error in statement from Line %d, Column %d to Line %d, Column %d"%(start, end, starti, endi)
 
     # ARROW is used as follows with references
     #   $arrayref->[0] = "January";   # Array element
@@ -276,8 +349,10 @@ class Parser(object):
         print("Syntax error in input!")
 
     # Build the parser
+    # error_seen decides if we should print the .html file or not at the end
     def build(self, **kwargs):
         self.parser = yacc.yacc(module=self, **kwargs)
+        self.error_seen = False
 
     # Set the token map which is obtained from the lexer
     def set_tokens(self, tokens):
@@ -285,7 +360,7 @@ class Parser(object):
 
     # A wrapper
     def parse(self, input):
-        return self.parser.parse(input)
+        return self.parser.parse(input, tracking=True)
 
     def get_children(self, p):
         children = []
