@@ -28,3 +28,4 @@ nytprof.out
 # Parsing
 parser.out
 parsetab.py
+*.html

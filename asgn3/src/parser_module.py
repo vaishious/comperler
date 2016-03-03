@@ -344,10 +344,6 @@ class Parser(object):
         ''' ternary-op : expression TERNARY_CONDOP expression COLON expression '''
         p[0] = ('ternary-op', self.get_children(p))
 
-    # Error rule for syntax errors
-    def p_error(self, p):
-        print("Syntax error in input!")
-
     # Build the parser
     # error_seen decides if we should print the .html file or not at the end
     def build(self, **kwargs):
@@ -359,7 +355,8 @@ class Parser(object):
         self.tokens = tokens
 
     # A wrapper
-    def parse(self, input):
+    def parse(self, input, output_file):
+        self.output_file = output_file
         return self.parser.parse(input, tracking=True)
 
     def get_children(self, p):
@@ -369,7 +366,8 @@ class Parser(object):
         return children
 
     def gen_rightmost(self, ast):
-        print "<html><body>"
+        filePtr = open(self.output_file, 'w')
+        filePtr.write("<html><body>\n")
         left_symbols = [ast]
         right_derived = []
         while left_symbols:
@@ -380,16 +378,17 @@ class Parser(object):
                 reduce_nt = left_symbols.pop()
                 for sym in left_symbols:
                     if type(sym) is tuple:
-                        print sym[0],
+                        filePtr.write(str(sym[0])+" ")
                     else:
-                        print sym,
-                print "<b>",reduce_nt[0],"</b>"
+                        filePtr.write(str(sym)+" ")
+                filePtr.write("<b> "+str(reduce_nt[0])+" </b>\n")
                 left_symbols += reduce_nt[1]
 
             for term in reversed(right_derived):
                 if type(term) is tuple:
-                    print term[0],
+                    filePtr.write(str(term[0])+" ")
                 else:
-                    print term,
-            print "<br><br><br>"
-        print "</body></html>"
+                    filePtr.write(str(term)+" ")
+            filePtr.write("<br><br><br>\n")
+        filePtr.write("</body></html>\n")
+        filePtr.close()
