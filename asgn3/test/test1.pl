@@ -11,7 +11,7 @@ else {
 }
 
 $a = $b < $c;
-unless (($abc == $pqr) || !($ab && $cd)) {
+unless (($abc == $pqr) || !$a) {
 	$mno = 6;
 }
 else {
