@@ -9,7 +9,7 @@ class Lexer(object): # Inheriting from object provides extra functionality
     'AND', 'OR', 'XOR',
 
     # Branch Keywords
-    'IF', 'ELSE', 'ELSIF', 'UNLESS', 'SWITCH',
+    'IF', 'ELSE', 'ELSIF', 'UNLESS',
 
     # Loop Keywords
     'WHILE', 'UNTIL', 'FOR', 'FOREACH', 'DO',
@@ -18,7 +18,7 @@ class Lexer(object): # Inheriting from object provides extra functionality
     'NEXT', 'LAST', 'CONTINUE', 'REDO', 'GOTO',
 
     # Function Keywords
-    'NOT', 'PRINT', 'PRINTF', 'MY',
+    'NOT', 'PRINT', 'PRINTF',
     'KEYS', 'VALUES', 'EXISTS', 'DELETE',
 
     # Miscellaneous Keywords
@@ -43,7 +43,7 @@ class Lexer(object): # Inheriting from object provides extra functionality
     tokens = (
 
        # Comments
-       'SINGLINECOMM', 'MULTILINECOMM',
+       'SINGLINECOMM',
 
        # String Literals
        'SINGQUOTSTR', 'DOUBQUOTSTR',
