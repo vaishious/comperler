@@ -45,10 +45,8 @@ class Parser(object):
     def p_codeblock_error(self, p):
         ''' codeblock : LBLOCK error RBLOCK
         '''
-        start, end = p.linespan(2)
-        starti, endi = p.lexspan(2)
         self.error_seen = True
-        print "Error in statement from Line %d, Column %d to Line %d, Column %d"%(start, end, starti, endi)
+        print "Error in code block starting at line %d and ending at line %d"%(p.lineno(1), p.lineno(3))
 
     def p_empty(self, p):
         ''' empty : '''
@@ -68,10 +66,13 @@ class Parser(object):
     def p_statement_error(self, p):
         ''' statement : error SEMICOLON
         '''
-        start, end = p.linespan(1)
-        starti, endi = p.lexspan(1)
         self.error_seen = True
-        print "Error in statement from Line %d, Column %d to Line %d, Column %d"%(start, end, starti, endi)
+        print "Line %d: Invalid statement"%(p.lineno(1))
+
+    def p_error(self, p):
+        if not self.error_seen:
+            print("Syntax error in input.")
+            self.error_seen = True
 
     def p_assign_sep(self, p):
         ''' assign-sep : EQUALS
@@ -167,10 +168,8 @@ class Parser(object):
 
     def p_if_elsif_error(self, p):
         ''' if-elsif : IF LPAREN error RPAREN codeblock elsif '''
-        start, end = p.linespan(3)
-        starti, endi = p.lexspan(3)
         self.error_seen = True
-        print "Error in statement from Line %d, Column %d to Line %d, Column %d"%(start, end, starti, endi)
+        print "Line %d: Invalid conditional passed to IF"%(p.lineno(3))
 
     def p_elsif(self, p):
         ''' elsif : ELSIF LPAREN expression RPAREN codeblock elsif
@@ -181,10 +180,8 @@ class Parser(object):
     def p_elsif_error(self, p):
         ''' elsif : ELSIF LPAREN error RPAREN codeblock elsif
         '''
-        start, end = p.linespan(3)
-        starti, endi = p.lexspan(3)
         self.error_seen = True
-        print "Error in statement from Line %d, Column %d to Line %d, Column %d"%(start, end, starti, endi)
+        print "Line %d: Invalid conditional passed to ELSIF"%(p.lineno(3))
 
     def p_else(self, p):
         ''' else : ELSE codeblock
@@ -198,10 +195,8 @@ class Parser(object):
 
     def p_unless_error(self, p):
         ''' unless : UNLESS LPAREN error RPAREN codeblock elsif else '''
-        start, end = p.linespan(3)
-        starti, endi = p.lexspan(3)
         self.error_seen = True
-        print "Error in statement from Line %d, Column %d to Line %d, Column %d"%(start, end, starti, endi)
+        print "Line %d: Invalid conditional passed to UNLESS"%(p.lineno(3))
 
     def p_continue_block(self, p):
         ''' continue : CONTINUE codeblock
@@ -224,26 +219,25 @@ class Parser(object):
                  | UNTIL LPAREN error RPAREN codeblock
                  | FOR LPAREN error RPAREN codeblock
         '''
-        start, end = p.linespan(3)
-        starti, endi = p.lexspan(3)
         self.error_seen = True
-        print "Error in statement from Line %d, Column %d to Line %d, Column %d"%(start, end, starti, endi)
+        if p[1] == 'while':
+            print "Line %d: Invalid conditional passed to WHILE loop"%(p.lineno(3))
+        elif p[1] == 'until':
+            print "Line %d: Invalid conditional passed to UNTIL loop"%(p.lineno(3))
+        elif p[1] == 'for':
+            print "Line %d: Invalid conditional passed to FOR loop"%(p.lineno(3))
 
     def p_loop_error_b(self, p):
         ''' loop : FOREACH var LPAREN error RPAREN codeblock continue
         '''
-        start, end = p.linespan(4)
-        starti, endi = p.lexspan(4)
         self.error_seen = True
-        print "Error in statement from Line %d, Column %d to Line %d, Column %d"%(start, end, starti, endi)
+        print "Line %d: Invalid conditional passed to FOREACH loop"%(p.lineno(4))
 
     def p_loop_error_c(self, p):
         ''' loop : DO codeblock WHILE LPAREN error RPAREN SEMICOLON
         '''
-        start, end = p.linespan(5)
-        starti, endi = p.lexspan(5)
         self.error_seen = True
-        print "Error in statement from Line %d, Column %d to Line %d, Column %d"%(start, end, starti, endi)
+        print "Line %d: Invalid conditional passed to DO-WHILE loop"%(p.lineno(5))
 
     def p_labelled_loop(self, p):
         ''' labelled-loop : ID COLON loop '''
@@ -278,10 +272,11 @@ class Parser(object):
         ''' access : LBRACKET error RBRACKET
                    | LBLOCK error RBLOCK
         '''
-        start, end = p.linespan(2)
-        starti, endi = p.lexspan(2)
         self.error_seen = True
-        print "Error in statement from Line %d, Column %d to Line %d, Column %d"%(start, end, starti, endi)
+        if p[1] == '[':
+            print "Line %d: Invalid array access token"%(p.lineno(2))
+        elif p[1] == '{':
+            print "Line %d: Invalid hash access token"%(p.lineno(2))
 
     # ARROW is used as follows with references
     #   $arrayref->[0] = "January";   # Array element
@@ -333,10 +328,8 @@ class Parser(object):
         ''' function-call : ID LPAREN error RPAREN
                           | builtin-func LPAREN error RPAREN
         '''
-        start, end = p.linespan(3)
-        starti, endi = p.lexspan(3)
         self.error_seen = True
-        print "Error in statement from Line %d, Column %d to Line %d, Column %d"%(start, end, starti, endi)
+        print "Line %d: Invalid expression passed to function call"%(p.lineno(3))
 
     def p_function_def(self, p):
         ''' function-def : SUB ID codeblock '''
@@ -363,7 +356,7 @@ class Parser(object):
     # A wrapper
     def parse(self, input, output_file):
         self.output_file = output_file
-        return self.parser.parse(input, tracking=True)
+        return self.parser.parse(input)
 
     def get_children(self, p):
         children = []
