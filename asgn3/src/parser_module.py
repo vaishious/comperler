@@ -54,6 +54,7 @@ class Parser(object):
 
     def p_statement(self, p):
         ''' statement : expression SEMICOLON
+                      | codeblock
                       | function-def
                       | function-ret SEMICOLON
                       | branch 
