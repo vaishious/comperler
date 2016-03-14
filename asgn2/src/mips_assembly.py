@@ -184,7 +184,12 @@ class TextRegion(object):
             loadSegment += G.INDENT + "sw $ra, %d($sp)\n"%(stackSpaceRequired-8)
             loadSegment += G.INDENT + "move $fp, $sp\n"
 
+            returnSegment = G.INDENT + "lw $fp, %d($sp)"%(stackSpaceRequired-4) + G.INDENT + "# " + "Reload the fp from the previous call\n"
+            returnSegment += G.INDENT + "lw $ra, %d($sp)"%(stackSpaceRequired-8) + G.INDENT + "# " + "Reload the ra of the current call\n"
+
+
             self.text = self.text.replace("%s:\n"%(func), loadSegment)
+            self.text = self.text.replace("%s_return:\n"%(func), returnSegment)
 
     def WriteToFile(self):
         self.text = ".text\nmain:\n" + self.text

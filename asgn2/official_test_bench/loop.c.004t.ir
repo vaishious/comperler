@@ -1,0 +1,19 @@
+1, =, res, 0
+2, =, i, 0
+3,  goto, 24
+5 , =, j, 0
+6 , goto, 19
+8 , =, k, 0
+9 , goto, 14
+11, =, +, res, res, 1
+12, =, +, k, k, 1
+14, ifgoto, <=, k, 9, 11
+15, goto, 17
+17, =, +, j, j, 1
+19, ifgoto, <=, j, 9, 8
+20, goto, 22
+22, =, +, i, i, 1
+24, ifgoto, <=, i, 9, 5
+25, goto, 27
+27, print, "res = %d\n", res
+28, ret, 0

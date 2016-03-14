@@ -1,0 +1,18 @@
+1, =, g, 10
+2, call, myfunc
+3, ret, 0
+
+4, label, myfunc
+5, =, g0, g
+6, ifgoto, ==, g0, 0, 8
+7, goto, 9
+8, ret
+9, =, g1, g
+10, print, "value of g is %d\n", g1
+11, =, g2, g
+12, =, -, g3, g2, 1
+13, =, g, g3
+14, call, myfunc
+15, ret
+
+

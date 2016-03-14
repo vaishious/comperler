@@ -64,8 +64,9 @@ def Translate(instr):
         G.CurrRegAddrTable.DumpDirtyVars()
         stackSpaceRequired = G.StackSpaceMap[G.CurrFunction] + 24
         G.AsmText.AddText(G.INDENT + "move $sp, $fp", "Restore the stack pointer")
-        G.AsmText.AddText(G.INDENT + "lw $fp, %d($sp)"%(stackSpaceRequired-4), "Reload the fp from previous call")
-        G.AsmText.AddText(G.INDENT + "lw $ra, %d($sp)"%(stackSpaceRequired-8), "Reload the ra of current call")
+        #G.AsmText.AddText(G.INDENT + "lw $fp, %d($sp)"%(stackSpaceRequired-4), "Reload the fp from previous call")
+        #G.AsmText.AddText(G.INDENT + "lw $ra, %d($sp)"%(stackSpaceRequired-8), "Reload the ra of current call")
+        G.AsmText.AddText("%s_return:"%G.CurrFunction)
         G.AsmText.AddText(G.INDENT + "jr $ra")
 
     elif instr.instrType.is_IFGOTO() or instr.instrType.is_STRIFGOTO():
