@@ -20,6 +20,7 @@ nytprof.out
 /_eumm/
 *.swp
 *tags
+mips-x86.linux-xgcc/iolib.s
 
 #Python stuff
 
