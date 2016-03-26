@@ -29,9 +29,7 @@ class Parser(object):
     def p_start_state(self, p):
         ''' start-state : statements '''
         p[0] = ('start-state', self.get_children(p))
-        if self.error_seen is False:
-            self.gen_rightmost(p[0])
-        else:
+        if self.error_seen:
             self.error_list.sort()
             for error_item in self.error_list:
                 print error_item[1]
@@ -359,31 +357,3 @@ class Parser(object):
         for i in xrange(1,len(p)):
             children.append(p[i])
         return children
-
-    def gen_rightmost(self, ast):
-        filePtr = open(self.output_file, 'w')
-        filePtr.write("<html><body>\n")
-        left_symbols = [ast]
-        right_derived = []
-        while left_symbols:
-            while left_symbols and type(left_symbols[-1]) is not tuple:
-                right_derived.append(left_symbols.pop())
-
-            if left_symbols:
-                reduce_nt = left_symbols.pop()
-                for sym in left_symbols:
-                    if type(sym) is tuple:
-                        filePtr.write(str(sym[0])+" ")
-                    else:
-                        filePtr.write(str(sym)+" ")
-                filePtr.write("<b> "+str(reduce_nt[0])+" </b>\n")
-                left_symbols += reduce_nt[1]
-
-            for term in reversed(right_derived):
-                if type(term) is tuple:
-                    filePtr.write(str(term[0])+" ")
-                else:
-                    filePtr.write(str(term)+" ")
-            filePtr.write("<br><br><br>\n")
-        filePtr.write("</body></html>\n")
-        filePtr.close()
