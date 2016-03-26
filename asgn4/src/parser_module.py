@@ -1,4 +1,5 @@
 import ply.yacc as yacc
+import symbol_table as SYMTAB
 
 class Parser(object):
 
@@ -39,13 +40,20 @@ class Parser(object):
                        | statement
         '''
         p[0] = ('statements', self.get_children(p))
+        
+    def p_mark_newscope(self, p):
+        ''' MARK-newscope : '''
+        
+        self.symTabManager.PushScope()
 
     def p_codeblock(self, p):
-        ''' codeblock : LBLOCK statements RBLOCK '''
+        ''' codeblock : MARK-newscope LBLOCK statements RBLOCK '''
         p[0] = ('codeblock', self.get_children(p))
 
+        self.symTabManager.PopScope()
+
     def p_codeblock_error(self, p):
-        ''' codeblock : LBLOCK error RBLOCK
+        ''' codeblock : MARK-newscope LBLOCK error RBLOCK
         '''
         self.error_list.append((p.lineno(3), "Error in code block starting at line %d and ending at line %d"%(p.lineno(1), p.lineno(3))))
 
@@ -305,6 +313,8 @@ class Parser(object):
         '''
         p[0] = ('variable-strict-decl', self.get_children(p))
 
+        self.symTabManager.Insert(p[2][1][0])
+
     def p_constant(self, p):
         ''' const : numeric
                   | SINGQUOTSTR
@@ -372,6 +382,8 @@ class Parser(object):
     # A wrapper
     def parse(self, input, output_file):
         self.output_file = output_file
+        self.symTabManager = SYMTAB.SymTabManager()
+        self.symTabManager.PushScope()
         return self.parser.parse(input)
 
     def get_children(self, p):
