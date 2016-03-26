@@ -18,7 +18,7 @@ class Lexer(object): # Inheriting from object provides extra functionality
     'NEXT', 'LAST', 'CONTINUE', 'REDO', 'GOTO',
 
     # Function Keywords
-    'NOT', 'PRINT', 'PRINTF',
+    'NOT', 'PRINT', 'PRINTF', 'MY',
     'KEYS', 'VALUES', 'EXISTS', 'DELETE',
 
     # Miscellaneous Keywords

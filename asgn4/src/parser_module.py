@@ -300,8 +300,8 @@ class Parser(object):
         p[0] = ('var', self.get_children(p))
 
     def p_variable_strict_decl(self, p):
-        ''' variable-strict-decl : MY var-name-lhs
-                                 | MY var-name-lhs assign-sep expression
+        ''' variable-strict-decl : MY var-name-lhs-strict
+                                 | MY var-name-lhs-strict assign-sep expression
         '''
         p[0] = ('variable-strict-decl', self.get_children(p))
 
