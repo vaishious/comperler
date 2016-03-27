@@ -1,5 +1,6 @@
 import ply.yacc as yacc
 import symbol_table as SYMTAB
+import ir_generation as IR
 
 class Parser(object):
 
@@ -100,48 +101,55 @@ class Parser(object):
         '''
         p[0] = ('assign-sep', self.get_children(p))
 
+    def p_binary_op(self, p):
+        ''' binary-op : expression PLUS expression 
+                      | expression MINUS expression 
+                      | expression TIMES expression 
+                      | expression DIVIDE expression 
+                      | expression MODULUS expression 
+                      | expression EXPONENT expression 
+                      | expression BOR expression 
+                      | expression BAND expression 
+                      | expression BXOR expression
+                      | expression LSHIFT expression
+                      | expression RSHIFT expression
+                      | expression LAND expression
+                      | expression AND expression
+                      | expression LOR expression
+                      | expression OR expression
+                      | expression XOR expression
+
+                      | expression LT expression
+                      | expression GT expression
+                      | expression LE expression
+                      | expression GE expression
+                      | expression EQ expression
+                      | expression NE expression
+                      | expression CMP expression
+
+                      | expression STRLT expression
+                      | expression STRGT expression
+                      | expression STRLE expression
+                      | expression STRGE expression
+                      | expression STREQ expression
+                      | expression STRNE expression
+                      | expression STRCMP expression
+        '''
+
+        p[0] = IR.BinaryOp(p[2], p[1], p[3])
+
     # (expression -> var assign-sep expression) corresponds to scalar assignment expression
     def p_expression(self, p):
         ''' expression : LPAREN expression RPAREN
-                       | expression PLUS expression
-                       | expression MINUS expression
-                       | expression TIMES expression
-                       | expression DIVIDE expression
-                       | expression MODULUS expression
-                       | expression EXPONENT expression
-                       | expression BOR expression
-                       | expression BAND expression
-                       | expression BXOR expression
-                       | expression LSHIFT expression
-                       | expression RSHIFT expression
+                       | binary-op
                        | expression DOT expression
                        | expression REPEAT expression
                        | expression HASHARROW expression
                        | expression RANGE expression
                        | BNOT expression
 
-                       | expression LAND expression
-                       | expression AND expression
-                       | expression LOR expression
-                       | expression OR expression
-                       | expression XOR expression
                        | LNOT expression
                        | NOT expression
-
-                       | expression LT expression
-                       | expression GT expression
-                       | expression LE expression
-                       | expression GE expression
-                       | expression EQ expression
-                       | expression NE expression
-                       | expression CMP expression
-                       | expression STRLT expression
-                       | expression STRGT expression
-                       | expression STRLE expression
-                       | expression STRGE expression
-                       | expression STREQ expression
-                       | expression STRNE expression
-                       | expression STRCMP expression
 
                        | var-lhs INC
                        | INC var-lhs
