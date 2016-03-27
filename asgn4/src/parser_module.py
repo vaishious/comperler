@@ -158,7 +158,7 @@ class Parser(object):
                        | const
                        | var
 
-                       | var-lhs assign-sep expression %prec EQUALS
+                       | global-assignment
         '''
         p[0] = ('expression', self.get_children(p))
 
@@ -307,13 +307,22 @@ class Parser(object):
                 | REFERENCE arrows_and_accesses '''
         p[0] = ('var', self.get_children(p))
 
+    def p_global_assignment(self, p):
+        ''' global-assignment : var-lhs assign-sep expression %prec EQUALS '''
+
+        p[0] = ('global-assignment', self.get_children(p))
+
+        # Make this better. The indexing is just horrible
+        self.symTabManager.InsertGlobal(p[1][-1][-1][-1][-1][-1][-1])
+
     def p_variable_strict_decl(self, p):
         ''' variable-strict-decl : MY var-name-lhs-strict
                                  | MY var-name-lhs-strict assign-sep expression
         '''
         p[0] = ('variable-strict-decl', self.get_children(p))
 
-        self.symTabManager.Insert(p[2][1][0])
+        # Make this better. The indexing is just horrible
+        self.symTabManager.InsertLocal(p[2][1][0])
 
     def p_constant(self, p):
         ''' const : numeric

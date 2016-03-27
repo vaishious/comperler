@@ -44,7 +44,7 @@ class SymTable(object):
                 "Lookup"    : Return the entry corresponding to the supplied variable name. Returns None if not present
     """
 
-    def __init__(self, scopeNum):
+    def __init__(self, scopeNum, parentScope):
         self.entries = {}        # Map from ID(name) to entry
         self.scopeNum = scopeNum
 
@@ -78,10 +78,11 @@ class SymTabManager(object):
 
     def PushScope(self):
 
+        lastScope = self.curScope
         self.scopeStack.append(self.nextScopeNumber)
         self.curScope = self.nextScopeNumber
+        self.curSymTab = SymTable(self.curScope, lastScope)
         self.symtables[self.curScope] = self.curSymTab
-        self.curSymTab = SymTable(self.curScope)
         
         self.nextScopeNumber += 1
 
@@ -90,6 +91,11 @@ class SymTabManager(object):
         self.curScope = self.scopeStack.pop()
         self.curSymTab = self.symtables[self.curScope]
 
-    def Insert(self, varName):
+    def InsertLocal(self, varName):
 
         self.curSymTab.Insert(varName)
+
+    def InsertGlobal(self, varName):
+
+        self.symtables[0].Insert(varName)
+
