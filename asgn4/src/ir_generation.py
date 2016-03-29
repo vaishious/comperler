@@ -3,53 +3,84 @@ Module : ir_generation
 Function : Contains class and function definitions used to perform IR generation
 """
 
-class DataType(object):
-    """ String or Integer/Real/Float if applicable """
+import debug as DEBUG
 
-    INT, STR, UNKNOWN = range(3)
+class Dereference(object):
 
-    def __init__(self, dataType):
+    def __init__(self, tabEntry, externalType, derefDepth):
 
-        self.dataType = dataType
+        self.tabEntry = tabEntry
+        self.externalType = externalType
+        self.derefDepth = derefDepth
 
-    def is_INT_TYPE(self)       : return self.dataType == DataType.INT
-    def is_STR_TYPE(self)       : return self.dataType == DataType.STR
-    def is_UNDEFINED_TYPE(self) : return self.dataType == DataType.UNKNOWN
+    def CheckDeclaration(self):
+        return self.tabEntry.CheckDeclaration()
 
+    def __str__(self):
+        return str(self.tabEntry)
 
-class Entity(object):
-    """ Can represent variables, numbers and strings """
+    def InsertGlobally(self, symTabManager):
+        self.tabEntry.InsertGlobally(symTabManager)
 
-    VARIABLE, NUMBER, STRING = range(3)
+    def InsertLocally(self, symTabManager):
+        self.tabEntry.InsertLocally(symTabManager)
 
-    def __init__(self, value, entityType, dataTypeObj):
+class ArrowOp(object):
 
-        self.value = value
-        self.entityType = entityType
-        self.dataTypeObj = dataTypeObj
+    def __init__(self, dereferencedLHS):
 
-    def is_VARIABLE(self) : return self.entityType == Entity.VARIABLE
-    def is_NUMBER(self)   : return self.entityType == Entity.NUMBER
-    def is_STRING(self)   : return self.entityType == Entity.STRING
+        self.dereferencedLHS = dereferencedLHS
 
-    def is_INT_TYPE(self)       : return self.dataTypeObj.is_INT_TYPE()
-    def is_STR_TYPE(self)       : return self.dataTypeObj.is_STR_TYPE()
-    def is_UNDEFINED_TYPE(self) : return self.dataTypeObj.is_UNDEFINED_TYPE()
+        if dereferencedLHS.externalType != SYMTAB.SymTabEntry.SCALAR:
+            raise PerlTypeError("Dereferenced object must be a scalar value")
 
+    def CheckDeclaration(self):
+        return self.dereferencedLHS.CheckDeclaration()
 
-class BinaryOp(object):
-    """ Represents all binary ops. Useful for defining a generic code generation template """
+    def __str__(self):
+        return str(self.dereferencedLHS)
 
-    def __init__(self, op, op1, op2):
+    def InsertGlobally(self, symTabManager):
+        self.dereferencedLHS.InsertGlobally(symTabManager)
 
-        self.op  = op
-        self.op1 = op1
-        self.op2 = op2
+    def InsertLocally(self, symTabManager):
+        self.dereferencedLHS.InsertLocally(symTabManager)
 
-class UnaryOp(object):
-    """ Represents all unary ops. Useful for defining a generic code generation template """
+class AccessOp(object):
 
-    def __init__(self, op, op1):
+    def __init__(self, lhs, keyAccess, accessType):
 
-        self.op  = op
-        self.op1 = op1
+        self.lhs = lhs
+        self.keyAccess = keyAccess
+        self.accessType = accessType
+
+    def CheckDeclaration(self):
+        return self.lhs.CheckDeclaration()
+
+    def __str__(self):
+        return str(self.lhs)
+
+    def InsertGlobally(self, symTabManager):
+        self.lhs.InsertGlobally(symTabManager)
+
+    def InsertLocally(self, symTabManager):
+        self.lhs.InsertLocally(symTabManager)
+
+class Reference(object):
+
+    def __init__(self, tabEntry):
+
+        self.tabEntry = tabEntry
+
+    def CheckDeclaration(self):
+        return self.tabEntry.CheckDeclaration()
+
+    def __str__(self):
+        return str(self.tabEntry)
+
+    def InsertGlobally(self, symTabManager):
+        self.tabEntry.InsertGlobally(symTabManager)
+
+    def InsertLocally(self, symTabManager):
+        self.tabEntry.InsertLocally(symTabManager)
+

@@ -1,6 +1,7 @@
 import ply.yacc as yacc
 import symbol_table as SYMTAB
 import ir_generation as IR
+import debug as DEBUG
 
 class Parser(object):
 
@@ -136,7 +137,7 @@ class Parser(object):
                       | expression STRCMP expression
         '''
 
-        p[0] = IR.BinaryOp(p[2], p[1], p[3])
+        p[0] = ('binary-op', self.get_children(p))
 
     # (expression -> var assign-sep expression) corresponds to scalar assignment expression
     def p_expression(self, p):
@@ -151,10 +152,10 @@ class Parser(object):
                        | LNOT expression
                        | NOT expression
 
-                       | var-lhs INC
-                       | INC var-lhs
-                       | var-lhs DEC
-                       | DEC var-lhs
+                       | var-lhs MARK-check-declaration INC 
+                       | INC var-lhs MARK-check-declaration
+                       | var-lhs MARK-check-declaration DEC
+                       | DEC var-lhs MARK-check-declaration
                        | MINUS expression
                        | PLUS expression
 
@@ -164,7 +165,7 @@ class Parser(object):
 
                        | function-call
                        | const
-                       | var
+                       | var MARK-check-declaration
 
                        | global-assignment
         '''
@@ -268,21 +269,45 @@ class Parser(object):
 
     def p_variable_name_lhs_strict(self, p):
         ''' var-name-lhs-strict : VARIABLE '''
-        p[0] = ('var-name-lhs-strict', self.get_children(p))
+
+        p[0] = self.symTabManager.Lookup(p[1])
 
     def p_variable_name_lhs(self, p):
         ''' var-name-lhs : var-name-lhs-strict
                          | DEREFERENCE
         '''
-        p[0] = ('var-name-lhs', self.get_children(p))
+
+        if type(p[1]) != SYMTAB.SymTabEntry:
+            # Is a dereference
+            strippedVarName = p[1][1:]
+            derefDepth = strippedVarName.count('$')
+            strippedVarName = '$' + strippedVarName[derefDepth:]
+
+            if p[1][0] == '$'   : externalType = SYMTAB.SymTabEntry.SCALAR
+            elif p[1][0] == '@' : externalType = SYMTAB.SymTabEntry.ARRAY
+            elif p[1][0] == '%' : externalType = SYMTAB.SymTabEntry.HASH
+
+            tabEntry = self.symTabManager.Lookup(strippedVarName)
+
+            p[0] = IR.Dereference(tabEntry, externalType, derefDepth)
+
+        else:
+            p[0] = p[1]
 
     # For array and hash access
     def p_access(self, p):
         ''' access : LBRACKET expression RBRACKET
                    | LBLOCK expression RBLOCK
         '''
-        p[0] = ('access', self.get_children(p))
 
+        if p[1] == '{':
+            accessType = SYMTAB.SymTabEntry.HASH
+        elif p[1] == "[":
+            accessType = SYMTAB.SymTabEntry.ARRAY
+
+        # LHS is defined later
+        p[0] = IR.AccessOp(None, p[2], accessType)
+ 
     def p_access_error(self, p):
         ''' access : LBRACKET error RBRACKET
                    | LBLOCK error RBLOCK
@@ -297,40 +322,68 @@ class Parser(object):
     #   $hashref->{"KEY"} = "VALUE";  # Hash element
 
     def p_variable_arrows_and_accesses(self, p):
-        ''' arrows_and_accesses : ARROW access arrows_and_accesses
-                                | access arrows_and_accesses
-                                | ARROW access
+        ''' arrows_and_accesses : ARROW access
                                 | access
         '''
-        p[0] = ('arrows_and_accesses', self.get_children(p))
-    
+
+        if len(p) == 2:
+            if type(p[-1]) == SYMTAB.SymTabEntry:
+                # Have to take corrective measures
+                if p[1].accessType == SYMTAB.SymTabEntry.HASH : newVarName = '%' + p[-1].baseVarName 
+                else : newVarName = '@' + p[-1].baseVarName
+
+                p[-1] = self.SymTabManager.Lookup(newVarName)
+
+                p[1].lhs = p[-1]
+                p[0] = p[1]
+        else:
+            if p[-1].externalType != SYMTAB.SymTabEntry.SCALAR:
+                raise PerlTypeError("Dereferenced object must be a scalar value")
+
+            p[2].lhs = IR.ArrowOp(p[-1])
+            p[0] = p[2]
+
     def p_variable_lhs(self, p):
         ''' var-lhs : var-name-lhs
-                    | var-name-lhs arrows_and_accesses '''
-        p[0] = ('var-lhs', self.get_children(p))
+                    | var-name-lhs arrows_and_accesses
+        '''
+
+        if len(p) == 2:
+            p[0] = p[1]
+        else:
+            p[0] = p[2]
 
     def p_variable(self, p):
         ''' var : var-lhs
                 | REFERENCE 
-                | REFERENCE arrows_and_accesses '''
-        p[0] = ('var', self.get_children(p))
+        '''
+
+        if type(p[1]) == str:
+            # Is a reference
+
+            tabEntry = self.symTabManager.Lookup(p[1][1:])
+            p[0] = IR.Reference(tabEntry)
+
+        else:
+            p[0] = p[1]
+
+    def p_mark_check_declaration(self, p):
+        ''' MARK-check-declaration : '''
+
+        if not p[-1].CheckDeclaration():
+            raise DEBUG.PerlNameError(str(p[-1]) + " not defined")
 
     def p_global_assignment(self, p):
         ''' global-assignment : var-lhs assign-sep expression %prec EQUALS '''
-
-        p[0] = ('global-assignment', self.get_children(p))
-
-        # Make this better. The indexing is just horrible
-        self.symTabManager.InsertGlobal(p[1][-1][-1][-1][-1][-1][-1])
+        
+        p[1].InsertGlobally(self.symTabManager)
 
     def p_variable_strict_decl(self, p):
         ''' variable-strict-decl : MY var-name-lhs-strict
                                  | MY var-name-lhs-strict assign-sep expression
         '''
-        p[0] = ('variable-strict-decl', self.get_children(p))
 
-        # Make this better. The indexing is just horrible
-        self.symTabManager.InsertLocal(p[2][1][0])
+        p[2].InsertLocally(self.symTabManager)
 
     def p_constant(self, p):
         ''' const : numeric

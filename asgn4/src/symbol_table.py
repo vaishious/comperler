@@ -4,56 +4,48 @@ Function : Contains class and function definitions used to implement a symbol ta
 """
 
 class SymTabEntry(object):
-    """ 
+
+    SCALAR, ARRAY, HASH = range(3)
+
+    def __init__(self, variable):
+
+        self.scopeNum = -1               # Indicates the fact that it has not 
+                                         # been entered into the symtable as of yet
+        self.varName = variable
         
-        Member Variables :
+        if variable[0] == '$'    : self.externalType = SymTabEntry.SCALAR 
+        elif variable[0] == '@'  : self.externalType = SymTabEntry.ARRAY
+        elif variable[0] == '%'  : self.externalType = SymTabEntry.HASH
+        else:
+            raise Exception("Unrecognized variable type")
 
-                "name"  : Name of the variable.
+        self.baseVarName = variable[1:]
 
-                "scope" : The scope number it belongs to.
-                
-                "type"  : Current type associated with the variable. Aaarghh, the pains of dynamic typing.
-                          I don't know if we'd be using this at some point.
+    def CheckDeclaration(self):
+        return self.scopeNum != -1
 
-        Member Functions :
+    def __str__(self):
+        return repr(self.varName)
 
-    """
+    def InsertGlobally(self, symTabManager):
+        if self.scopeNum == -1:
+            self.scopeNum = 0
+            symTabManager.symtables[0].Insert(self, self.varName)
 
-    def __init__(self, varName, scopeNum):
-
-        self.name = varName
-        self.scope = scopeNum
+    def InsertLocally(self, symTabManager):
+        self.scopeNum = symTabManager.curScope
+        symTabManager.curSymTab.Insert(self, self.varName)
 
 
 class SymTable(object):
-    """
-        Purpose : Symbol table corresponding to one scope
-
-        Member Variables :
-                
-                "entries" : Obviously, the entries themselves
-
-                "parent"  : The parent scope to checkout if a name is not found here
-
-        Member Functions :
-              
-                "Insert"    : Insert a variable name. If present, returns False, True otherwise
-
-                "IsPresent" : Self-explanatory
-
-                "Lookup"    : Return the entry corresponding to the supplied variable name. Returns None if not present
-    """
 
     def __init__(self, scopeNum, parentScope):
         self.entries = {}        # Map from ID(name) to entry
         self.scopeNum = scopeNum
+        self.parentScope = parentScope
 
-    def Insert(self, varName):
-        if not self.entries.has_key(varName):
-            self.entries[varName] = SymTabEntry(varName, self.scopeNum)
-            return True   # Yes, it was inserted
-
-        return False      # No, already present
+    def Insert(self, entry, varName):
+        self.entries[varName] = entry
 
     def IsPresent(self, varName):
         return self.entries.has_key(varName)
@@ -91,11 +83,19 @@ class SymTabManager(object):
         self.curScope = self.scopeStack.pop()
         self.curSymTab = self.symtables[self.curScope]
 
-    def InsertLocal(self, varName):
+    def Lookup(self, varName):
 
-        self.curSymTab.Insert(varName)
+        itScope = self.curScope
+        while (itScope != -1):
 
-    def InsertGlobal(self, varName):
+            symTab = self.symtables[itScope]
+            if symTab.IsPresent(varName):
+                return symTab.entries[varName]
 
-        self.symtables[0].Insert(varName)
+            itScope = symTab.parentScope
+
+        # Create new entry to be entered later
+        return SymTabEntry(varName)
+
+
 
