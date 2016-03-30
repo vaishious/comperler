@@ -100,76 +100,208 @@ class Parser(object):
                        | OREQUAL
                        | EXPEQUAL
         '''
-        p[0] = ('assign-sep', self.get_children(p))
 
-    def p_binary_op(self, p):
-        ''' binary-op : expression PLUS expression 
-                      | expression MINUS expression 
-                      | expression TIMES expression 
-                      | expression DIVIDE expression 
-                      | expression MODULUS expression 
-                      | expression EXPONENT expression 
-                      | expression BOR expression 
-                      | expression BAND expression 
-                      | expression BXOR expression
-                      | expression LSHIFT expression
-                      | expression RSHIFT expression
-                      | expression LAND expression
-                      | expression AND expression
-                      | expression LOR expression
-                      | expression OR expression
-                      | expression XOR expression
-
-                      | expression LT expression
-                      | expression GT expression
-                      | expression LE expression
-                      | expression GE expression
-                      | expression EQ expression
-                      | expression NE expression
-                      | expression CMP expression
-
-                      | expression STRLT expression
-                      | expression STRGT expression
-                      | expression STRLE expression
-                      | expression STRGE expression
-                      | expression STREQ expression
-                      | expression STRNE expression
-                      | expression STRCMP expression
-        '''
-
-        p[0] = ('binary-op', self.get_children(p))
+        p[0] = p[1]
 
     # (expression -> var assign-sep expression) corresponds to scalar assignment expression
-    def p_expression(self, p):
-        ''' expression : LPAREN expression RPAREN
-                       | binary-op
-                       | expression DOT expression
-                       | expression REPEAT expression
-                       | expression HASHARROW expression
-                       | expression RANGE expression
-                       | BNOT expression
 
-                       | LNOT expression
-                       | NOT expression
-
-                       | var-lhs MARK-check-declaration INC 
-                       | INC var-lhs MARK-check-declaration
-                       | var-lhs MARK-check-declaration DEC
-                       | DEC var-lhs MARK-check-declaration
-                       | MINUS expression
-                       | PLUS expression
-
-                       | expression COMMA expression
-                       | expression COMMA empty
-                       | ternary-op
-
-                       | function-call
-                       | const
-                       | var MARK-check-declaration
-
-                       | global-assignment
+    def p_arith_boolean_expression(self, p):
+        ''' arith-boolean-expression : numeric
+                                     | arith-unary-op
+                                     | arith-binary-op
+                                     | boolean-expression
+                                     | string-boolean-expression
+                                     | LPAREN arith-boolean-expression RPAREN
+                                     | LPAREN var RPAREN
         '''
-        p[0] = ('expression', self.get_children(p))
+
+    def p_arith_unary_op(self, p):
+        ''' arith-unary-op : MINUS arith-boolean-expression 
+                           | PLUS arith-boolean-expression
+                           | BNOT arith-boolean-expression
+                           | MINUS var
+                           | PLUS var
+                           | BNOT var
+        '''
+
+    def p_arith_binary_op(self, p):
+        ''' arith-binary-op : arith-boolean-expression PLUS arith-boolean-expression 
+                            | arith-boolean-expression MINUS arith-boolean-expression 
+                            | arith-boolean-expression TIMES arith-boolean-expression 
+                            | arith-boolean-expression DIVIDE arith-boolean-expression 
+                            | arith-boolean-expression MODULUS arith-boolean-expression 
+                            | arith-boolean-expression EXPONENT arith-boolean-expression 
+                            | arith-boolean-expression BOR arith-boolean-expression 
+                            | arith-boolean-expression BAND arith-boolean-expression 
+                            | arith-boolean-expression BXOR arith-boolean-expression
+                            | arith-boolean-expression LSHIFT arith-boolean-expression
+                            | arith-boolean-expression RSHIFT arith-boolean-expression
+                            | var PLUS var 
+                            | var MINUS var 
+                            | var TIMES var 
+                            | var DIVIDE var 
+                            | var MODULUS var 
+                            | var EXPONENT var 
+                            | var BOR var 
+                            | var BAND var 
+                            | var BXOR var
+                            | var LSHIFT var
+                            | var RSHIFT var
+        '''
+
+    def p_boolean_expression(self, p):
+        ''' boolean-expression : arith-boolean-expression LAND arith-boolean-expression
+                               | arith-boolean-expression AND arith-boolean-expression
+                               | arith-boolean-expression LOR arith-boolean-expression
+                               | arith-boolean-expression OR arith-boolean-expression
+                               | arith-boolean-expression XOR arith-boolean-expression
+
+                               | arith-boolean-expression LT arith-boolean-expression
+                               | arith-boolean-expression GT arith-boolean-expression
+                               | arith-boolean-expression LE arith-boolean-expression
+                               | arith-boolean-expression GE arith-boolean-expression
+                               | arith-boolean-expression EQ arith-boolean-expression
+                               | arith-boolean-expression NE arith-boolean-expression
+                               | arith-boolean-expression CMP arith-boolean-expression
+                               | LNOT arith-boolean-expression
+                               | NOT arith-boolean-expression
+
+                               | var LAND var
+                               | var AND var
+                               | var LOR var
+                               | var OR var
+                               | var XOR var
+
+                               | var LT var
+                               | var GT var
+                               | var LE var
+                               | var GE var
+                               | var EQ var
+                               | var NE var
+                               | var CMP var
+                               | LNOT var
+                               | NOT var
+
+                               | arith-boolean-expression LAND var
+                               | arith-boolean-expression AND var
+                               | arith-boolean-expression LOR var
+                               | arith-boolean-expression OR var
+                               | arith-boolean-expression XOR var
+
+                               | arith-boolean-expression LT var
+                               | arith-boolean-expression GT var
+                               | arith-boolean-expression LE var
+                               | arith-boolean-expression GE var
+                               | arith-boolean-expression EQ var
+                               | arith-boolean-expression NE var
+                               | arith-boolean-expression CMP var
+
+                               | var LAND arith-boolean-expression
+                               | var AND arith-boolean-expression
+                               | var LOR arith-boolean-expression
+                               | var OR arith-boolean-expression
+                               | var XOR arith-boolean-expression
+
+                               | var LT arith-boolean-expression
+                               | var GT arith-boolean-expression
+                               | var LE arith-boolean-expression
+                               | var GE arith-boolean-expression
+                               | var EQ arith-boolean-expression
+                               | var NE arith-boolean-expression
+                               | var CMP arith-boolean-expression
+
+                               | var-lhs MARK-check-declaration INC 
+                               | INC var-lhs MARK-check-declaration
+                               | var-lhs MARK-check-declaration DEC
+                               | DEC var-lhs MARK-check-declaration
+        '''
+
+    def p_string_op(self, p):
+        ''' string-op : string-expression PLUS arith-boolean-expression
+                      | string-expression PLUS var
+                      | var PLUS string-expression
+                      | string-expression DOT string-expression
+                      | string-expression DOT var
+                      | var DOT string-expression
+                      | var DOT var
+                      | string-expression REPEAT arith-boolean-expression
+                      | string-expression REPEAT var 
+                      | var REPEAT arith-boolean-expression
+                      | var REPEAT var 
+        '''
+
+    def p_string_boolean_op(self, p):
+        ''' string-boolean-expression : string-expression STRLT string-expression
+                                      | string-expression STRGT string-expression 
+                                      | string-expression STRLE string-expression 
+                                      | string-expression STRGE string-expression 
+                                      | string-expression STREQ string-expression 
+                                      | string-expression STRNE string-expression 
+                                      | string-expression STRCMP string-expression 
+
+                                      | var STRLT string-expression
+                                      | var STRGT string-expression 
+                                      | var STRLE string-expression 
+                                      | var STRGE string-expression 
+                                      | var STREQ string-expression 
+                                      | var STRNE string-expression 
+                                      | var STRCMP string-expression 
+
+                                      | string-expression STRLT var 
+                                      | string-expression STRGT var  
+                                      | string-expression STRLE var  
+                                      | string-expression STRGE var  
+                                      | string-expression STREQ var  
+                                      | string-expression STRNE var  
+                                      | string-expression STRCMP var 
+
+                                      | var STRLT var
+                                      | var STRGT var 
+                                      | var STRLE var 
+                                      | var STRGE var 
+                                      | var STREQ var 
+                                      | var STRNE var 
+                                      | var STRCMP var 
+        '''
+
+    def p_string_expression(self, p):
+        ''' string-expression : string
+                              | string-op
+                              | LPAREN string-expression RPAREN
+        '''
+
+    def p_arith_bool_string_expression(self, p):
+        ''' arith-bool-string-expression : arith-boolean-expression
+                                         | string-expression
+                                         | var
+        '''
+
+    def p_list_elements(self, p):
+        ''' list-elements : arith-bool-string-expression COMMA list-elements
+                          | arith-bool-string-expression COMMA
+        '''
+
+    def p_list_expression(self, p):
+        ''' list-expression : LPAREN list-elements RPAREN '''
+
+    def p_hash_elements(self, p):
+        ''' hash-elements : arith-bool-string-expression HASHARROW arith-bool-string-expression COMMA hash-elements
+                          | arith-bool-string-expression HASHARROW arith-bool-string-expression
+        '''
+
+    def p_hash_expression(self, p):
+        ''' hash-expression : LPAREN hash-elements RPAREN '''
+
+    def p_any_computable_expression(self, p):
+        ''' any-computable-expression : arith-bool-string-expression
+                                      | list-expression
+                                      | hash-expression
+        '''
+    def p_expression(self, p):
+        ''' expression : any-computable-expression
+                       | global-assignment
+                       | ternary-op
+        '''
 
     def p_branch(self, p):
         ''' branch : if-elsif-else
@@ -182,7 +314,7 @@ class Parser(object):
         p[0] = ('if-elsif-else', self.get_children(p))
 
     def p_if_elsif(self, p):
-        ''' if-elsif : IF LPAREN expression RPAREN codeblock elsif '''
+        ''' if-elsif : IF LPAREN boolean-expression RPAREN codeblock elsif '''
         p[0] = ('if-elsif', self.get_children(p))
 
     def p_if_elsif_error(self, p):
@@ -190,7 +322,7 @@ class Parser(object):
         self.error_list.append((p.lineno(3), "Line %d: Invalid conditional passed to IF"%(p.lineno(3))))
 
     def p_elsif(self, p):
-        ''' elsif : ELSIF LPAREN expression RPAREN codeblock elsif
+        ''' elsif : ELSIF LPAREN boolean-expression RPAREN codeblock elsif
                   | empty
         '''
         p[0] = ('elsif', self.get_children(p))
@@ -207,7 +339,7 @@ class Parser(object):
         p[0] = ('else', self.get_children(p))
 
     def p_unless(self, p):
-        ''' unless : UNLESS LPAREN expression RPAREN codeblock elsif else '''
+        ''' unless : UNLESS LPAREN boolean-expression RPAREN codeblock elsif else '''
         p[0] = ('unless', self.get_children(p))
 
     def p_unless_error(self, p):
@@ -222,9 +354,9 @@ class Parser(object):
 
     # Foreach-loop semantics need to be good
     def p_loop(self, p):
-        ''' loop : WHILE LPAREN expression RPAREN codeblock continue
-                 | UNTIL LPAREN expression RPAREN codeblock
-                 | FOR LPAREN expression SEMICOLON expression SEMICOLON expression RPAREN codeblock
+        ''' loop : WHILE LPAREN boolean-expression RPAREN codeblock continue
+                 | UNTIL LPAREN boolean-expression RPAREN codeblock
+                 | FOR LPAREN expression SEMICOLON boolean-expression SEMICOLON expression RPAREN codeblock
                  | FOREACH var-lhs LPAREN var-lhs RPAREN codeblock continue
                  | DO codeblock WHILE LPAREN expression RPAREN SEMICOLON
         '''
@@ -354,8 +486,8 @@ class Parser(object):
             p[0] = p[2]
 
     def p_variable(self, p):
-        ''' var : var-lhs
-                | REFERENCE 
+        ''' variable : var-lhs MARK-check-declaration
+                     | REFERENCE MARK-check-declaration 
         '''
 
         if type(p[1]) == str:
@@ -367,6 +499,11 @@ class Parser(object):
         else:
             p[0] = p[1]
 
+    def p_var_function_call(self, p):
+        ''' var : variable
+                | function-call
+        '''
+
     def p_mark_check_declaration(self, p):
         ''' MARK-check-declaration : '''
 
@@ -374,23 +511,27 @@ class Parser(object):
             raise DEBUG.PerlNameError(str(p[-1]) + " not defined")
 
     def p_global_assignment(self, p):
-        ''' global-assignment : var-lhs assign-sep expression %prec EQUALS '''
-        
-        p[1].InsertGlobally(self.symTabManager)
+        ''' global-assignment : var-lhs assign-sep any-computable-expression %prec EQUALS '''
+
+        if p[2] != '=':
+            if not p[1].CheckDeclaration():
+                raise DEBUG.PerlNameError(str(p[1]) + " not defined")
+        else:
+            p[1].InsertGlobally(self.symTabManager)
 
     def p_variable_strict_decl(self, p):
         ''' variable-strict-decl : MY var-name-lhs-strict
-                                 | MY var-name-lhs-strict assign-sep expression
+                                 | MY var-name-lhs-strict EQUALS expression
         '''
 
         p[2].InsertLocally(self.symTabManager)
 
-    def p_constant(self, p):
-        ''' const : numeric
-                  | SINGQUOTSTR
-                  | DOUBQUOTSTR
+    def p_string(self, p):
+        ''' string : SINGQUOTSTR
+                   | DOUBQUOTSTR
         '''
-        p[0] = ('const', self.get_children(p))
+
+        p[0] = IR.Constant(p[1], IR.STR_DATA_TYPE)
 
     def p_numeric(self, p):
         ''' numeric : NUMBER
@@ -398,7 +539,8 @@ class Parser(object):
                     | OCTAL
                     | HEXADECIMAL
         '''
-        p[0] = ('numeric', self.get_children(p))
+        
+        p[0] = IR.Constant(p[1], IR.INT_DATA_TYPE)
 
     def p_builtin_function(self, p):
         ''' builtin-func : PRINTF
@@ -428,14 +570,15 @@ class Parser(object):
 
     def p_function_def(self, p):
         ''' function-def : SUB ID codeblock '''
-        p[0] = ('function-def', self.get_children(p))
 
     def p_function_return(self, p):
         ''' function-ret : RETURN expression '''
         p[0] = ('function-ret', self.get_children(p))
 
     def p_ternary_operator(self, p):
-        ''' ternary-op : expression TERNARY_CONDOP expression COLON expression '''
+        ''' ternary-op : boolean-expression TERNARY_CONDOP any-computable-expression COLON any-computable-expression
+                       | LPAREN ternary-op RPAREN
+        '''
         p[0] = ('ternary-op', self.get_children(p))
 
     # Build the parser

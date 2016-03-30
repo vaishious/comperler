@@ -5,6 +5,16 @@ Function : Contains class and function definitions used to perform IR generation
 
 import debug as DEBUG
 
+INT_DATA_TYPE, STR_DATA_TYPE, UNKNOWN_DATA_TYPE = range(3)
+
+class Constant(object):
+
+    def __init__(self, value, dataType):
+
+        self.value = value
+        self.dataType = dataType
+
+
 class Dereference(object):
 
     def __init__(self, tabEntry, externalType, derefDepth):

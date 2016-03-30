@@ -80,7 +80,8 @@ class SymTabManager(object):
 
     def PopScope(self):
 
-        self.curScope = self.scopeStack.pop()
+        self.scopeStack.pop()
+        self.curScope = self.scopeStack[-1]
         self.curSymTab = self.symtables[self.curScope]
 
     def Lookup(self, varName):
@@ -96,6 +97,3 @@ class SymTabManager(object):
 
         # Create new entry to be entered later
         return SymTabEntry(varName)
-
-
-
