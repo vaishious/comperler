@@ -7,90 +7,88 @@ import debug as DEBUG
 
 INT_DATA_TYPE, STR_DATA_TYPE, UNKNOWN_DATA_TYPE = range(3)
 
-class Constant(object):
+### Some nice wrappers for IR Code ###
 
-    def __init__(self, value, dataType):
+class CodeIR(object):
 
-        self.value = value
-        self.dataType = dataType
+    def __init__(self, code, prevIR=None, nextIR=None):
 
-
-class Dereference(object):
-
-    def __init__(self, tabEntry, externalType, derefDepth):
-
-        self.tabEntry = tabEntry
-        self.externalType = externalType
-        self.derefDepth = derefDepth
-
-    def CheckDeclaration(self):
-        return self.tabEntry.CheckDeclaration()
+        self.code = code
+        self.prevIR = prevIR
+        self.nextIR = nextIR
 
     def __str__(self):
-        return str(self.tabEntry)
+        return self.code
 
-    def InsertGlobally(self, symTabManager):
-        self.tabEntry.InsertGlobally(symTabManager)
+class ListIR(object):
 
-    def InsertLocally(self, symTabManager):
-        self.tabEntry.InsertLocally(symTabManager)
+    def __init__(self, code=None):
 
-class ArrowOp(object):
+        self.head = code
+        self.tail = code
 
-    def __init__(self, dereferencedLHS):
+    def __or__(self, other):
 
-        self.dereferencedLHS = dereferencedLHS
+        if other == None:
+            return self
 
-        if dereferencedLHS.externalType != SYMTAB.SymTabEntry.SCALAR:
-            raise PerlTypeError("Dereferenced object must be a scalar value")
+        assert(type(other) == ListIR)
 
-    def CheckDeclaration(self):
-        return self.dereferencedLHS.CheckDeclaration()
+        if self.head == None:
+            self.head = other.head
+            self.tail = other.tail
 
-    def __str__(self):
-        return str(self.dereferencedLHS)
+        else:
+            if other.head == None:
+                return self
 
-    def InsertGlobally(self, symTabManager):
-        self.dereferencedLHS.InsertGlobally(symTabManager)
+            self.tail.nextIR = other.head
+            other.head.prevIR = self.tail
 
-    def InsertLocally(self, symTabManager):
-        self.dereferencedLHS.InsertLocally(symTabManager)
+            self.tail = other.tail
 
-class AccessOp(object):
+        return self
 
-    def __init__(self, lhs, keyAccess, accessType):
+    def PrintIR(self):
+        curIR = self.head
+        while (curIR != None):
+            print curIR
+            curIR = curIR.nextIR
 
-        self.lhs = lhs
-        self.keyAccess = keyAccess
-        self.accessType = accessType
+def GenCode(string):
+    return ListIR(CodeIR(string))
 
-    def CheckDeclaration(self):
-        return self.lhs.CheckDeclaration()
+######################################
 
-    def __str__(self):
-        return str(self.lhs)
+### Wrapper to store all attributes ###
 
-    def InsertGlobally(self, symTabManager):
-        self.lhs.InsertGlobally(symTabManager)
+class Attributes(object):
 
-    def InsertLocally(self, symTabManager):
-        self.lhs.InsertLocally(symTabManager)
+    def __init__(self):
 
-class Reference(object):
+        self.place = None
+        self.code  = None
 
-    def __init__(self, tabEntry):
+        # For symbol table
+        self.symEntry = None
 
-        self.tabEntry = tabEntry
+        # For dereferencing
+        self.depthDeref = 0
 
-    def CheckDeclaration(self):
-        return self.tabEntry.CheckDeclaration()
+        # For assign-sep
+        self.opCode = None
 
-    def __str__(self):
-        return str(self.tabEntry)
+        # Flags to make life easy
+        self.isArrowOp = False
+        
 
-    def InsertGlobally(self, symTabManager):
-        self.tabEntry.InsertGlobally(symTabManager)
+######################################
 
-    def InsertLocally(self, symTabManager):
-        self.tabEntry.InsertLocally(symTabManager)
+def TempVar():
+    if not hasattr(TempVar, "tempVarCount"):
+        TempVar.tempVarCount = 0
+
+    TempVar.tempVarCount += 1
+
+    return "t%d"%(TempVar.tempVarCount)
 

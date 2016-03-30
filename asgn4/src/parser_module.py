@@ -31,22 +31,72 @@ class Parser(object):
 
     def p_start_state(self, p):
         ''' start-state : statements '''
-        p[0] = ('start-state', self.get_children(p))
         if self.error_seen:
             self.error_list.sort()
             for error_item in self.error_list:
                 print error_item[1]
+        else:
+            p[1].code.PrintIR()
+
+    ### Special Rules ###
+
+    def p_empty(self, p):
+        ''' empty : '''
+        p[0] = ('empty', self.get_children(p))
+
+    def p_error(self, p):
+        if not self.error_seen:
+            print("Syntax error in input.")
+            self.error_seen = True
+
+    ##################################
+    
+    ### Marker Symbols ###
+
+    def p_mark_newscope(self, p):
+        ''' MARK-newscope : '''
+        
+        self.symTabManager.PushScope()
+
+    def p_mark_check_declaration(self, p):
+        ''' MARK-check-declaration : '''
+
+        if not p[-1].symEntry.CheckDeclaration():
+            raise DEBUG.PerlNameError("Variable %s not defined"%(p[-1].symEntry.baseVarName))
+
+    ##################################
 
     def p_statements(self, p):
         ''' statements : statement statements
                        | statement
         '''
-        p[0] = ('statements', self.get_children(p))
-        
-    def p_mark_newscope(self, p):
-        ''' MARK-newscope : '''
-        
-        self.symTabManager.PushScope()
+
+        p[0] = IR.Attributes()
+
+        if len(p) == 2:
+            p[0].code = p[1].code
+        else:
+            p[0].code = p[1].code | p[2].code
+ 
+    def p_statement(self, p):
+        ''' statement : expression SEMICOLON
+                      | variable-strict-decl SEMICOLON
+                      | codeblock
+                      | function-def
+                      | function-ret SEMICOLON
+                      | branch 
+                      | loop
+                      | labelled-loop
+                      | loop-control SEMICOLON
+        '''
+
+        p[0] = p[1]
+
+    def p_statement_error(self, p):
+        ''' statement : error SEMICOLON
+        '''
+        self.error_list.append((p.lineno(1), "Line %d: Invalid statement"%(p.lineno(1))))       
+
 
     def p_codeblock(self, p):
         ''' codeblock : MARK-newscope LBLOCK statements RBLOCK '''
@@ -59,51 +109,45 @@ class Parser(object):
         '''
         self.error_list.append((p.lineno(3), "Error in code block starting at line %d and ending at line %d"%(p.lineno(1), p.lineno(3))))
 
-    def p_empty(self, p):
-        ''' empty : '''
-        p[0] = ('empty', self.get_children(p))
-
-    def p_statement(self, p):
-        ''' statement : expression SEMICOLON
-                      | variable-strict-decl SEMICOLON
-                      | codeblock
-                      | function-def
-                      | function-ret SEMICOLON
-                      | branch 
-                      | loop
-                      | labelled-loop
-                      | loop-control SEMICOLON
-        '''
-        p[0] = ('statement', self.get_children(p))
-
-    def p_statement_error(self, p):
-        ''' statement : error SEMICOLON
-        '''
-        self.error_list.append((p.lineno(1), "Line %d: Invalid statement"%(p.lineno(1))))
-
-    def p_error(self, p):
-        if not self.error_seen:
-            print("Syntax error in input.")
-            self.error_seen = True
-
-    def p_assign_sep(self, p):
-        ''' assign-sep : EQUALS
-                       | TIMESEQUAL
-                       | DIVEQUAL
-                       | MODEQUAL
-                       | PLUSEQUAL
-                       | MINUSEQUAL
-                       | LSHIFTEQUAL
-                       | RSHIFTEQUAL
-                       | ANDEQUAL
-                       | XOREQUAL
-                       | OREQUAL
-                       | EXPEQUAL
+    def p_expression(self, p):
+        ''' expression : usable-expression
+                       | normal-assignment
+                       | ternary-op
         '''
 
         p[0] = p[1]
 
-    # (expression -> var assign-sep expression) corresponds to scalar assignment expression
+    def p_usable_expression(self, p):
+        ''' usable-expression : arith-bool-string-expression
+                              | list-expression
+                              | hash-expression
+        '''
+
+        p[0] = p[1]
+
+    def p_list_expression(self, p):
+        ''' list-expression : LPAREN list-elements RPAREN '''
+
+    def p_list_elements(self, p):
+        ''' list-elements : arith-bool-string-expression COMMA list-elements
+                          | arith-bool-string-expression COMMA
+        '''
+
+    def p_hash_expression(self, p):
+        ''' hash-expression : LPAREN hash-elements RPAREN '''
+
+    def p_hash_elements(self, p):
+        ''' hash-elements : arith-bool-string-expression HASHARROW arith-bool-string-expression COMMA hash-elements
+                          | arith-bool-string-expression HASHARROW arith-bool-string-expression
+        '''
+
+    def p_arith_bool_string_expression(self, p):
+        ''' arith-bool-string-expression : arith-boolean-expression
+                                         | string-expression
+                                         | var
+        '''
+
+        p[0] = p[1]
 
     def p_arith_boolean_expression(self, p):
         ''' arith-boolean-expression : numeric
@@ -114,6 +158,18 @@ class Parser(object):
                                      | LPAREN arith-boolean-expression RPAREN
                                      | LPAREN var RPAREN
         '''
+
+        if len(p) == 2:
+            p[0] = p[1]
+        else:
+            p[0] = p[2]
+
+    def p_string_expression(self, p):
+        ''' string-expression : string
+                              | string-op
+                              | LPAREN string-expression RPAREN
+        '''
+
 
     def p_arith_unary_op(self, p):
         ''' arith-unary-op : MINUS arith-boolean-expression 
@@ -136,6 +192,7 @@ class Parser(object):
                             | arith-boolean-expression BXOR arith-boolean-expression
                             | arith-boolean-expression LSHIFT arith-boolean-expression
                             | arith-boolean-expression RSHIFT arith-boolean-expression
+
                             | var PLUS var 
                             | var MINUS var 
                             | var TIMES var 
@@ -147,7 +204,36 @@ class Parser(object):
                             | var BXOR var
                             | var LSHIFT var
                             | var RSHIFT var
+
+                            | arith-boolean-expression PLUS var 
+                            | arith-boolean-expression MINUS var 
+                            | arith-boolean-expression TIMES var 
+                            | arith-boolean-expression DIVIDE var 
+                            | arith-boolean-expression MODULUS var 
+                            | arith-boolean-expression EXPONENT var 
+                            | arith-boolean-expression BOR var 
+                            | arith-boolean-expression BAND var 
+                            | arith-boolean-expression BXOR var
+                            | arith-boolean-expression LSHIFT var
+                            | arith-boolean-expression RSHIFT var
+
+                            | var PLUS arith-boolean-expression 
+                            | var MINUS arith-boolean-expression 
+                            | var TIMES arith-boolean-expression 
+                            | var DIVIDE arith-boolean-expression 
+                            | var MODULUS arith-boolean-expression 
+                            | var EXPONENT arith-boolean-expression 
+                            | var BOR arith-boolean-expression 
+                            | var BAND arith-boolean-expression 
+                            | var BXOR arith-boolean-expression
+                            | var LSHIFT arith-boolean-expression
+                            | var RSHIFT arith-boolean-expression
         '''
+
+        p[0] = IR.Attributes()
+
+        p[0].place = IR.TempVar()
+        p[0].code = p[1].code | p[3].code | IR.GenCode("=, %s, %s, %s, %s"%(p[2], p[0].place, p[1].place, p[3].place)) 
 
     def p_boolean_expression(self, p):
         ''' boolean-expression : arith-boolean-expression LAND arith-boolean-expression
@@ -264,44 +350,23 @@ class Parser(object):
                                       | var STRCMP var 
         '''
 
-    def p_string_expression(self, p):
-        ''' string-expression : string
-                              | string-op
-                              | LPAREN string-expression RPAREN
+    def p_assign_sep(self, p):
+        ''' assign-sep : EQUALS
+                       | TIMESEQUAL
+                       | DIVEQUAL
+                       | MODEQUAL
+                       | PLUSEQUAL
+                       | MINUSEQUAL
+                       | LSHIFTEQUAL
+                       | RSHIFTEQUAL
+                       | ANDEQUAL
+                       | XOREQUAL
+                       | OREQUAL
+                       | EXPEQUAL
         '''
 
-    def p_arith_bool_string_expression(self, p):
-        ''' arith-bool-string-expression : arith-boolean-expression
-                                         | string-expression
-                                         | var
-        '''
-
-    def p_list_elements(self, p):
-        ''' list-elements : arith-bool-string-expression COMMA list-elements
-                          | arith-bool-string-expression COMMA
-        '''
-
-    def p_list_expression(self, p):
-        ''' list-expression : LPAREN list-elements RPAREN '''
-
-    def p_hash_elements(self, p):
-        ''' hash-elements : arith-bool-string-expression HASHARROW arith-bool-string-expression COMMA hash-elements
-                          | arith-bool-string-expression HASHARROW arith-bool-string-expression
-        '''
-
-    def p_hash_expression(self, p):
-        ''' hash-expression : LPAREN hash-elements RPAREN '''
-
-    def p_any_computable_expression(self, p):
-        ''' any-computable-expression : arith-bool-string-expression
-                                      | list-expression
-                                      | hash-expression
-        '''
-    def p_expression(self, p):
-        ''' expression : any-computable-expression
-                       | global-assignment
-                       | ternary-op
-        '''
+        p[0] = IR.Attributes()
+        p[0].opCode = p[1]
 
     def p_branch(self, p):
         ''' branch : if-elsif-else
@@ -402,43 +467,63 @@ class Parser(object):
     def p_variable_name_lhs_strict(self, p):
         ''' var-name-lhs-strict : VARIABLE '''
 
-        p[0] = self.symTabManager.Lookup(p[1])
+        p[0] = IR.Attributes()
+        p[0].symEntry = self.symTabManager.Lookup(p[1])
+        p[0].place = p[0].symEntry.place
+        p[0].code = IR.ListIR()
 
-    def p_variable_name_lhs(self, p):
-        ''' var-name-lhs : var-name-lhs-strict
-                         | DEREFERENCE
+    def p_dereference(self, p):
+        ''' dereference : DEREFERENCE
         '''
 
-        if type(p[1]) != SYMTAB.SymTabEntry:
-            # Is a dereference
-            strippedVarName = p[1][1:]
-            derefDepth = strippedVarName.count('$')
-            strippedVarName = '$' + strippedVarName[derefDepth:]
+        p[0] = IR.Attributes() # is DEREFERENCE
+            
+        depthDeref = p[1][1:].count('$')
+        varName = p[1][0] + p[1][1:][depthDeref:]
 
-            if p[1][0] == '$'   : externalType = SYMTAB.SymTabEntry.SCALAR
-            elif p[1][0] == '@' : externalType = SYMTAB.SymTabEntry.ARRAY
-            elif p[1][0] == '%' : externalType = SYMTAB.SymTabEntry.HASH
+        p[0].depthDeref = depthDeref
+        p[0].symEntry = self.symTabManager.Lookup(varName)
+        
+        p[0].code = IR.ListIR()
+        targetVar = p[0].symEntry.place 
 
-            tabEntry = self.symTabManager.Lookup(strippedVarName)
-
-            p[0] = IR.Dereference(tabEntry, externalType, derefDepth)
-
-        else:
-            p[0] = p[1]
+        for i in xrange(depthDeref):
+            p[0].place = IR.TempVar()
+            p[0].code = p[0].code | IR.GenCode("=, $, %s, %s"%(p[1].place, targetVar))
+            targetVar = p[0].place
 
     # For array and hash access
     def p_access(self, p):
-        ''' access : LBRACKET expression RBRACKET
-                   | LBLOCK expression RBLOCK
+        ''' access : LBRACKET usable-expression RBRACKET
+                   | LBLOCK usable-expression RBLOCK
         '''
 
-        if p[1] == '{':
-            accessType = SYMTAB.SymTabEntry.HASH
-        elif p[1] == "[":
-            accessType = SYMTAB.SymTabEntry.ARRAY
+        p[0] = IR.Attributes()
 
-        # LHS is defined later
-        p[0] = IR.AccessOp(None, p[2], accessType)
+        p[0].symEntry = p[-1].symEntry
+        if not p[-1].isArrowOp:
+            if p[1] == '{':
+                newVarName = '%' + p[0].symEntry.baseVarName
+            else:
+                newVarName = '@' + p[0].symEntry.baseVarName
+
+            p[0].symEntry = self.symTabManager.Lookup(newVarName)
+
+        p[0].place = "%s%s%s%s"%(p[-1].place, p[1], p[2].place, p[3])
+        p[0].code = p[2].code | p[-1].code
+
+    def p_arrow(self, p):
+        ''' arrow : ARROW '''
+
+        p[0] = IR.Attributes()
+
+        p[0].symEntry = p[-1].symEntry
+        if p[0].symEntry.externalType != SYMTAB.SymTabEntry.SCALAR:
+            raise PerlTypeError("Dereferenced object must be a scalar value")
+
+        p[0].place = IR.TempVar()
+        p[0].code = p[-1].code | IR.GenCode("=, $, %s, %s"%(p[0].place, p[-1].place))
+        p[0].isArrowOp = True
  
     def p_access_error(self, p):
         ''' access : LBRACKET error RBRACKET
@@ -454,84 +539,85 @@ class Parser(object):
     #   $hashref->{"KEY"} = "VALUE";  # Hash element
 
     def p_variable_arrows_and_accesses(self, p):
-        ''' arrows_and_accesses : ARROW access
+        ''' arrows_and_accesses : arrow access
                                 | access
         '''
 
-        if len(p) == 2:
-            if type(p[-1]) == SYMTAB.SymTabEntry:
-                # Have to take corrective measures
-                if p[1].accessType == SYMTAB.SymTabEntry.HASH : newVarName = '%' + p[-1].baseVarName 
-                else : newVarName = '@' + p[-1].baseVarName
-
-                p[-1] = self.SymTabManager.Lookup(newVarName)
-
-                p[1].lhs = p[-1]
-                p[0] = p[1]
-        else:
-            if p[-1].externalType != SYMTAB.SymTabEntry.SCALAR:
-                raise PerlTypeError("Dereferenced object must be a scalar value")
-
-            p[2].lhs = IR.ArrowOp(p[-1])
+        if len(p) == 3:
             p[0] = p[2]
+        else:
+            p[0] = p[1]
 
     def p_variable_lhs(self, p):
-        ''' var-lhs : var-name-lhs
-                    | var-name-lhs arrows_and_accesses
+        ''' var-lhs : var-name-lhs-strict
+                    | var-name-lhs-strict arrows_and_accesses
         '''
 
         if len(p) == 2:
             p[0] = p[1]
         else:
             p[0] = p[2]
+
+    def p_reference(self, p):
+        ''' reference : REFERENCE '''
+
+        p[0] = IR.Attributes()
+
+        varName = p[1][1:]
+        p[0].symEntry = self.symTabManager.Lookup(varName)
+
+        p[0].place = IR.TempVar()
+        p[0].code = IR.GenCode("=, &, %s, %s"%(p[0].place, p[0].symEntry.place))
 
     def p_variable(self, p):
         ''' variable : var-lhs MARK-check-declaration
-                     | REFERENCE MARK-check-declaration 
+                     | reference MARK-check-declaration 
+                     | dereference MARK-check-declaration
         '''
 
-        if type(p[1]) == str:
-            # Is a reference
-
-            tabEntry = self.symTabManager.Lookup(p[1][1:])
-            p[0] = IR.Reference(tabEntry)
-
-        else:
-            p[0] = p[1]
+        p[0] = p[1]
 
     def p_var_function_call(self, p):
         ''' var : variable
                 | function-call
         '''
 
-    def p_mark_check_declaration(self, p):
-        ''' MARK-check-declaration : '''
+        p[0] = p[1]
 
-        if not p[-1].CheckDeclaration():
-            raise DEBUG.PerlNameError(str(p[-1]) + " not defined")
 
-    def p_global_assignment(self, p):
-        ''' global-assignment : var-lhs assign-sep any-computable-expression %prec EQUALS '''
+    def p_normal_assignment(self, p):
+        ''' normal-assignment : var-lhs MARK-check-declaration assign-sep usable-expression %prec EQUALS '''
 
-        if p[2] != '=':
-            if not p[1].CheckDeclaration():
-                raise DEBUG.PerlNameError(str(p[1]) + " not defined")
+        p[0] = IR.Attributes()
+
+        if p[3].opCode == '=':
+            p[0].code = p[4].code | p[1].code | IR.GenCode("=, %s, %s"%(p[1].place, p[4].place)) 
         else:
-            p[1].InsertGlobally(self.symTabManager)
+            p[0].code = p[4].code | p[1].code | IR.GenCode("=, %s, %s, %s, %s"%(p[3].opCode, p[1].place, p[1].place, p[4].place))
 
     def p_variable_strict_decl(self, p):
         ''' variable-strict-decl : MY var-name-lhs-strict
-                                 | MY var-name-lhs-strict EQUALS expression
+                                 | MY var-name-lhs-strict EQUALS usable-expression
         '''
 
-        p[2].InsertLocally(self.symTabManager)
+        p[2].symEntry.InsertLocally(self.symTabManager)
+
+        p[0] = IR.Attributes()
+
+        if len(p) == 5:
+            p[0].code = p[4].code | IR.GenCode("=, %s, %s"%(p[2].place, p[4].place))
+        else:
+            p[0].code = IR.ListIR() # TODO
 
     def p_string(self, p):
         ''' string : SINGQUOTSTR
                    | DOUBQUOTSTR
         '''
 
-        p[0] = IR.Constant(p[1], IR.STR_DATA_TYPE)
+        p[0] = IR.Attributes()
+
+        p[0].place = str(p[1])
+        p[0].code = IR.ListIR()  # No code
 
     def p_numeric(self, p):
         ''' numeric : NUMBER
@@ -540,7 +626,10 @@ class Parser(object):
                     | HEXADECIMAL
         '''
         
-        p[0] = IR.Constant(p[1], IR.INT_DATA_TYPE)
+        p[0] = IR.Attributes()
+
+        p[0].place = str(p[1])
+        p[0].code = IR.ListIR() # No code 
 
     def p_builtin_function(self, p):
         ''' builtin-func : PRINTF
@@ -576,7 +665,7 @@ class Parser(object):
         p[0] = ('function-ret', self.get_children(p))
 
     def p_ternary_operator(self, p):
-        ''' ternary-op : boolean-expression TERNARY_CONDOP any-computable-expression COLON any-computable-expression
+        ''' ternary-op : boolean-expression TERNARY_CONDOP usable-expression COLON usable-expression
                        | LPAREN ternary-op RPAREN
         '''
         p[0] = ('ternary-op', self.get_children(p))

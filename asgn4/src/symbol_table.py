@@ -21,6 +21,9 @@ class SymTabEntry(object):
 
         self.baseVarName = variable[1:]
 
+        self.place = self.baseVarName + variable[0] # To differentiate between namespaces for arrays, hashes and scalars
+        self.code = []
+
     def CheckDeclaration(self):
         return self.scopeNum != -1
 
