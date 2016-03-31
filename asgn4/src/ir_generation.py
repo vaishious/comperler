@@ -106,6 +106,13 @@ class Attributes(object):
         self.nextlist = []
         self.instr = None
 
+        # For backpatching in loops
+        self.loop_next_list = {}
+        self.loop_last_list = {}
+        self.loop_continue_list = {}
+        self.loop_redo_list = {}
+        self.loopID = ''
+
 
         # Flags to make life easy
         self.isArrowOp = False
@@ -135,7 +142,7 @@ def MakeList(i):
     return [i]
 
 def Merge(p1, p2):
-    return p1 + p2
+    return list(set(p1 + p2))
 
 def BackPatch(p, i):
     global InstrMap

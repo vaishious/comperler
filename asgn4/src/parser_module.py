@@ -82,6 +82,35 @@ class Parser(object):
             IR.BackPatch(p[1].nextlist, p[2].instr)
             p[0].nextlist = p[3].nextlist
 
+    def p_loop_statements(self, p):
+        ''' loop-statements : loop-statements MARK-backpatch loop-statement
+                            | loop-statement
+        '''
+
+        p[0] = IR.Attributes()
+
+        if len(p) == 2:
+            p[0].code = p[1].code
+            p[0].nextlist = p[1].nextlist
+            p[0].loop_next_list = p[1].loop_next_list
+            p[0].loop_redo_list = p[1].loop_redo_list
+            p[0].loop_last_list = p[1].loop_last_list
+        else:
+            p[0].code = p[1].code | p[3].code
+            IR.BackPatch(p[1].nextlist, p[2].instr)
+            p[0].nextlist = p[3].nextlist
+
+            iterKeys = p[1].loop_next_list.keys() + p[3].loop_next_list.keys()
+            for i in iterKeys:
+                p[0].loop_next_list[i] = IR.Merge(p[1].loop_next_list.get(i, []), p[3].loop_next_list.get(i, []))
+
+            iterKeys = p[1].loop_redo_list.keys() + p[3].loop_redo_list.keys()
+            for i in iterKeys:
+                p[0].loop_redo_list[i] = IR.Merge(p[1].loop_redo_list.get(i, []), p[3].loop_redo_list.get(i, []))
+
+            iterKeys = p[1].loop_last_list.keys() + p[3].loop_last_list.keys()
+            for i in iterKeys:
+                p[0].loop_last_list[i] = IR.Merge(p[1].loop_last_list.get(i, []), p[3].loop_last_list.get(i, []))
  
     def p_statement(self, p):
         ''' statement : expression SEMICOLON
@@ -90,9 +119,14 @@ class Parser(object):
                       | function-def
                       | function-ret SEMICOLON
                       | branch 
-                      | loop
                       | labelled-loop
-                      | loop-control SEMICOLON
+        '''
+
+        p[0] = p[1]
+
+    def p_loop_statement(self, p):
+        ''' loop-statement : statement
+                           | loop-control SEMICOLON
         '''
 
         p[0] = p[1]
@@ -105,6 +139,13 @@ class Parser(object):
 
     def p_codeblock(self, p):
         ''' codeblock : MARK-newscope LBLOCK statements RBLOCK '''
+
+        p[0] = p[3]
+
+        self.symTabManager.PopScope()
+
+    def p_loop_codeblock(self, p):
+        ''' loop-codeblock : MARK-newscope LBLOCK loop-statements RBLOCK '''
 
         p[0] = p[3]
 
@@ -636,23 +677,59 @@ class Parser(object):
 
     def p_continue_block(self, p):
         ''' continue : CONTINUE codeblock
-                     | empty
         '''
-        p[0] = ('continue', self.get_children(p))
+
+        p[0] = p[2]
+
+    def p_while_loop(self, p):
+        ''' while-loop : WHILE MARK-backpatch LPAREN boolean-expression RPAREN MARK-backpatch loop-codeblock '''
+
+        p[0] = IR.Attributes()
+        loopID = p[-1].loopID
+
+        IR.BackPatch(p[7].nextlist, p[2].instr)
+        IR.BackPatch(p[4].truelist, p[6].instr)
+        IR.BackPatch(p[7].loop_next_list.get(loopID, []), p[2].instr)
+        IR.BackPatch(p[7].loop_redo_list.get(loopID, []), p[6].instr)
+
+        p[0].nextlist = IR.Merge(p[4].falselist, p[7].loop_last_list.get(loopID, []))
+        p[0].loop_next_list = p[7].loop_next_list
+        p[0].loop_redo_list = p[7].loop_redo_list
+        p[0].loop_last_list = p[7].loop_last_list
+
+        p[0].code = p[4].code | p[7].code | IR.GenCode("goto, %d"%(p[2].instr))
+
+    def p_while_loop_continue(self, p):
+        ''' while-loop : WHILE MARK-backpatch LPAREN boolean-expression RPAREN MARK-backpatch loop-codeblock MARK-backpatch continue '''
+
+        p[0] = IR.Attributes()
+        loopID = p[-1].loopID
+
+        IR.BackPatch(p[7].nextlist, p[8].instr)
+        IR.BackPatch(p[4].truelist, p[6].instr)
+        IR.BackPatch(p[7].loop_next_list.get(loopID, []), p[8].instr)
+        IR.BackPatch(p[7].loop_redo_list.get(loopID, []), p[6].instr)
+
+        p[0].nextlist = IR.Merge(IR.Merge(p[4].falselist, p[9].nextlist), p[7].loop_last_list.get(loopID, []))
+        p[0].loop_next_list = p[7].loop_next_list
+        p[0].loop_redo_list = p[7].loop_redo_list
+        p[0].loop_last_list = p[7].loop_last_list
+
+        p[0].code = p[4].code | p[7].code | p[9].code | IR.GenCode("goto, %d"%(p[2].instr))
 
     # Foreach-loop semantics need to be good
     def p_loop(self, p):
-        ''' loop : WHILE LPAREN boolean-expression RPAREN codeblock continue
-                 | UNTIL LPAREN boolean-expression RPAREN codeblock
-                 | FOR LPAREN expression SEMICOLON boolean-expression SEMICOLON expression RPAREN codeblock
-                 | FOREACH var-lhs LPAREN var-lhs RPAREN codeblock continue
-                 | DO codeblock WHILE LPAREN expression RPAREN SEMICOLON
-        '''
-        p[0] = ('loop', self.get_children(p))
+        ''' loop : while-loop '''
+                 #| UNTIL LPAREN boolean-expression RPAREN codeblock
+                 #| FOR LPAREN expression SEMICOLON boolean-expression SEMICOLON expression RPAREN codeblock
+                 #| FOREACH var-lhs LPAREN var-lhs RPAREN codeblock continue
+                 #| DO codeblock WHILE LPAREN expression RPAREN SEMICOLON
+        #'''
+
+        p[0] = p[1]
 
     def p_loop_error_a(self, p):
-        ''' loop : WHILE LPAREN error RPAREN codeblock continue
-                 | UNTIL LPAREN error RPAREN codeblock
+        ''' loop : UNTIL LPAREN error RPAREN codeblock
                  | FOR LPAREN error RPAREN codeblock
         '''
         if p[1] == 'while':
@@ -672,20 +749,72 @@ class Parser(object):
         '''
         self.error_list.append((p.lineno(5), "Line %d: Invalid conditional passed to DO-WHILE loop"%(p.lineno(5))))
 
+    def p_loop_label(self, p):
+        ''' loop-label : ID COLON
+                       |
+        '''
+
+        p[0] = IR.Attributes()
+        if len(p) == 1:
+            p[0].loopID = ''
+        else:
+            p[0].loopID = p[1]
+
     def p_labelled_loop(self, p):
-        ''' labelled-loop : ID COLON loop '''
-        p[0] = ('labelled-loop', self.get_children(p))
+        ''' labelled-loop : loop-label loop '''
+
+        p[0] = p[2]
+
+    def p_loop_next(self, p):
+        ''' loop-next : NEXT
+                      | NEXT ID
+        '''
+
+        p[0] = IR.Attributes()
+        
+        if len(p) == 2:
+            p[0].loop_next_list[''] = IR.MakeList(IR.NextInstr)
+        else:
+            p[0].loop_next_list[p[2]] = IR.MakeList(IR.NextInstr)
+
+        p[0].code = IR.GenCode("goto, LABEL#REQUIRED")
+
+    def p_loop_redo(self, p):
+        ''' loop-redo : REDO
+                      | REDO ID
+        '''
+
+        p[0] = IR.Attributes()
+        
+        if len(p) == 2:
+            p[0].loop_redo_list[''] = IR.MakeList(IR.NextInstr)
+        else:
+            p[0].loop_redo_list[p[2]] = IR.MakeList(IR.NextInstr)
+
+        p[0].code = IR.GenCode("goto, LABEL#REQUIRED")
+
+    def p_loop_last(self, p):
+        ''' loop-last : LAST
+                      | LAST ID
+        '''
+
+        p[0] = IR.Attributes()
+        
+        if len(p) == 2:
+            p[0].loop_last_list[''] = IR.MakeList(IR.NextInstr)
+        else:
+            p[0].loop_last_list[p[2]] = IR.MakeList(IR.NextInstr)
+
+        p[0].code = IR.GenCode("goto, LABEL#REQUIRED")
 
     def p_loop_control_statement(self, p):
-        ''' loop-control : NEXT
-                         | NEXT ID
-                         | LAST 
-                         | LAST ID
-                         | REDO
-                         | REDO ID
+        ''' loop-control : loop-next
+                         | loop-redo
+                         | loop-last
                          | GOTO ID
         '''
-        p[0] = ('loop-control', self.get_children(p))
+
+        p[0] = p[1]
 
     def p_variable_name_lhs_strict(self, p):
         ''' var-name-lhs-strict : VARIABLE '''
