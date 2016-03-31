@@ -7,6 +7,9 @@ import debug as DEBUG
 
 INT_DATA_TYPE, STR_DATA_TYPE, UNKNOWN_DATA_TYPE = range(3)
 
+NextInstr = 0
+InstrMap = [0]
+
 ### Some nice wrappers for IR Code ###
 
 class CodeIR(object):
@@ -16,6 +19,9 @@ class CodeIR(object):
         self.code = code
         self.prevIR = prevIR
         self.nextIR = nextIR
+
+        global InstrMap, NextInstr
+        InstrMap[NextInstr-1] = self # It has already been increased by 1
 
     def __str__(self):
         return self.code
@@ -56,7 +62,22 @@ class ListIR(object):
             curIR = curIR.nextIR
 
 def GenCode(string):
+    global NextInstr, InstrMap
+
+    string = str(NextInstr) + ", " + string
+    NextInstr += 1
+    InstrMap += [0]
+
     return ListIR(CodeIR(string))
+
+def Label(string):
+    global NextInstr, InstrMap
+
+    string = str(NextInstr) + ", " + string
+    NextInstr += 1
+    InstrMap += [0]
+
+    return ListIR(CodeIR("label, %s"%(string)))
 
 ######################################
 
@@ -68,6 +89,7 @@ class Attributes(object):
 
         self.place = None
         self.code  = None
+        self.booleanExprCode = None
 
         # For symbol table
         self.symEntry = None
@@ -78,9 +100,49 @@ class Attributes(object):
         # For assign-sep
         self.opCode = None
 
+        # For backpatching
+        self.truelist = []
+        self.falselist = []
+        self.nextlist = []
+        self.instr = None
+
+
         # Flags to make life easy
         self.isArrowOp = False
+        self.isBooleanExpression = False
+
+    def DuplicateTo(self, other):
+        other.place = self.place
+        other.code = self.code
+        other.booleanExprCode = self.code
+        other.symEntry = self.symEntry
+        other.depthDeref = self.depthDeref
+        other.opCode = self.opCode
+        other.truelist = self.truelist[:]
+        other.falselist = self.falselist[:]
+        other.nextlist = self.nextlist[:]
+        other.instr = self.instr
+        other.isArrowOp = self.isArrowOp
         
+
+######################################
+
+######## Backpatching Functions ######
+
+# Let's be inefficient
+
+def MakeList(i):
+    return [i]
+
+def Merge(p1, p2):
+    return p1 + p2
+
+def BackPatch(p, i):
+    global InstrMap
+
+    for numInstr in p:
+        instr = InstrMap[numInstr]
+        instr.code = instr.code.replace('LABEL#REQUIRED', str(i))
 
 ######################################
 
@@ -91,4 +153,14 @@ def TempVar():
     TempVar.tempVarCount += 1
 
     return "t%d"%(TempVar.tempVarCount)
+
+def NewLabel():
+    if not hasattr(NewLabel, "labelCount"):
+        NewLabel.labelCount = 0
+
+    NewLabel.labelCount += 1
+
+    return "Label%d"%(NewLabel.labelCount)
+
+######################################
 
