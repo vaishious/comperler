@@ -744,10 +744,82 @@ class Parser(object):
 
         p[0].code = p[4].code | p[7].code | p[9].code | IR.GenCode("goto, %d"%(p[2].instr))
 
+    def p_until_loop(self, p):
+        ''' until-loop : UNTIL MARK-backpatch LPAREN boolean-expression RPAREN MARK-backpatch loop-codeblock '''
+
+        p[0] = IR.Attributes()
+        loopID = p[-1].loopID
+        defaultID = ''
+
+        IR.BackPatch(p[7].nextlist, p[2].instr)
+        IR.BackPatch(p[4].falselist, p[6].instr)
+
+        full_next_list = IR.Merge(p[7].loop_next_list.get(loopID, []), p[7].loop_next_list.get(defaultID, []))
+        full_redo_list = IR.Merge(p[7].loop_redo_list.get(loopID, []), p[7].loop_redo_list.get(defaultID, []))
+        full_last_list = IR.Merge(p[7].loop_last_list.get(loopID, []), p[7].loop_last_list.get(defaultID, []))
+
+        IR.BackPatch(full_next_list, p[2].instr)
+        IR.BackPatch(full_redo_list, p[6].instr)
+
+        p[0].nextlist = IR.Merge(p[4].truelist, full_last_list)
+
+        p[0].loop_next_list = p[7].loop_next_list
+        p[0].loop_next_list.pop(loopID, None)
+        p[0].loop_next_list.pop(defaultID, None)
+
+        p[0].loop_redo_list = p[7].loop_redo_list
+        p[0].loop_redo_list.pop(loopID, None)
+        p[0].loop_redo_list.pop(defaultID, None)
+
+        p[0].loop_last_list = p[7].loop_last_list
+        p[0].loop_last_list.pop(loopID, None)
+        p[0].loop_last_list.pop(defaultID, None)
+
+        p[0].code = p[4].code | p[7].code | IR.GenCode("goto, %d"%(p[2].instr))
+
+    def p_until_loop_continue(self, p):
+        ''' until-loop : UNTIL MARK-backpatch LPAREN boolean-expression RPAREN MARK-backpatch loop-codeblock MARK-backpatch continue '''
+
+        p[0] = IR.Attributes()
+        loopID = p[-1].loopID
+        defaultID = ''
+
+        temp_next_list1 = IR.Merge(p[7].loop_next_list.get(loopID, []), p[7].loop_next_list.get(defaultID, []))
+        temp_next_list2 = IR.Merge(p[9].loop_next_list.get(loopID, []), p[9].loop_next_list.get(defaultID, []))
+        full_next_list = IR.Merge(temp_next_list1, temp_next_list2)
+
+        temp_redo_list1 = IR.Merge(p[7].loop_redo_list.get(loopID, []), p[7].loop_redo_list.get(defaultID, []))
+        temp_redo_list2 = IR.Merge(p[9].loop_redo_list.get(loopID, []), p[9].loop_redo_list.get(defaultID, []))
+        full_redo_list = IR.Merge(temp_redo_list1, temp_redo_list2)
+
+        temp_last_list1 = IR.Merge(p[7].loop_last_list.get(loopID, []), p[7].loop_last_list.get(defaultID, []))
+        temp_last_list2 = IR.Merge(p[9].loop_last_list.get(loopID, []), p[9].loop_last_list.get(defaultID, []))
+        full_last_list = IR.Merge(temp_last_list1, temp_last_list2)
+
+        IR.BackPatch(p[7].nextlist, p[8].instr)
+        IR.BackPatch(p[4].falselist, p[6].instr)
+        IR.BackPatch(full_next_list, p[8].instr)
+        IR.BackPatch(full_redo_list, p[6].instr)
+
+        p[0].nextlist = IR.Merge(IR.Merge(p[4].truelist, p[9].nextlist), full_last_list)
+
+        p[0].loop_next_list = IR.MergeLoopLists(p[7].loop_next_list, p[9].loop_next_list)
+        p[0].loop_next_list.pop(loopID, None)
+        p[0].loop_next_list.pop(defaultID, None)
+        p[0].loop_redo_list = IR.MergeLoopLists(p[7].loop_redo_list, p[9].loop_redo_list)
+        p[0].loop_redo_list.pop(loopID, None)
+        p[0].loop_redo_list.pop(defaultID, None)
+        p[0].loop_last_list = IR.MergeLoopLists(p[7].loop_last_list, p[9].loop_redo_list)
+        p[0].loop_last_list.pop(loopID, None)
+        p[0].loop_last_list.pop(defaultID, None)
+
+        p[0].code = p[4].code | p[7].code | p[9].code | IR.GenCode("goto, %d"%(p[2].instr))
+
     # Foreach-loop semantics need to be good
     def p_loop(self, p):
-        ''' loop : while-loop '''
-                 #| UNTIL LPAREN boolean-expression RPAREN codeblock
+        ''' loop : while-loop 
+                 | until-loop
+        '''
                  #| FOR LPAREN expression SEMICOLON boolean-expression SEMICOLON expression RPAREN codeblock
                  #| FOREACH var-lhs LPAREN var-lhs RPAREN codeblock continue
                  #| DO codeblock WHILE LPAREN expression RPAREN SEMICOLON
@@ -755,6 +827,8 @@ class Parser(object):
 
         p[0] = p[1]
 
+    # Fix these error messages
+    """
     def p_loop_error_a(self, p):
         ''' loop : UNTIL LPAREN error RPAREN codeblock
                  | FOR LPAREN error RPAREN codeblock
@@ -775,14 +849,15 @@ class Parser(object):
         ''' loop : DO codeblock WHILE LPAREN error RPAREN SEMICOLON
         '''
         self.error_list.append((p.lineno(5), "Line %d: Invalid conditional passed to DO-WHILE loop"%(p.lineno(5))))
+    """
 
     def p_loop_label(self, p):
         ''' loop-label : ID COLON
-                       |
+                       | empty
         '''
 
         p[0] = IR.Attributes()
-        if len(p) == 1:
+        if len(p) == 2:
             p[0].loopID = ''
         else:
             p[0].loopID = p[1]
