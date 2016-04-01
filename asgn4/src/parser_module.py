@@ -982,11 +982,13 @@ class Parser(object):
         p[0].symEntry = p[-1].symEntry
         if not p[-1].isArrowOp:
             if p[1] == '{':
-                newVarName = '%' + p[0].symEntry.baseVarName
+                newVarName = '%' + p[-1].symEntry.baseVarName
             else:
-                newVarName = '@' + p[0].symEntry.baseVarName
+                newVarName = '@' + p[-1].symEntry.baseVarName
 
-            p[0].symEntry = self.symTabManager.Lookup(newVarName)
+            p[-1].symEntry = self.symTabManager.Lookup(newVarName)
+            p[0].symEntry = p[-1].symEntry
+            p[-1].place = p[-1].symEntry.place
 
         p[0].place = "%s%s%s%s"%(p[-1].place, p[1], p[2].place, p[3])
         p[0].code = p[2].code | p[-1].code
