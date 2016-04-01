@@ -77,21 +77,6 @@ class Parser(object):
         if len(p) == 2:
             p[0].code = p[1].code
             p[0].nextlist = p[1].nextlist
-        else:
-            p[0].code = p[1].code | p[3].code
-            IR.BackPatch(p[1].nextlist, p[2].instr)
-            p[0].nextlist = p[3].nextlist
-
-    def p_loop_statements(self, p):
-        ''' loop-statements : loop-statements MARK-backpatch loop-statement
-                            | loop-statement
-        '''
-
-        p[0] = IR.Attributes()
-
-        if len(p) == 2:
-            p[0].code = p[1].code
-            p[0].nextlist = p[1].nextlist
             p[0].loop_next_list = p[1].loop_next_list
             p[0].loop_redo_list = p[1].loop_redo_list
             p[0].loop_last_list = p[1].loop_last_list
@@ -112,13 +97,7 @@ class Parser(object):
                       | function-ret SEMICOLON
                       | branch 
                       | labelled-loop
-        '''
-
-        p[0] = p[1]
-
-    def p_loop_statement(self, p):
-        ''' loop-statement : statement
-                           | loop-control SEMICOLON
+                      | loop-control SEMICOLON
         '''
 
         p[0] = p[1]
@@ -131,13 +110,6 @@ class Parser(object):
 
     def p_codeblock(self, p):
         ''' codeblock : MARK-newscope LBLOCK statements RBLOCK '''
-
-        p[0] = p[3]
-
-        self.symTabManager.PopScope()
-
-    def p_loop_codeblock(self, p):
-        ''' loop-codeblock : MARK-newscope LBLOCK loop-statements RBLOCK '''
 
         p[0] = p[3]
 
@@ -566,6 +538,7 @@ class Parser(object):
         IR.BackPatch(p[1].falselist, p[4].instr)
 
         p[0].nextlist = IR.Merge(IR.Merge(p[1].nextlist, p[2].nextlist), p[5].nextlist)
+        p[0].CopyLoopLists(p[5])
         p[0].code = p[1].code | p[2].code | p[5].code
 
     def p_if_elsif1(self, p):
@@ -577,6 +550,7 @@ class Parser(object):
 
         IR.BackPatch(p[3].truelist, p[5].instr)
         p[0].nextlist = IR.Merge(p[3].falselist, p[6].nextlist)
+        p[0].CopyLoopLists(p[6])
         p[0].falselist = p[3].falselist
 
     def p_mark_backpatch_nextlist(self, p):
@@ -594,6 +568,7 @@ class Parser(object):
         IR.BackPatch(p[3].truelist, p[5].instr)
         IR.BackPatch(p[3].falselist, p[8].instr)
         p[0].nextlist = IR.Merge(IR.Merge(p[6].nextlist, p[7].nextlist), p[9].nextlist)
+        p[0].CopyLoopLists(p[6])
 
         p[0].code = p[3].code | p[6].code | p[7].code | p[9].code
         p[0].falselist = p[9].falselist
@@ -609,6 +584,7 @@ class Parser(object):
         IR.BackPatch(p[3].truelist, p[5].instr)
         IR.BackPatch(p[3].falselist, p[8].instr)
         p[0].nextlist = IR.Merge(IR.Merge(p[6].nextlist, p[7].nextlist), p[9].nextlist)
+        p[0].CopyLoopLists(p[6])
 
         p[0].code = p[3].code | p[6].code | p[7].code | p[9].code
         p[0].falselist = p[9].falselist
@@ -621,6 +597,7 @@ class Parser(object):
 
         IR.BackPatch(p[3].truelist, p[5].instr)
         p[0].nextlist = IR.Merge(p[3].falselist, p[6].nextlist)
+        p[0].CopyLoopLists(p[6])
         p[0].falselist = p[3].falselist
 
     def p_elsif_error(self, p):
@@ -640,6 +617,7 @@ class Parser(object):
         IR.BackPatch(p[1].falselist, p[4].instr)
 
         p[0].nextlist = IR.Merge(IR.Merge(p[1].nextlist, p[2].nextlist), p[5].nextlist)
+        p[0].CopyLoopLists(p[5])
         p[0].code = p[1].code | p[2].code | p[5].code
 
     def p_unless_elsif(self, p):
@@ -649,6 +627,7 @@ class Parser(object):
         IR.BackPatch(p[3].falselist, p[5].instr)
         IR.BackPatch(p[3].truelist, p[8].instr)
         p[0].nextlist = IR.Merge(IR.Merge(p[6].nextlist, p[7].nextlist), p[9].nextlist)
+        p[0].CopyLoopLists(p[6])
 
         p[0].code = p[3].code | p[6].code | p[7].code | p[9].code
         p[0].falselist = p[9].falselist
@@ -661,6 +640,7 @@ class Parser(object):
 
         IR.BackPatch(p[3].falselist, p[5].instr)
         p[0].nextlist = IR.Merge(p[3].falselist, p[6].nextlist)
+        p[0].CopyLoopLists(p[6])
         p[0].falselist = p[3].truelist
 
     def p_unless_error(self, p):
@@ -668,13 +648,13 @@ class Parser(object):
         self.error_list.append((p.lineno(3), "Line %d: Invalid conditional passed to UNLESS"%(p.lineno(3))))
 
     def p_continue_block(self, p):
-        ''' continue : CONTINUE loop-codeblock
+        ''' continue : CONTINUE codeblock
         '''
 
         p[0] = p[2]
 
     def p_while_loop(self, p):
-        ''' while-loop : WHILE MARK-backpatch LPAREN boolean-expression RPAREN MARK-backpatch loop-codeblock '''
+        ''' while-loop : WHILE MARK-backpatch LPAREN boolean-expression RPAREN MARK-backpatch codeblock '''
 
         p[0] = IR.Attributes()
         loopID = p[-1].loopID
@@ -707,7 +687,7 @@ class Parser(object):
         p[0].code = p[4].code | p[7].code | IR.GenCode("goto, %d"%(p[2].instr))
 
     def p_while_loop_continue(self, p):
-        ''' while-loop : WHILE MARK-backpatch LPAREN boolean-expression RPAREN MARK-backpatch loop-codeblock MARK-backpatch continue '''
+        ''' while-loop : WHILE MARK-backpatch LPAREN boolean-expression RPAREN MARK-backpatch codeblock MARK-backpatch continue '''
 
         p[0] = IR.Attributes()
         loopID = p[-1].loopID
@@ -745,7 +725,7 @@ class Parser(object):
         p[0].code = p[4].code | p[7].code | p[9].code | IR.GenCode("goto, %d"%(p[2].instr))
 
     def p_until_loop(self, p):
-        ''' until-loop : UNTIL MARK-backpatch LPAREN boolean-expression RPAREN MARK-backpatch loop-codeblock '''
+        ''' until-loop : UNTIL MARK-backpatch LPAREN boolean-expression RPAREN MARK-backpatch codeblock '''
 
         p[0] = IR.Attributes()
         loopID = p[-1].loopID
@@ -778,7 +758,7 @@ class Parser(object):
         p[0].code = p[4].code | p[7].code | IR.GenCode("goto, %d"%(p[2].instr))
 
     def p_until_loop_continue(self, p):
-        ''' until-loop : UNTIL MARK-backpatch LPAREN boolean-expression RPAREN MARK-backpatch loop-codeblock MARK-backpatch continue '''
+        ''' until-loop : UNTIL MARK-backpatch LPAREN boolean-expression RPAREN MARK-backpatch codeblock MARK-backpatch continue '''
 
         p[0] = IR.Attributes()
         loopID = p[-1].loopID
@@ -815,15 +795,34 @@ class Parser(object):
 
         p[0].code = p[4].code | p[7].code | p[9].code | IR.GenCode("goto, %d"%(p[2].instr))
 
-    # Foreach-loop semantics need to be good
+    def p_do_while_loop(self, p):
+        # Next, redo and last give a compilation error when used with do-while
+        ''' do-while-loop : DO MARK-backpatch codeblock MARK-backpatch WHILE LPAREN boolean-expression RPAREN SEMICOLON '''
+
+        p[0] = IR.Attributes()
+        IR.BackPatch(p[3].nextlist, p[4].instr)
+        IR.BackPatch(p[7].truelist, p[2].instr)
+
+        p[0].nextlist = p[7].falselist
+        p[0].loop_next_list = p[3].loop_next_list
+        p[0].loop_redo_list = p[3].loop_redo_list
+        p[0].loop_last_list = p[3].loop_last_list
+
+        p[0].code = p[3].code | p[7].code
+
+    def p_foreach_loop(self, p):
+        ''' foreach-loop : FOREACH var-lhs LPAREN var-lhs RPAREN codeblock '''
+
+    def p_for_loop(self, p): # We don't allow declarations in the for-loop specification
+        ''' for-loop : FOR LPAREN expression SEMICOLON boolean-expression SEMICOLON expression RPAREN codeblock '''
+
     def p_loop(self, p):
         ''' loop : while-loop 
                  | until-loop
+                 | do-while-loop
+                 | foreach-loop
+                 | for-loop
         '''
-                 #| FOR LPAREN expression SEMICOLON boolean-expression SEMICOLON expression RPAREN codeblock
-                 #| FOREACH var-lhs LPAREN var-lhs RPAREN codeblock continue
-                 #| DO codeblock WHILE LPAREN expression RPAREN SEMICOLON
-        #'''
 
         p[0] = p[1]
 
@@ -1048,6 +1047,11 @@ class Parser(object):
             p[0].code = p[4].code | p[1].code | IR.GenCode("=, %s, %s"%(p[1].place, p[4].place)) 
         else:
             p[0].code = p[4].code | p[1].code | IR.GenCode("=, %s, %s, %s, %s"%(p[3].opCode, p[1].place, p[1].place, p[4].place))
+
+    def empty_assignment(self, p): # Used for FOR loop
+        ''' normal-assignment : empty '''
+
+        p[0] = IR.Attributes()
 
     def p_variable_strict_decl(self, p):
         ''' variable-strict-decl : MY var-name-lhs-strict

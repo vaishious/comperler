@@ -130,6 +130,11 @@ class Attributes(object):
         other.nextlist = self.nextlist[:]
         other.instr = self.instr
         other.isArrowOp = self.isArrowOp
+
+    def CopyLoopLists(self, other):
+        self.loop_next_list = other.loop_next_list
+        self.loop_redo_list = other.loop_redo_list
+        self.loop_last_list = other.loop_last_list
         
 
 ######################################
