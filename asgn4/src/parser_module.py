@@ -706,11 +706,12 @@ class Parser(object):
         full_last_list = IR.Merge(temp_last_list1, temp_last_list2)
 
         IR.BackPatch(p[7].nextlist, p[8].instr)
+        IR.BackPatch(p[9].nextlist, p[2].instr)
         IR.BackPatch(p[4].truelist, p[6].instr)
         IR.BackPatch(full_next_list, p[8].instr)
         IR.BackPatch(full_redo_list, p[6].instr)
 
-        p[0].nextlist = IR.Merge(IR.Merge(p[4].falselist, p[9].nextlist), full_last_list)
+        p[0].nextlist = IR.Merge(p[4].falselist, full_last_list)
 
         p[0].loop_next_list = IR.MergeLoopLists(p[7].loop_next_list, p[9].loop_next_list)
         p[0].loop_next_list.pop(loopID, None)
@@ -777,11 +778,12 @@ class Parser(object):
         full_last_list = IR.Merge(temp_last_list1, temp_last_list2)
 
         IR.BackPatch(p[7].nextlist, p[8].instr)
+        IR.BackPatch(p[9].nextlist, p[2].instr)
         IR.BackPatch(p[4].falselist, p[6].instr)
         IR.BackPatch(full_next_list, p[8].instr)
         IR.BackPatch(full_redo_list, p[6].instr)
 
-        p[0].nextlist = IR.Merge(IR.Merge(p[4].truelist, p[9].nextlist), full_last_list)
+        p[0].nextlist = IR.Merge(p[4].truelist, full_last_list)
 
         p[0].loop_next_list = IR.MergeLoopLists(p[7].loop_next_list, p[9].loop_next_list)
         p[0].loop_next_list.pop(loopID, None)
@@ -804,9 +806,7 @@ class Parser(object):
         IR.BackPatch(p[7].truelist, p[2].instr)
 
         p[0].nextlist = p[7].falselist
-        p[0].loop_next_list = p[3].loop_next_list
-        p[0].loop_redo_list = p[3].loop_redo_list
-        p[0].loop_last_list = p[3].loop_last_list
+        p[0].CopyLoopLists(p[3])
 
         p[0].code = p[3].code | p[7].code
 
@@ -814,14 +814,40 @@ class Parser(object):
         ''' foreach-loop : FOREACH var-lhs LPAREN var-lhs RPAREN codeblock '''
 
     def p_for_loop(self, p): # We don't allow declarations in the for-loop specification
-        ''' for-loop : FOR LPAREN expression SEMICOLON boolean-expression SEMICOLON expression RPAREN codeblock '''
+        ''' for-loop : FOR LPAREN expression SEMICOLON MARK-backpatch boolean-expression SEMICOLON MARK-backpatch expression MARK-backpatch-nextlist RPAREN MARK-backpatch codeblock '''
+
+        p[0] = IR.Attributes()
+        loopID = p[-1].loopID
+        defaultID = ''
+        IR.BackPatch(p[6].truelist, p[12].instr)
+        IR.BackPatch(p[13].nextlist, p[8].instr)
+        IR.BackPatch(p[10].nextlist, p[5].instr)
+
+        full_next_list = IR.Merge(p[13].loop_next_list.get(loopID, []), p[13].loop_next_list.get(defaultID, []))
+        full_redo_list = IR.Merge(p[13].loop_redo_list.get(loopID, []), p[13].loop_redo_list.get(defaultID, []))
+        full_last_list = IR.Merge(p[13].loop_last_list.get(loopID, []), p[13].loop_last_list.get(defaultID, []))
+        IR.BackPatch(full_next_list, p[8].instr)
+        IR.BackPatch(full_redo_list, p[12].instr)
+
+        p[0].nextlist = IR.Merge(p[6].falselist, full_last_list)
+
+        p[0].CopyLoopLists(p[13])
+
+        p[0].loop_next_list.pop(loopID, None)
+        p[0].loop_next_list.pop(defaultID, None)
+        p[0].loop_redo_list.pop(loopID, None)
+        p[0].loop_redo_list.pop(defaultID, None)
+        p[0].loop_last_list.pop(loopID, None)
+        p[0].loop_last_list.pop(defaultID, None)
+
+        p[0].code = p[3].code | p[6].code | p[13].code | p[9].code | p[10].code 
 
     def p_loop(self, p):
         ''' loop : while-loop 
                  | until-loop
                  | do-while-loop
-                 | foreach-loop
                  | for-loop
+                 | foreach-loop
         '''
 
         p[0] = p[1]
