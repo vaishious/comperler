@@ -144,6 +144,14 @@ def MakeList(i):
 def Merge(p1, p2):
     return list(set(p1 + p2))
 
+def MergeLoopLists(p1, p2):
+    iterKeys = p1.keys() + p2.keys()
+    p = {}
+    for i in iterKeys:
+        p[i] = Merge(p1.get(i, []), p2.get(i, []))
+
+    return p
+
 def BackPatch(p, i):
     global InstrMap
 

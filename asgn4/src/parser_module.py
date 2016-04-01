@@ -100,17 +100,9 @@ class Parser(object):
             IR.BackPatch(p[1].nextlist, p[2].instr)
             p[0].nextlist = p[3].nextlist
 
-            iterKeys = p[1].loop_next_list.keys() + p[3].loop_next_list.keys()
-            for i in iterKeys:
-                p[0].loop_next_list[i] = IR.Merge(p[1].loop_next_list.get(i, []), p[3].loop_next_list.get(i, []))
-
-            iterKeys = p[1].loop_redo_list.keys() + p[3].loop_redo_list.keys()
-            for i in iterKeys:
-                p[0].loop_redo_list[i] = IR.Merge(p[1].loop_redo_list.get(i, []), p[3].loop_redo_list.get(i, []))
-
-            iterKeys = p[1].loop_last_list.keys() + p[3].loop_last_list.keys()
-            for i in iterKeys:
-                p[0].loop_last_list[i] = IR.Merge(p[1].loop_last_list.get(i, []), p[3].loop_last_list.get(i, []))
+            p[0].loop_next_list = IR.MergeLoopLists(p[1].loop_next_list, p[3].loop_next_list)
+            p[0].loop_redo_list = IR.MergeLoopLists(p[1].loop_redo_list, p[3].loop_redo_list)
+            p[0].loop_last_list = IR.MergeLoopLists(p[1].loop_last_list, p[3].loop_last_list)
  
     def p_statement(self, p):
         ''' statement : expression SEMICOLON
@@ -676,7 +668,7 @@ class Parser(object):
         self.error_list.append((p.lineno(3), "Line %d: Invalid conditional passed to UNLESS"%(p.lineno(3))))
 
     def p_continue_block(self, p):
-        ''' continue : CONTINUE codeblock
+        ''' continue : CONTINUE loop-codeblock
         '''
 
         p[0] = p[2]
@@ -686,16 +678,31 @@ class Parser(object):
 
         p[0] = IR.Attributes()
         loopID = p[-1].loopID
+        defaultID = ''
 
         IR.BackPatch(p[7].nextlist, p[2].instr)
         IR.BackPatch(p[4].truelist, p[6].instr)
-        IR.BackPatch(p[7].loop_next_list.get(loopID, []), p[2].instr)
-        IR.BackPatch(p[7].loop_redo_list.get(loopID, []), p[6].instr)
 
-        p[0].nextlist = IR.Merge(p[4].falselist, p[7].loop_last_list.get(loopID, []))
+        full_next_list = IR.Merge(p[7].loop_next_list.get(loopID, []), p[7].loop_next_list.get(defaultID, []))
+        full_redo_list = IR.Merge(p[7].loop_redo_list.get(loopID, []), p[7].loop_redo_list.get(defaultID, []))
+        full_last_list = IR.Merge(p[7].loop_last_list.get(loopID, []), p[7].loop_last_list.get(defaultID, []))
+
+        IR.BackPatch(full_next_list, p[2].instr)
+        IR.BackPatch(full_redo_list, p[6].instr)
+
+        p[0].nextlist = IR.Merge(p[4].falselist, full_last_list)
+
         p[0].loop_next_list = p[7].loop_next_list
+        p[0].loop_next_list.pop(loopID, None)
+        p[0].loop_next_list.pop(defaultID, None)
+
         p[0].loop_redo_list = p[7].loop_redo_list
+        p[0].loop_redo_list.pop(loopID, None)
+        p[0].loop_redo_list.pop(defaultID, None)
+
         p[0].loop_last_list = p[7].loop_last_list
+        p[0].loop_last_list.pop(loopID, None)
+        p[0].loop_last_list.pop(defaultID, None)
 
         p[0].code = p[4].code | p[7].code | IR.GenCode("goto, %d"%(p[2].instr))
 
@@ -704,16 +711,36 @@ class Parser(object):
 
         p[0] = IR.Attributes()
         loopID = p[-1].loopID
+        defaultID = ''
+
+        temp_next_list1 = IR.Merge(p[7].loop_next_list.get(loopID, []), p[7].loop_next_list.get(defaultID, []))
+        temp_next_list2 = IR.Merge(p[9].loop_next_list.get(loopID, []), p[9].loop_next_list.get(defaultID, []))
+        full_next_list = IR.Merge(temp_next_list1, temp_next_list2)
+
+        temp_redo_list1 = IR.Merge(p[7].loop_redo_list.get(loopID, []), p[7].loop_redo_list.get(defaultID, []))
+        temp_redo_list2 = IR.Merge(p[9].loop_redo_list.get(loopID, []), p[9].loop_redo_list.get(defaultID, []))
+        full_redo_list = IR.Merge(temp_redo_list1, temp_redo_list2)
+
+        temp_last_list1 = IR.Merge(p[7].loop_last_list.get(loopID, []), p[7].loop_last_list.get(defaultID, []))
+        temp_last_list2 = IR.Merge(p[9].loop_last_list.get(loopID, []), p[9].loop_last_list.get(defaultID, []))
+        full_last_list = IR.Merge(temp_last_list1, temp_last_list2)
 
         IR.BackPatch(p[7].nextlist, p[8].instr)
         IR.BackPatch(p[4].truelist, p[6].instr)
-        IR.BackPatch(p[7].loop_next_list.get(loopID, []), p[8].instr)
-        IR.BackPatch(p[7].loop_redo_list.get(loopID, []), p[6].instr)
+        IR.BackPatch(full_next_list, p[8].instr)
+        IR.BackPatch(full_redo_list, p[6].instr)
 
-        p[0].nextlist = IR.Merge(IR.Merge(p[4].falselist, p[9].nextlist), p[7].loop_last_list.get(loopID, []))
-        p[0].loop_next_list = p[7].loop_next_list
-        p[0].loop_redo_list = p[7].loop_redo_list
-        p[0].loop_last_list = p[7].loop_last_list
+        p[0].nextlist = IR.Merge(IR.Merge(p[4].falselist, p[9].nextlist), full_last_list)
+
+        p[0].loop_next_list = IR.MergeLoopLists(p[7].loop_next_list, p[9].loop_next_list)
+        p[0].loop_next_list.pop(loopID, None)
+        p[0].loop_next_list.pop(defaultID, None)
+        p[0].loop_redo_list = IR.MergeLoopLists(p[7].loop_redo_list, p[9].loop_redo_list)
+        p[0].loop_redo_list.pop(loopID, None)
+        p[0].loop_redo_list.pop(defaultID, None)
+        p[0].loop_last_list = IR.MergeLoopLists(p[7].loop_last_list, p[9].loop_redo_list)
+        p[0].loop_last_list.pop(loopID, None)
+        p[0].loop_last_list.pop(defaultID, None)
 
         p[0].code = p[4].code | p[7].code | p[9].code | IR.GenCode("goto, %d"%(p[2].instr))
 
