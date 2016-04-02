@@ -991,6 +991,9 @@ class Parser(object):
             p[-1].place = p[-1].symEntry.place
 
         p[0].place = "%s%s%s%s"%(p[-1].place, p[1], p[2].place, p[3])
+        p[0].hasNumericKey = p[2].isConstantNumeric
+        p[0].key = p[2].place
+        p[0].accessType = p[1]
         p[0].code = p[2].code | p[-1].code
 
     def p_arrow(self, p):
@@ -1087,6 +1090,7 @@ class Parser(object):
         '''
 
         p[2].symEntry.InsertLocally(self.symTabManager)
+        p[2].place = p[2].symEntry.place
 
         p[0] = IR.Attributes()
 
@@ -1094,6 +1098,21 @@ class Parser(object):
             p[0].code = p[4].code | IR.GenCode("=, %s, %s"%(p[2].place, p[4].place))
         else:
             p[0].code = IR.ListIR() # TODO
+
+    def p_variable_array_decl(self, p):
+        ''' variable-strict-decl : MY var-name-lhs-strict access '''
+
+        if p[3].accessType != '[':
+            raise DEBUG.PerlTypeError("Only array declarations allowed with an access component")
+
+        if not p[3].hasNumericKey:
+            raise DEBUG.PerlTypeError("Only array declarations with constant numeric size allowed")
+
+        p[2].symEntry.InsertLocally(self.symTabManager)
+        p[2].place = p[2].symEntry.place
+        p[2].symEntry.width = p[3].key
+
+        p[0] = p[3] 
 
     def p_string(self, p):
         ''' string : SINGQUOTSTR
@@ -1116,6 +1135,7 @@ class Parser(object):
 
         p[0].place = str(p[1])
         p[0].code = IR.ListIR() # No code 
+        p[0].isConstantNumeric = True
 
     def p_builtin_function(self, p):
         ''' builtin-func : PRINTF

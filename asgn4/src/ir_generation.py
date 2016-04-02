@@ -100,6 +100,12 @@ class Attributes(object):
         # For assign-sep
         self.opCode = None
 
+        # For accesses
+        self.accessType = ''
+        self.hasNumericKey = False
+        self.isConstantNumeric = False
+        self.key = None
+
         # For backpatching
         self.truelist = []
         self.falselist = []

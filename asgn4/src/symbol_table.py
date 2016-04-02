@@ -12,6 +12,7 @@ class SymTabEntry(object):
         self.scopeNum = -1               # Indicates the fact that it has not 
                                          # been entered into the symtable as of yet
         self.varName = variable
+        self.width = 1
         
         if variable[0] == '$'    : self.externalType = SymTabEntry.SCALAR 
         elif variable[0] == '@'  : self.externalType = SymTabEntry.ARRAY
@@ -37,6 +38,7 @@ class SymTabEntry(object):
 
     def InsertLocally(self, symTabManager):
         self.scopeNum = symTabManager.curScope
+        self.place = self.place + "_scope_" + str(self.scopeNum)
         symTabManager.curSymTab.Insert(self, self.varName)
 
 
