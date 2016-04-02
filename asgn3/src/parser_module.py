@@ -57,6 +57,7 @@ class Parser(object):
 
     def p_statement(self, p):
         ''' statement : expression SEMICOLON
+                      | variable-strict-decl SEMICOLON
                       | codeblock
                       | function-def
                       | function-ret SEMICOLON
@@ -136,10 +137,10 @@ class Parser(object):
                        | expression STRNE expression
                        | expression STRCMP expression
 
-                       | var INC
-                       | INC var
-                       | var DEC
-                       | DEC var
+                       | var-lhs INC
+                       | INC var-lhs
+                       | var-lhs DEC
+                       | DEC var-lhs
                        | MINUS expression
                        | PLUS expression
 
@@ -151,7 +152,7 @@ class Parser(object):
                        | const
                        | var
 
-                       | var assign-sep expression %prec EQUALS
+                       | var-lhs assign-sep expression %prec EQUALS
         '''
         p[0] = ('expression', self.get_children(p))
 
@@ -209,7 +210,7 @@ class Parser(object):
         ''' loop : WHILE LPAREN expression RPAREN codeblock continue
                  | UNTIL LPAREN expression RPAREN codeblock
                  | FOR LPAREN expression SEMICOLON expression SEMICOLON expression RPAREN codeblock
-                 | FOREACH var LPAREN var RPAREN codeblock continue
+                 | FOREACH var-lhs LPAREN var-lhs RPAREN codeblock continue
                  | DO codeblock WHILE LPAREN expression RPAREN SEMICOLON
         '''
         p[0] = ('loop', self.get_children(p))
@@ -227,7 +228,7 @@ class Parser(object):
             self.error_list.append((p.lineno(3), "Line %d: Invalid conditional passed to FOR loop"%(p.lineno(3))))
 
     def p_loop_error_b(self, p):
-        ''' loop : FOREACH var LPAREN error RPAREN codeblock continue
+        ''' loop : FOREACH var-lhs LPAREN error RPAREN codeblock continue
         '''
         self.error_list.append((p.lineno(4), "Line %d: Invalid conditional passed to FOREACH loop"%(p.lineno(4))))
 
@@ -251,12 +252,15 @@ class Parser(object):
         '''
         p[0] = ('loop-control', self.get_children(p))
 
-    def p_variable_name(self, p):
-        ''' var-name : VARIABLE
-                     | REFERENCE
-                     | DEREFERENCE
+    def p_variable_name_lhs_strict(self, p):
+        ''' var-name-lhs-strict : VARIABLE '''
+        p[0] = ('var-name-lhs-strict', self.get_children(p))
+
+    def p_variable_name_lhs(self, p):
+        ''' var-name-lhs : var-name-lhs-strict
+                         | DEREFERENCE
         '''
-        p[0] = ('var-name', self.get_children(p))
+        p[0] = ('var-name-lhs', self.get_children(p))
 
     # For array and hash access
     def p_access(self, p):
@@ -277,13 +281,31 @@ class Parser(object):
     # ARROW is used as follows with references
     #   $arrayref->[0] = "January";   # Array element
     #   $hashref->{"KEY"} = "VALUE";  # Hash element
-    def p_variable(self, p):
-        ''' var : var-name
-                | var ARROW access
-                | var access
+    def p_variable_arrows_and_accesses(self, p):
+        ''' arrows_and_accesses : ARROW access arrows_and_accesses
+                                | access arrows_and_accesses
+                                | ARROW access
+                                | access
         '''
+        p[0] = ('arrows_and_accesses', self.get_children(p))
+    
+    def p_variable_lhs(self, p):
+        ''' var-lhs : var-name-lhs
+                    | var-name-lhs arrows_and_accesses
+        '''
+        p[0] = ('var-lhs', self.get_children(p))
+
+    def p_variable(self, p):
+        ''' var : var-lhs
+                | REFERENCE 
+                | REFERENCE arrows_and_accesses '''
         p[0] = ('var', self.get_children(p))
-        # Needs verification
+
+    def p_variable_strict_decl(self, p):
+        ''' variable-strict-decl : MY var-name-lhs-strict
+                                 | MY var-name-lhs-strict assign-sep expression
+        '''
+        p[0] = ('variable-strict-decl', self.get_children(p))
 
     def p_constant(self, p):
         ''' const : numeric
