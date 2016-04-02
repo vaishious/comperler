@@ -467,6 +467,13 @@ class Parser(object):
                       | var REPEAT var 
         '''
 
+        p[0] = IR.Attributes()
+
+        op = {'+' : '+', '.' : 'strcat', 'x' : 'strmul'}
+
+        p[0].place = IR.TempVar()
+        p[0].code = p[1].code | p[3].code | IR.GenCode("=, %s, %s, %s, %s"%(op[p[2]], p[0].place, p[1].place, p[3].place))
+
     def p_string_boolean_op(self, p):
         ''' string-boolean-expression : string-expression STRLT string-expression
                                       | string-expression STRGT string-expression 
@@ -500,6 +507,15 @@ class Parser(object):
                                       | var STRNE var 
                                       | var STRCMP var 
         '''
+
+        p[0] = IR.Attributes()
+
+        p[0].truelist = IR.MakeList(IR.NextInstr)
+        p[0].code = p[1].code | p[3].code
+        p[0].code = p[0].code | IR.GenCode("ifgoto, %s, %s, %s, LABEL#REQUIRED"%('str'+p[2], p[1].place, p[3].place))
+
+        p[0].falselist = IR.MakeList(IR.NextInstr)
+        p[0].code = p[0].code | IR.GenCode("goto, LABEL#REQUIRED")
 
     def p_assign_sep(self, p):
         ''' assign-sep : EQUALS
