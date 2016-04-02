@@ -137,11 +137,11 @@ class Parser(object):
         p[0] = p[1]
 
     def p_list_expression(self, p):
-        ''' list-expression : LPAREN list-elements RPAREN '''
+        ''' list-expression : LPAREN arith-bool-string-expression list-elements RPAREN '''
 
     def p_list_elements(self, p):
-        ''' list-elements : arith-bool-string-expression COMMA list-elements
-                          | arith-bool-string-expression COMMA
+        ''' list-elements : COMMA arith-bool-string-expression list-elements
+                          | empty
         '''
 
     def p_hash_expression(self, p):
