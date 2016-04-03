@@ -167,10 +167,26 @@ class Parser(object):
     def p_hash_expression(self, p):
         ''' hash-expression : LPAREN hash-elements RPAREN '''
 
+        p[0] = IR.Attributes()
+
+        p[0].place = IR.TempVarHash()
+
+        for ir in p[2].code:
+            ir.code = ir.code.replace("#tempVarHashName", p[0].place)
+
+        p[0].code = p[2].code
+
     def p_hash_elements(self, p):
-        ''' hash-elements : arith-bool-string-expression HASHARROW arith-bool-string-expression COMMA hash-elements
+        ''' hash-elements : hash-elements COMMA arith-bool-string-expression HASHARROW arith-bool-string-expression
                           | arith-bool-string-expression HASHARROW arith-bool-string-expression
         '''
+
+        p[0] = IR.Attributes()
+
+        if len(p) == 4:
+            p[0].code = p[1].code | p[3].code | IR.GenCode("=, #tempVarHashName{%s}, %s"%(p[1].place, p[3].place))
+        else:
+            p[0].code = p[1].code | p[3].code | p[5].code | IR.GenCode("=, #tempVarHashName{%s}, %s"%(p[3].place, p[5].place))
 
     def p_arith_bool_string_expression(self, p):
         ''' arith-bool-string-expression : arith-boolean-expression

@@ -205,6 +205,14 @@ def TempVarArray(width):
 
     return "t_array%d"%(TempVarArray.tempVarArrayCount)
 
+def TempVarHash():
+    if not hasattr(TempVarHash, "tempVarHashCount"):
+        TempVarHash.tempVarHashCount = 0
+
+    TempVarHash.tempVarHashCount += 1
+
+    return "t_hash%d"%(TempVarHash.tempVarHashCount)
+
 def NewLabel():
     if not hasattr(NewLabel, "labelCount"):
         NewLabel.labelCount = 0
