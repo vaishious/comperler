@@ -107,7 +107,6 @@ class Parser(object):
         '''
         self.error_list.append((p.lineno(1), "Line %d: Invalid statement"%(p.lineno(1))))       
 
-
     def p_codeblock(self, p):
         ''' codeblock : MARK-newscope LBLOCK statements RBLOCK '''
 
@@ -1142,6 +1141,9 @@ class Parser(object):
                                  | MY var-name-lhs-strict EQUALS usable-expression
         '''
 
+        if p[2].symEntry.scopeNum != -1:
+            p[2].symEntry = SYMTAB.SymTabEntry(p[2].symEntry.varName)
+
         p[2].symEntry.InsertLocally(self.symTabManager)
         p[2].place = p[2].symEntry.place
 
@@ -1225,12 +1227,26 @@ class Parser(object):
         '''
         self.error_list.append((p.lineno(3), "Line %d: Invalid expression passed to function call"%(p.lineno(3))))
 
+    def p_mark_function_def(self, p):
+        ''' MARK-function-def : '''
+
+        functionID = p[-1]
+        if self.curFuncID != 'main': # We don't support nested function definitions
+            raise DEBUG.PerlError("Cannot define a function inside a function")
+
+        self.curFuncID = functionID
+
     def p_function_def(self, p):
-        ''' function-def : SUB ID codeblock '''
+        ''' function-def : SUB ID MARK-function-def codeblock '''
+
+        p[0] = IR.Attributes()
+        p[0].code = IR.GenCode("label, %s"%(p[2])) | p[4].code
 
     def p_function_return(self, p):
         ''' function-ret : RETURN expression '''
+
         p[0] = ('function-ret', self.get_children(p))
+        self.curFuncID = 'main'
 
     def p_ternary_operator(self, p):
         ''' ternary-op : boolean-expression TERNARY_CONDOP usable-expression COLON usable-expression
@@ -1254,6 +1270,7 @@ class Parser(object):
         self.output_file = output_file
         self.symTabManager = SYMTAB.SymTabManager()
         self.symTabManager.PushScope()
+        self.curFuncID = 'main'
 
         IR.NextInstr = 1
         IR.InstrMap += [0]
