@@ -26,12 +26,15 @@ class CodeIR(object):
     def __str__(self):
         return self.code
 
+
+
 class ListIR(object):
 
     def __init__(self, code=None):
 
         self.head = code
         self.tail = code
+        self.iterCurrent = None
 
     def __or__(self, other):
 
@@ -55,11 +58,25 @@ class ListIR(object):
 
         return self
 
+    def __iter__(self):
+        if self.head != None:
+            self.iterCurrent = self.head
+        else:
+            self.iterCurrent = CodeIR("")
+
+        return self
+
+    def next(self):
+        if self.iterCurrent == None:
+            raise StopIteration
+        else:
+            retVal = self.iterCurrent
+            self.iterCurrent = self.iterCurrent.nextIR
+            return retVal
+
     def PrintIR(self):
-        curIR = self.head
-        while (curIR != None):
-            print curIR
-            curIR = curIR.nextIR
+        for IRCode in self:
+            print IRCode.code
 
 def GenCode(string):
     global NextInstr, InstrMap
@@ -179,6 +196,14 @@ def TempVar():
     TempVar.tempVarCount += 1
 
     return "t%d"%(TempVar.tempVarCount)
+
+def TempVarArray(width):
+    if not hasattr(TempVarArray, "tempVarArrayCount"):
+        TempVarArray.tempVarArrayCount = 0
+
+    TempVarArray.tempVarArrayCount += 1
+
+    return "t_array%d"%(TempVarArray.tempVarArrayCount)
 
 def NewLabel():
     if not hasattr(NewLabel, "labelCount"):

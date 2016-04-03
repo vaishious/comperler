@@ -139,10 +139,30 @@ class Parser(object):
     def p_list_expression(self, p):
         ''' list-expression : LPAREN arith-bool-string-expression list-elements RPAREN '''
 
+        p[0] = IR.Attributes()
+        listCode = []
+        for ir in p[3].code:
+            if "#tempVarArrayName" in ir.code:
+                listCode += [ir]
+
+        p[0].place = IR.TempVarArray(1 + len(listCode))
+        for (index, ir) in enumerate(listCode):
+            ir.code = ir.code.replace('#tempVarArrayName', p[0].place)
+            ir.code = ir.code.replace('#IndexRequired', str(index+1))
+
+        p[0].code = p[2].code | IR.GenCode("=, %s[0], %s"%(p[0].place, p[2].place)) | p[3].code
+
     def p_list_elements(self, p):
-        ''' list-elements : COMMA arith-bool-string-expression list-elements
+        ''' list-elements : list-elements COMMA arith-bool-string-expression
                           | empty
         '''
+
+        p[0] = IR.Attributes()
+
+        if len(p) != 2:
+            p[0].code = p[1].code | p[3].code | IR.GenCode("=, #tempVarArrayName[#IndexRequired], %s"%(p[3].place))
+        else:
+            p[0].code = IR.ListIR()
 
     def p_hash_expression(self, p):
         ''' hash-expression : LPAREN hash-elements RPAREN '''
