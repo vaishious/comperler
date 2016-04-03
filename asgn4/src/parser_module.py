@@ -132,6 +132,7 @@ class Parser(object):
         ''' usable-expression : arith-bool-string-expression
                               | list-expression
                               | hash-expression
+                              | stdin
         '''
 
         p[0] = p[1]
@@ -1188,6 +1189,15 @@ class Parser(object):
         p[0].place = str(p[1])
         p[0].code = IR.ListIR() # No code 
         p[0].isConstantNumeric = True
+
+    def p_stdin(self, p):
+        ''' stdin : STDIN '''
+
+        p[0] = IR.Attributes()
+
+        p[0].place = IR.TempVar()
+
+        p[0].code = IR.GenCode("=, alloc, %s, 1000"%(p[0].place)) | IR.GenCode("read, \"%s\", " + p[0].place) # We currently only read a string of max 1000 size  
 
     def p_builtin_function(self, p):
         ''' builtin-func : PRINTF

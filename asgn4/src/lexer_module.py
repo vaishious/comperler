@@ -68,7 +68,7 @@ class Lexer(object): # Inheriting from object provides extra functionality
        'OREQUAL', 'EXPEQUAL',
 
        # Miscellaneous Operators
-       'DOT', 'REPEAT', 'RANGE', 'INC', 'DEC', 'ARROW', 'HASHARROW',
+       'DOT', 'REPEAT', 'RANGE', 'INC', 'DEC', 'ARROW', 'HASHARROW', 'STDIN',
 
        # Various Syntax elements
        'REFERENCE', 'DEREFERENCE',
@@ -221,6 +221,7 @@ class Lexer(object): # Inheriting from object provides extra functionality
     t_DEC            = r'--'
     t_ARROW          = r'->'
     t_HASHARROW      = r'=>'
+    t_STDIN          = r'<>'
 
     t_LPAREN         = r'\('
     t_RPAREN         = r'\)'
