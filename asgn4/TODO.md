@@ -12,4 +12,4 @@
 
 * Do we want more efficient branches? Implement the IF_FALSE construct to get rid of unnecessary GOTOs
 
-* Construct for reading input
+* Create Activation Record data for each function defined
