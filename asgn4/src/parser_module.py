@@ -1242,10 +1242,14 @@ class Parser(object):
         ''' MARK-function-def : '''
 
         functionID = p[-1]
-        if self.curFuncID != 'main': # We don't support nested function definitions
+        if IR.CurFuncID != 'main': # We don't support nested function definitions
             raise DEBUG.PerlError("Cannot define a function inside a function")
+        elif IR.FuncMap.has_key(functionID):
+            raise DEBUG.PerlError("Cannot have two functions with the same ID")
 
-        self.curFuncID = functionID
+        IR.CurFuncID = functionID
+        IR.FuncMap[IR.CurFuncID] = SYMTAB.ActivationRecord(IR.CurFuncID)
+        IR.CurActivationRecord = IR.FuncMap[IR.CurFuncID]
 
     def p_function_def(self, p):
         ''' function-def : SUB ID MARK-function-def codeblock '''
@@ -1259,7 +1263,8 @@ class Parser(object):
         p[0] = IR.Attributes()
         p[0].code = p[2].code | IR.GenCode("return, %s"%(p[2].place))
 
-        self.curFuncID = 'main'
+        IR.CurFuncID = 'main'
+        IR.CurActivationRecord = IR.FuncMap[IR.CurFuncID]
 
     def p_ternary_operator(self, p):
         ''' ternary-op : boolean-expression TERNARY_CONDOP usable-expression COLON usable-expression
@@ -1283,10 +1288,13 @@ class Parser(object):
         self.output_file = output_file
         self.symTabManager = SYMTAB.SymTabManager()
         self.symTabManager.PushScope()
-        self.curFuncID = 'main'
+        IR.CurFuncID = 'main'
 
         IR.NextInstr = 1
         IR.InstrMap += [0]
+        IR.FuncMap[IR.CurFuncID] = SYMTAB.ActivationRecord(IR.CurFuncID)
+        IR.CurActivationRecord = IR.FuncMap[IR.CurFuncID]
+
         return self.parser.parse(input)
 
     def get_children(self, p):

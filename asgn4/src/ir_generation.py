@@ -9,6 +9,9 @@ INT_DATA_TYPE, STR_DATA_TYPE, UNKNOWN_DATA_TYPE = range(3)
 
 NextInstr = 0
 InstrMap = [0]
+FuncMap = {}
+CurFuncID = ''
+CurActivationRecord = None
 
 ### Some nice wrappers for IR Code ###
 
@@ -191,28 +194,43 @@ def BackPatch(p, i):
 ######################################
 
 def TempVar():
+    global CurActivationRecord
+
     if not hasattr(TempVar, "tempVarCount"):
         TempVar.tempVarCount = 0
 
     TempVar.tempVarCount += 1
 
-    return "t%d"%(TempVar.tempVarCount)
+    name = "t%d"%(TempVar.tempVarCount)
+    CurActivationRecord.AllocateTemp(name)
+
+    return name
 
 def TempVarArray(width):
+    global CurActivationRecord
+
     if not hasattr(TempVarArray, "tempVarArrayCount"):
         TempVarArray.tempVarArrayCount = 0
 
     TempVarArray.tempVarArrayCount += 1
 
-    return "t_array%d"%(TempVarArray.tempVarArrayCount)
+    name = "t_array%d"%(TempVarArray.tempVarArrayCount)
+    CurActivationRecord.AllocateTemp(name, width*4)
+
+    return name
 
 def TempVarHash():
+    global CurActivationRecord
+
     if not hasattr(TempVarHash, "tempVarHashCount"):
         TempVarHash.tempVarHashCount = 0
 
     TempVarHash.tempVarHashCount += 1
 
-    return "t_hash%d"%(TempVarHash.tempVarHashCount)
+    name = "t_hash%d"%(TempVarHash.tempVarHashCount)
+    CurActivationRecord.AllocateTemp(name)
+
+    return name
 
 def NewLabel():
     if not hasattr(NewLabel, "labelCount"):
