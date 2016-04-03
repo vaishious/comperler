@@ -107,7 +107,6 @@ class Parser(object):
         '''
         self.error_list.append((p.lineno(1), "Line %d: Invalid statement"%(p.lineno(1))))       
 
-
     def p_codeblock(self, p):
         ''' codeblock : MARK-newscope LBLOCK statements RBLOCK '''
 
@@ -132,6 +131,7 @@ class Parser(object):
         ''' usable-expression : arith-bool-string-expression
                               | list-expression
                               | hash-expression
+                              | stdin
         '''
 
         p[0] = p[1]
@@ -139,18 +139,54 @@ class Parser(object):
     def p_list_expression(self, p):
         ''' list-expression : LPAREN arith-bool-string-expression list-elements RPAREN '''
 
+        p[0] = IR.Attributes()
+        listCode = []
+        for ir in p[3].code:
+            if "#tempVarArrayName" in ir.code:
+                listCode += [ir]
+
+        p[0].place = IR.TempVarArray(1 + len(listCode))
+        for (index, ir) in enumerate(listCode):
+            ir.code = ir.code.replace('#tempVarArrayName', p[0].place)
+            ir.code = ir.code.replace('#IndexRequired', str(index+1))
+
+        p[0].code = p[2].code | IR.GenCode("=, %s[0], %s"%(p[0].place, p[2].place)) | p[3].code
+
     def p_list_elements(self, p):
-        ''' list-elements : COMMA arith-bool-string-expression list-elements
+        ''' list-elements : list-elements COMMA arith-bool-string-expression
                           | empty
         '''
+
+        p[0] = IR.Attributes()
+
+        if len(p) != 2:
+            p[0].code = p[1].code | p[3].code | IR.GenCode("=, #tempVarArrayName[#IndexRequired], %s"%(p[3].place))
+        else:
+            p[0].code = IR.ListIR()
 
     def p_hash_expression(self, p):
         ''' hash-expression : LPAREN hash-elements RPAREN '''
 
+        p[0] = IR.Attributes()
+
+        p[0].place = IR.TempVarHash()
+
+        for ir in p[2].code:
+            ir.code = ir.code.replace("#tempVarHashName", p[0].place)
+
+        p[0].code = p[2].code
+
     def p_hash_elements(self, p):
-        ''' hash-elements : arith-bool-string-expression HASHARROW arith-bool-string-expression COMMA hash-elements
+        ''' hash-elements : hash-elements COMMA arith-bool-string-expression HASHARROW arith-bool-string-expression
                           | arith-bool-string-expression HASHARROW arith-bool-string-expression
         '''
+
+        p[0] = IR.Attributes()
+
+        if len(p) == 4:
+            p[0].code = p[1].code | p[3].code | IR.GenCode("=, #tempVarHashName{%s}, %s"%(p[1].place, p[3].place))
+        else:
+            p[0].code = p[1].code | p[3].code | p[5].code | IR.GenCode("=, #tempVarHashName{%s}, %s"%(p[3].place, p[5].place))
 
     def p_arith_bool_string_expression(self, p):
         ''' arith-bool-string-expression : arith-boolean-expression
@@ -1105,6 +1141,9 @@ class Parser(object):
                                  | MY var-name-lhs-strict EQUALS usable-expression
         '''
 
+        if p[2].symEntry.scopeNum != -1:
+            p[2].symEntry = SYMTAB.SymTabEntry(p[2].symEntry.varName)
+
         p[2].symEntry.InsertLocally(self.symTabManager)
         p[2].place = p[2].symEntry.place
 
@@ -1153,6 +1192,15 @@ class Parser(object):
         p[0].code = IR.ListIR() # No code 
         p[0].isConstantNumeric = True
 
+    def p_stdin(self, p):
+        ''' stdin : STDIN '''
+
+        p[0] = IR.Attributes()
+
+        p[0].place = IR.TempVar()
+
+        p[0].code = IR.GenCode("=, alloc, %s, 1000"%(p[0].place)) | IR.GenCode("read, \"%s\", " + p[0].place) # We currently only read a string of max 1000 size  
+
     def p_builtin_function(self, p):
         ''' builtin-func : PRINTF
                          | PRINT
@@ -1165,13 +1213,24 @@ class Parser(object):
 
     # Our implementation of function calls necessarily requires parentheses
     # to be supplied for all functions.
-    def p_function_call(self, p):
-        ''' function-call : ID LPAREN expression RPAREN
-                          | ID LPAREN RPAREN
-                          | builtin-func LPAREN expression RPAREN
-                          | builtin-func LPAREN RPAREN
+
+    def p_builtin_function_call(self, p):
+        ''' builtin-func-call : builtin-func list-expression
+                              | builtin-func LPAREN RPAREN
         '''
-        p[0] = ('function-call', self.get_children(p))
+
+        #TODO
+
+    def p_function_call(self, p):
+        ''' function-call : builtin-func-call
+                          | ID list-expression
+                          | ID LPAREN RPAREN
+        '''
+
+        p[0] = IR.Attributes()
+        p[0].isFunctionCall = True
+
+        #TODO
 
     def p_function_call_error(self, p):
         ''' function-call : ID LPAREN error RPAREN
@@ -1179,12 +1238,33 @@ class Parser(object):
         '''
         self.error_list.append((p.lineno(3), "Line %d: Invalid expression passed to function call"%(p.lineno(3))))
 
+    def p_mark_function_def(self, p):
+        ''' MARK-function-def : '''
+
+        functionID = p[-1]
+        if IR.CurFuncID != 'main': # We don't support nested function definitions
+            raise DEBUG.PerlError("Cannot define a function inside a function")
+        elif IR.FuncMap.has_key(functionID):
+            raise DEBUG.PerlError("Cannot have two functions with the same ID")
+
+        IR.CurFuncID = functionID
+        IR.FuncMap[IR.CurFuncID] = SYMTAB.ActivationRecord(IR.CurFuncID)
+        IR.CurActivationRecord = IR.FuncMap[IR.CurFuncID]
+
     def p_function_def(self, p):
-        ''' function-def : SUB ID codeblock '''
+        ''' function-def : SUB ID MARK-function-def codeblock '''
+
+        p[0] = IR.Attributes()
+        p[0].code = IR.GenCode("label, %s"%(p[2])) | p[4].code
 
     def p_function_return(self, p):
         ''' function-ret : RETURN expression '''
-        p[0] = ('function-ret', self.get_children(p))
+
+        p[0] = IR.Attributes()
+        p[0].code = p[2].code | IR.GenCode("return, %s"%(p[2].place))
+
+        IR.CurFuncID = 'main'
+        IR.CurActivationRecord = IR.FuncMap[IR.CurFuncID]
 
     def p_ternary_operator(self, p):
         ''' ternary-op : boolean-expression TERNARY_CONDOP usable-expression COLON usable-expression
@@ -1208,9 +1288,13 @@ class Parser(object):
         self.output_file = output_file
         self.symTabManager = SYMTAB.SymTabManager()
         self.symTabManager.PushScope()
+        IR.CurFuncID = 'main'
 
         IR.NextInstr = 1
         IR.InstrMap += [0]
+        IR.FuncMap[IR.CurFuncID] = SYMTAB.ActivationRecord(IR.CurFuncID)
+        IR.CurActivationRecord = IR.FuncMap[IR.CurFuncID]
+
         return self.parser.parse(input)
 
     def get_children(self, p):

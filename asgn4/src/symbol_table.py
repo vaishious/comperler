@@ -3,6 +3,8 @@ Module : symbol_table
 Function : Contains class and function definitions used to implement a symbol table
 """
 
+import ir_generation as IR
+
 class SymTabEntry(object):
 
     SCALAR, ARRAY, HASH = range(3)
@@ -39,6 +41,8 @@ class SymTabEntry(object):
     def InsertLocally(self, symTabManager):
         self.scopeNum = symTabManager.curScope
         self.place = self.place + "_scope_" + str(self.scopeNum)
+        IR.CurActivationRecord.AllocateVariable(self.place, self.width*4)
+
         symTabManager.curSymTab.Insert(self, self.varName)
 
 
@@ -102,3 +106,25 @@ class SymTabManager(object):
 
         # Create new entry to be entered later
         return SymTabEntry(varName)
+
+class ActivationRecord(object):
+    ''' Stores some information required for generating the activation record '''
+
+    def __init__(self, funcID):
+
+        self.funcID = funcID
+        self.varLocationMap = {} # Stores the position of the variable in the stack/static region
+        self.tempVarMap = {}
+
+        self.varOffset = 0
+        self.tempOffset = 0
+
+    def AllocateVariable(self, varName, width=4):
+
+        self.varLocationMap[varName] = self.varOffset
+        self.varOffset += width
+
+    def AllocateTemp(self, tempName, width=4):
+
+        self.tempVarMap[tempName] = self.tempOffset
+        self.tempOffset += width

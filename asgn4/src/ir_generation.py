@@ -9,6 +9,9 @@ INT_DATA_TYPE, STR_DATA_TYPE, UNKNOWN_DATA_TYPE = range(3)
 
 NextInstr = 0
 InstrMap = [0]
+FuncMap = {}
+CurFuncID = ''
+CurActivationRecord = None
 
 ### Some nice wrappers for IR Code ###
 
@@ -26,12 +29,15 @@ class CodeIR(object):
     def __str__(self):
         return self.code
 
+
+
 class ListIR(object):
 
     def __init__(self, code=None):
 
         self.head = code
         self.tail = code
+        self.iterCurrent = None
 
     def __or__(self, other):
 
@@ -55,11 +61,25 @@ class ListIR(object):
 
         return self
 
+    def __iter__(self):
+        if self.head != None:
+            self.iterCurrent = self.head
+        else:
+            self.iterCurrent = CodeIR("")
+
+        return self
+
+    def next(self):
+        if self.iterCurrent == None:
+            raise StopIteration
+        else:
+            retVal = self.iterCurrent
+            self.iterCurrent = self.iterCurrent.nextIR
+            return retVal
+
     def PrintIR(self):
-        curIR = self.head
-        while (curIR != None):
-            print curIR
-            curIR = curIR.nextIR
+        for IRCode in self:
+            print IRCode.code
 
 def GenCode(string):
     global NextInstr, InstrMap
@@ -123,6 +143,7 @@ class Attributes(object):
         # Flags to make life easy
         self.isArrowOp = False
         self.isBooleanExpression = False
+        self.isFunctionCall = False
 
     def DuplicateTo(self, other):
         other.place = self.place
@@ -173,12 +194,43 @@ def BackPatch(p, i):
 ######################################
 
 def TempVar():
+    global CurActivationRecord
+
     if not hasattr(TempVar, "tempVarCount"):
         TempVar.tempVarCount = 0
 
     TempVar.tempVarCount += 1
 
-    return "t%d"%(TempVar.tempVarCount)
+    name = "t%d"%(TempVar.tempVarCount)
+    CurActivationRecord.AllocateTemp(name)
+
+    return name
+
+def TempVarArray(width):
+    global CurActivationRecord
+
+    if not hasattr(TempVarArray, "tempVarArrayCount"):
+        TempVarArray.tempVarArrayCount = 0
+
+    TempVarArray.tempVarArrayCount += 1
+
+    name = "t_array%d"%(TempVarArray.tempVarArrayCount)
+    CurActivationRecord.AllocateTemp(name, width*4)
+
+    return name
+
+def TempVarHash():
+    global CurActivationRecord
+
+    if not hasattr(TempVarHash, "tempVarHashCount"):
+        TempVarHash.tempVarHashCount = 0
+
+    TempVarHash.tempVarHashCount += 1
+
+    name = "t_hash%d"%(TempVarHash.tempVarHashCount)
+    CurActivationRecord.AllocateTemp(name)
+
+    return name
 
 def NewLabel():
     if not hasattr(NewLabel, "labelCount"):
