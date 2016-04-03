@@ -140,6 +140,7 @@ class Attributes(object):
         # Flags to make life easy
         self.isArrowOp = False
         self.isBooleanExpression = False
+        self.isFunctionCall = False
 
     def DuplicateTo(self, other):
         other.place = self.place

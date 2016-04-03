@@ -1213,13 +1213,24 @@ class Parser(object):
 
     # Our implementation of function calls necessarily requires parentheses
     # to be supplied for all functions.
-    def p_function_call(self, p):
-        ''' function-call : ID LPAREN expression RPAREN
-                          | ID LPAREN RPAREN
-                          | builtin-func LPAREN expression RPAREN
-                          | builtin-func LPAREN RPAREN
+
+    def p_builtin_function_call(self, p):
+        ''' builtin-func-call : builtin-func list-expression
+                              | builtin-func LPAREN RPAREN
         '''
-        p[0] = ('function-call', self.get_children(p))
+
+        #TODO
+
+    def p_function_call(self, p):
+        ''' function-call : builtin-func-call
+                          | ID list-expression
+                          | ID LPAREN RPAREN
+        '''
+
+        p[0] = IR.Attributes()
+        p[0].isFunctionCall = True
+
+        #TODO
 
     def p_function_call_error(self, p):
         ''' function-call : ID LPAREN error RPAREN
@@ -1245,7 +1256,9 @@ class Parser(object):
     def p_function_return(self, p):
         ''' function-ret : RETURN expression '''
 
-        p[0] = ('function-ret', self.get_children(p))
+        p[0] = IR.Attributes()
+        p[0].code = p[2].code | IR.GenCode("return, %s"%(p[2].place))
+
         self.curFuncID = 'main'
 
     def p_ternary_operator(self, p):
