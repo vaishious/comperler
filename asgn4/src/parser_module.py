@@ -863,14 +863,94 @@ class Parser(object):
         p[0].code = p[3].code | p[7].code
 
     def p_foreach_loop(self, p):
-        ''' foreach-loop : FOREACH var-lhs LPAREN var-lhs RPAREN codeblock '''
+        ''' foreach-loop : FOREACH var-lhs LPAREN var-lhs RPAREN MARK-backpatch codeblock '''
+
+        p[0] = IR.Attributes()
+
+        loopID = p[-1].loopID
+        defaultID = ''
+
+        tempVarSize = IR.TempVar()
+        tempIterator = IR.TempVar()
+        p[0].code = IR.GenCode("=, arraylen, %s, %s"%(tempVarSize, p[4].place)) | IR.GenCode("=, %s, 0"%(tempIterator))
+        instrBoolean = IR.NextInstr
+        p[0].code = p[0].code | IR.GenCode("ifgoto, <, %s, %s, %d"%(p[2].place, tempVarSize, p[6].instr))
+        falselist = [IR.NextInstr]
+        p[0].code = p[0].code | IR.GenCode("goto, LABEL#REQUIRED") | IR.GenCode("=, %s, %s[%s]"%(p[2].place, p[4].place, tempIterator))
+
+        full_next_list = IR.Merge(p[7].loop_next_list.get(loopID, []), p[7].loop_next_list.get(defaultID, []))
+        full_redo_list = IR.Merge(p[7].loop_redo_list.get(loopID, []), p[7].loop_redo_list.get(defaultID, []))
+        full_last_list = IR.Merge(p[7].loop_last_list.get(loopID, []), p[7].loop_last_list.get(defaultID, []))
+
+        IR.BackPatch(p[7].nextlist, instrBoolean)
+        IR.BackPatch(full_next_list, IR.NextInstr) 
+        IR.BackPatch(full_redo_list, p[6].instr)
+        
+        p[0].nextlist = IR.Merge(falselist, full_last_list)
+        p[0].CopyLoopLists(p[7])
+
+        p[0].loop_next_list.pop(loopID, None)
+        p[0].loop_next_list.pop(defaultID, None)
+        p[0].loop_redo_list.pop(loopID, None)
+        p[0].loop_redo_list.pop(defaultID, None)
+        p[0].loop_last_list.pop(loopID, None)
+        p[0].loop_last_list.pop(defaultID, None)
+
+        p[0].code = p[0].code | p[7].code | IR.GenCode("=, +, %s, %s, 1"%(tempIterator, tempIterator)) | IR.GenCode("goto, %d"%(instrBoolean))
+
+    def p_foreach_loop_continue(self, p):
+        ''' foreach-loop : FOREACH var-lhs LPAREN var-lhs RPAREN MARK-backpatch codeblock MARK-backpatch continue '''
+
+        p[0] = IR.Attributes()
+
+        loopID = p[-1].loopID
+        defaultID = ''
+
+        tempVarSize = IR.TempVar()
+        tempIterator = IR.TempVar()
+        p[0].code = IR.GenCode("=, arraylen, %s, %s"%(tempVarSize, p[4].place)) | IR.GenCode("=, %s, 0"%(tempIterator))
+        instrBoolean = IR.NextInstr
+        p[0].code = p[0].code | IR.GenCode("ifgoto, <, %s, %s, %d"%(p[2].place, tempVarSize, p[6].instr))
+        falselist = [IR.NextInstr]
+        p[0].code = p[0].code | IR.GenCode("goto, LABEL#REQUIRED") | IR.GenCode("=, %s, %s[%s]"%(p[2].place, p[4].place, tempIterator))
+
+        temp_next_list1 = IR.Merge(p[7].loop_next_list.get(loopID, []), p[7].loop_next_list.get(defaultID, []))
+        temp_next_list2 = IR.Merge(p[9].loop_next_list.get(loopID, []), p[9].loop_next_list.get(defaultID, []))
+        full_next_list = IR.Merge(temp_next_list1, temp_next_list2)
+
+        temp_redo_list1 = IR.Merge(p[7].loop_redo_list.get(loopID, []), p[7].loop_redo_list.get(defaultID, []))
+        temp_redo_list2 = IR.Merge(p[9].loop_redo_list.get(loopID, []), p[9].loop_redo_list.get(defaultID, []))
+        full_redo_list = IR.Merge(temp_redo_list1, temp_redo_list2)
+
+        temp_last_list1 = IR.Merge(p[7].loop_last_list.get(loopID, []), p[7].loop_last_list.get(defaultID, []))
+        temp_last_list2 = IR.Merge(p[9].loop_last_list.get(loopID, []), p[9].loop_last_list.get(defaultID, []))
+        full_last_list = IR.Merge(temp_last_list1, temp_last_list2)
+
+        IR.BackPatch(p[7].nextlist, p[8].instr)
+        IR.BackPatch(p[9].nextlist, instrBoolean)
+        IR.BackPatch(full_next_list, p[8].instr) 
+        IR.BackPatch(full_redo_list, p[6].instr)
+        
+        p[0].nextlist = IR.Merge(falselist, full_last_list)
+        p[0].CopyLoopLists(p[7])
+
+        p[0].loop_next_list.pop(loopID, None)
+        p[0].loop_next_list.pop(defaultID, None)
+        p[0].loop_redo_list.pop(loopID, None)
+        p[0].loop_redo_list.pop(defaultID, None)
+        p[0].loop_last_list.pop(loopID, None)
+        p[0].loop_last_list.pop(defaultID, None)
+
+        p[0].code = p[0].code | p[7].code | p[9].code | IR.GenCode("=, +, %s, %s, 1"%(tempIterator, tempIterator)) | IR.GenCode("goto, %d"%(instrBoolean))
 
     def p_for_loop(self, p): # We don't allow declarations in the for-loop specification
         ''' for-loop : FOR LPAREN expression SEMICOLON MARK-backpatch boolean-expression SEMICOLON MARK-backpatch expression MARK-backpatch-nextlist RPAREN MARK-backpatch codeblock '''
 
         p[0] = IR.Attributes()
+
         loopID = p[-1].loopID
         defaultID = ''
+
         IR.BackPatch(p[6].truelist, p[12].instr)
         IR.BackPatch(p[13].nextlist, p[8].instr)
         IR.BackPatch(p[10].nextlist, p[5].instr)
