@@ -67,8 +67,8 @@ class InstrType(object):
     def is_CALL(self)       : return self.instrType == InstrType.CALL
     def is_RETURN(self)     : return self.instrType == InstrType.RETURN
     def is_PRINT(self)      : return self.instrType == InstrType.PRINT
-    def is_KEYS(self)       : return self.instrType == InstrType.PRINT
-    def is_VALUES(self)     : return self.instrType == InstrType.PRINT
+    def is_KEYS(self)       : return self.instrType == InstrType.KEYS
+    def is_VALUES(self)     : return self.instrType == InstrType.VALUES
     def is_READ(self)       : return self.instrType == InstrType.READ
     def is_ALLOC(self)      : return self.instrType == InstrType.ALLOC
     def is_LABEL(self)      : return self.instrType == InstrType.LABEL
@@ -513,10 +513,22 @@ class Instr3AC(object):
             DEBUG.Assert(len(inpTuple) == 2, "Expected 2-tuple for exit")
 
         elif self.instrType.is_PRINT():
-            # Line Number, Print, Inputs                                
-            DEBUG.Assert(len(inpTuple) >= 3, "Expected atleast a 3-tuple for print")
-            self.IOArgs = map(Entity, map(str, inpTuple[2:]))
-            
+            # Line Number, Print, InputArray                                
+            DEBUG.Assert(len(inpTuple) == 3, "Expected a 3-tuple for print")
+            self.inp1 = Entity(inpTuple[2])
+ 
+        elif self.instrType.is_KEYS():
+            # Line Number, Print, TargetVar, InputArray                                
+            DEBUG.Assert(len(inpTuple) == 4, "Expected a 4-tuple for keys")
+            self.dest = Entity(str(inpTuple[2]))
+            self.inp1 = Entity(inpTuple[3])           
+
+        elif self.instrType.is_VALUES():
+            # Line Number, Print, TargetVar, InputArray                                
+            DEBUG.Assert(len(inpTuple) == 4, "Expected a 4-tuple for values")
+            self.dest = Entity(str(inpTuple[2]))
+            self.inp1 = Entity(inpTuple[3])
+
         elif self.instrType.is_READ():
             # Line Number, Read, Inputs                                
             DEBUG.Assert(len(inpTuple) >= 3, "Expected atleast a 3-tuple for read")
@@ -648,7 +660,13 @@ class Instr3AC(object):
             return "exit"
 
         if self.instrType.is_PRINT():
-            return "Print %s"%(str(self.inpTuple[2:]))
+            return "Print %s"%(str(self.inp1))
+
+        if self.instrType.is_KEYS():
+            return "%s = keys(%s)"%(str(self.dest), str(self.inp1))
+
+        if self.instrType.is_VALUES():
+            return "%s = values(%s)"%(str(self.dest), str(self.inp1))
 
         if self.instrType.is_ALLOC():
             return "%s = malloc(%s)"%(self.dest, self.inp1)
