@@ -47,7 +47,8 @@ class SymTabEntry(object):
 
     def Print(self, filePtr):
         typeMap = {SymTabEntry.SCALAR : "SCALAR", SymTabEntry.HASH : "HASH", SymTabEntry.ARRAY : "ARRAY"}
-        filePtr.write("NAME : %s, SCOPE : %d, TYPE : %s, SIZE : 4 bytes\n"%(self.baseVarName, self.scopeNum, typeMap[self.externalType]))
+        writeString = "TYPE : {:6} | SIZE : 4 bytes | NAME : {:100}".format(typeMap[self.externalType], self.baseVarName)
+        filePtr.write(writeString + "\n")
 
 
 class SymTable(object):
@@ -67,8 +68,13 @@ class SymTable(object):
         return self.entries.get(varName, None)
 
     def Print(self, filePtr):
+
+        filePtr.write("###### SYMTABLE SCOPE : %d (Parent Scope : %d) ######\n"%(self.scopeNum, self.parentScope))
+        
         for entry in self.entries.values():
             entry.Print(filePtr)
+
+        filePtr.write("#####################################################\n\n")
 
 
 class SymTabManager(object):
@@ -118,8 +124,9 @@ class SymTabManager(object):
     def PrintAllSymTables(self, outputFile):
 
         f = open(outputFile[:-3] + '.sym', 'w+')
-        for table in self.symtables.values():
-            table.Print(f)
+        for scope, table in self.symtables.items():
+            if (scope != -1):
+                table.Print(f)
 
 
 class ActivationRecord(object):

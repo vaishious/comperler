@@ -63,7 +63,7 @@ class Parser(object):
             f.write(finalCode)
             f.close()
 
-            #self.symTabManager.PrintAllSymTables(self.output_file)
+            self.symTabManager.PrintAllSymTables(self.output_file)
 
     ### Special Rules ###
 
