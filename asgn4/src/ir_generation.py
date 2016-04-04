@@ -25,7 +25,8 @@ class CodeIR(object):
         self.nextIR = nextIR
 
         global InstrMap, NextInstr
-        InstrMap[NextInstr-1] = self # It has already been increased by 1
+        if (self.code != ''):
+            InstrMap[NextInstr-1] = self # It has already been increased by 1
 
     def __str__(self):
         return self.code
