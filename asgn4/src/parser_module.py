@@ -37,6 +37,7 @@ class Parser(object):
                 print error_item[1]
         else:
             IR.BackPatch(p[1].nextlist, IR.NextInstr)
+            p[1].code = p[1].code | IR.GenCode("return")
             lineNum = 1
             newMap = {}
             finalCode = ''
@@ -58,8 +59,11 @@ class Parser(object):
             for orig, new in newMap.items():
                 finalCode = finalCode.replace(orig, str(new))
 
-            print finalCode
+            f = open(self.output_file, 'w+')
+            f.write(finalCode)
+            f.close()
 
+            self.symTabManager.PrintAllSymTables(self.output_file)
 
     ### Special Rules ###
 

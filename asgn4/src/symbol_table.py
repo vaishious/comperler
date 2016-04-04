@@ -45,6 +45,10 @@ class SymTabEntry(object):
 
         symTabManager.curSymTab.Insert(self, self.varName)
 
+    def Print(self, filePtr):
+        typeMap = {SymTabEntry.SCALAR : "SCALAR", SymTabEntry.HASH : "HASH", SymTabEntry.ARRAY : "ARRAY"}
+        filePtr.write("NAME : %s, SCOPE : %d, TYPE : %s, SIZE : 4 bytes\n"%(self.baseVarName, self.scopeNum, typeMap[self.externalType]))
+
 
 class SymTable(object):
 
@@ -61,6 +65,10 @@ class SymTable(object):
 
     def Lookup(self, varName):
         return self.entries.get(varName, None)
+
+    def Print(self, filePtr):
+        for entry in self.entries.values():
+            entry.Print(filePtr)
 
 
 class SymTabManager(object):
@@ -106,6 +114,13 @@ class SymTabManager(object):
 
         # Create new entry to be entered later
         return SymTabEntry(varName)
+
+    def PrintAllSymTables(self, outputFile):
+
+        f = open(outputFile[:-3] + '.sym', 'w+')
+        for table in self.symtables.values():
+            table.Print(f)
+
 
 class ActivationRecord(object):
     ''' Stores some information required for generating the activation record '''
