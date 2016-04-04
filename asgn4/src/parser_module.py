@@ -38,6 +38,7 @@ class Parser(object):
         else:
             IR.BackPatch(p[1].nextlist, IR.NextInstr)
             p[1].code.PrintIR()
+            self.functionDefs.PrintIR()
 
     ### Special Rules ###
 
@@ -80,13 +81,26 @@ class Parser(object):
             p[0].loop_redo_list = p[1].loop_redo_list
             p[0].loop_last_list = p[1].loop_last_list
         else:
-            p[0].code = p[1].code | p[3].code
-            IR.BackPatch(p[1].nextlist, p[2].instr)
-            p[0].nextlist = p[3].nextlist
+            if not p[3].isFunctionDef:
+                p[0].code = p[1].code | p[3].code
+                IR.BackPatch(p[1].nextlist, p[2].instr)
+                p[0].nextlist = p[3].nextlist
 
-            p[0].loop_next_list = IR.MergeLoopLists(p[1].loop_next_list, p[3].loop_next_list)
-            p[0].loop_redo_list = IR.MergeLoopLists(p[1].loop_redo_list, p[3].loop_redo_list)
-            p[0].loop_last_list = IR.MergeLoopLists(p[1].loop_last_list, p[3].loop_last_list)
+                p[0].loop_next_list = IR.MergeLoopLists(p[1].loop_next_list, p[3].loop_next_list)
+                p[0].loop_redo_list = IR.MergeLoopLists(p[1].loop_redo_list, p[3].loop_redo_list)
+                p[0].loop_last_list = IR.MergeLoopLists(p[1].loop_last_list, p[3].loop_last_list)
+                
+            else:
+                p[2].instr = IR.NextInstr
+                p[0].code = p[1].code | IR.GenCode("nop")
+                IR.BackPatch(p[1].nextlist, p[2].instr)
+
+                self.functionDefs = self.functionDefs | p[3].code
+
+                p[0].loop_next_list = p[1].loop_next_list
+                p[0].loop_redo_list = p[1].loop_redo_list
+                p[0].loop_last_list = p[1].loop_last_list
+
  
     def p_statement(self, p):
         ''' statement : expression SEMICOLON
@@ -1115,6 +1129,7 @@ class Parser(object):
             if p[1] == '{':
                 newVarName = '%' + p[-2].symEntry.baseVarName
             else:
+                print p[-2]
                 newVarName = '@' + p[-2].symEntry.baseVarName
 
             p[-2].symEntry = self.symTabManager.Lookup(newVarName)
@@ -1251,21 +1266,6 @@ class Parser(object):
         else:
             p[0].code = IR.ListIR() 
 
-    def p_variable_array_decl(self, p):
-        ''' variable-strict-decl : MY var-name-lhs-strict access '''
-
-        if p[3].accessType != '[':
-            raise DEBUG.PerlTypeError("Only array declarations allowed with an access component")
-
-        if not p[3].hasNumericKey:
-            raise DEBUG.PerlTypeError("Only array declarations with constant numeric size allowed")
-
-        p[2].symEntry.InsertLocally(self.symTabManager)
-        p[2].place = p[2].symEntry.place
-        p[2].symEntry.width = p[3].key
-
-        p[0] = p[3] 
-
     def p_string(self, p):
         ''' string : SINGQUOTSTR
                    | DOUBQUOTSTR
@@ -1303,20 +1303,23 @@ class Parser(object):
                          | PRINT
                          | KEYS
                          | VALUES
-                         | EXISTS
-                         | DELETE
         '''
-        p[0] = ('builtin-func', self.get_children(p))
+
+        p[0] = IR.Attributes()
+        if p[1] == 'keys' or p[1] == 'values':
+            p[0].place = 'hash' + p[1]
+        else:
+            p[0].place = 'print'
 
     # Our implementation of function calls necessarily requires parentheses
     # to be supplied for all functions.
 
     def p_builtin_function_call(self, p):
         ''' builtin-func-call : builtin-func list-expression
-                              | builtin-func LPAREN RPAREN
         '''
 
-        #TODO
+        p[0] = IR.Attributes()
+        p[0].code = p[2].code | IR.GenCode("%s, %s"%(p[1], p[2].place)) 
 
     def p_function_call(self, p):
         ''' function-call : builtin-func-call
@@ -1324,10 +1327,17 @@ class Parser(object):
                           | ID LPAREN RPAREN
         '''
 
-        p[0] = IR.Attributes()
-        p[0].isFunctionCall = True
+        if len(p) == 2:
+            p[0] = p[1]
+        else:
+            p[0] = IR.Attributes()
+            p[0].isFunctionCall = True
+            p[0].place = IR.TempVar()
 
-        #TODO
+            if len(p) == 3:
+                p[0].code = p[2].code | IR.GenCode("=, call, %s, %s, %s"%(p[0].place, p[1], p[2].place))
+            else:
+                p[0].code = IR.GenCode("=, call, %s, %s"%(p[0].place, p[1]))
 
     def p_function_call_error(self, p):
         ''' function-call : ID LPAREN error RPAREN
@@ -1346,13 +1356,19 @@ class Parser(object):
 
         IR.CurFuncID = functionID
         IR.FuncMap[IR.CurFuncID] = SYMTAB.ActivationRecord(IR.CurFuncID)
+        IR.FuncReturnMap[IR.CurFuncID] = False
         IR.CurActivationRecord = IR.FuncMap[IR.CurFuncID]
 
     def p_function_def(self, p):
         ''' function-def : SUB ID MARK-function-def codeblock '''
 
         p[0] = IR.Attributes()
+        p[0].isFunctionDef = True
         p[0].code = IR.GenCode("label, %s"%(p[2])) | p[4].code
+
+        if not IR.FuncReturnMap[p[2]]:
+            IR.BackPatch(p[4].nextlist, IR.NextInstr)
+            p[0].code = p[0].code | IR.GenCode("return")
 
     def p_function_return(self, p):
         ''' function-ret : RETURN expression '''
@@ -1360,6 +1376,7 @@ class Parser(object):
         p[0] = IR.Attributes()
         p[0].code = p[2].code | IR.GenCode("return, %s"%(p[2].place))
 
+        IR.FuncReturnMap[IR.CurFuncID] = True
         IR.CurFuncID = 'main'
         IR.CurActivationRecord = IR.FuncMap[IR.CurFuncID]
 
@@ -1403,11 +1420,13 @@ class Parser(object):
         self.output_file = output_file
         self.symTabManager = SYMTAB.SymTabManager()
         self.symTabManager.PushScope()
+        self.functionDefs = IR.ListIR()
         IR.CurFuncID = 'main'
 
         IR.NextInstr = 1
         IR.InstrMap += [0]
         IR.FuncMap[IR.CurFuncID] = SYMTAB.ActivationRecord(IR.CurFuncID)
+        IR.FuncReturnMap[IR.CurFuncID] = False
         IR.CurActivationRecord = IR.FuncMap[IR.CurFuncID]
 
         return self.parser.parse(input)

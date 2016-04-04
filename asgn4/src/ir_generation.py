@@ -10,6 +10,7 @@ INT_DATA_TYPE, STR_DATA_TYPE, UNKNOWN_DATA_TYPE = range(3)
 NextInstr = 0
 InstrMap = [0]
 FuncMap = {}
+FuncReturnMap = {}
 CurFuncID = ''
 CurActivationRecord = None
 
@@ -144,6 +145,7 @@ class Attributes(object):
         self.isArrowOp = False
         self.isBooleanExpression = False
         self.isFunctionCall = False
+        self.isFunctionDef = False
 
     def DuplicateTo(self, other):
         other.place = self.place
