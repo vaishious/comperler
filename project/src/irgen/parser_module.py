@@ -63,8 +63,6 @@ class Parser(object):
             f.write(finalCode)
             f.close()
 
-            self.symTabManager.PrintAllSymTables(self.output_file)
-
     ### Special Rules ###
 
     def p_empty(self, p):
@@ -1463,4 +1461,7 @@ class Parser(object):
         IR.FuncReturnMap[IR.CurFuncID] = False
         IR.CurActivationRecord = IR.FuncMap[IR.CurFuncID]
 
-        return self.parser.parse(input)
+        self.parser.parse(input)
+
+        # Return Symbol Tables and the Activation record data for consumption by codegen
+        return self.symTabManager, IR.FuncMap

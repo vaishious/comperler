@@ -39,7 +39,7 @@ class CodeGenerator(object):
         
     """
 
-    def __init__(self, text, fileName):
+    def __init__(self, text, fileName, symTabManager, funcActRecords):
         text = text.split('\n')
         text = [i.lstrip().rstrip() for i in text if i != '']
         text = [i.replace('\t', '') for i in text]
@@ -48,6 +48,7 @@ class CodeGenerator(object):
         self.basicBlocks  = []
         self.targets      = set([])
         self.allLineIDs   = set([])
+        self.fileName = fileName
 
         # Build Global Objects
         G.AsmText = ASM.TextRegion(fileName)
@@ -115,10 +116,12 @@ class CodeGenerator(object):
             bb.PrettyPrint()
 
     def BuildCode(self):
+        filePtr = open(self.fileName.replace('.ir', '.s'), 'w+')
         for bb in self.basicBlocks:
             bb.Translate()
 
-        G.AsmText.WriteHeader()
-        G.AsmData.GenerateDataRegion()
-        G.AsmText.WriteToFile()
+        G.AsmText.WriteHeader(filePtr)
+        G.AsmData.GenerateDataRegion(filePtr)
+        G.AsmText.WriteToFile(filePtr)
+        filePtr.close()
 

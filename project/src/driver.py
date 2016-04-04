@@ -12,6 +12,17 @@ def Compile(fileName):
     myParser.set_tokens(myLexer.tokens)
     myParser.build()
 
-    filePtr = open(fileName, 'r')
-    myParser.parse(filePtr.read(), os.path.splitext(os.path.basename(fileName))[0] + '.ir')
-    filePtr.close()
+    with open(fileName, 'r') as filePtr:
+        irFileName = os.path.splitext(os.path.basename(fileName))[0] + '.ir'
+        symTabManager, funcActRecords = myParser.parse(filePtr.read(), irFileName)
+
+    with open(irFileName, 'r') as filePtr:
+        codeGen = CodeGenerator(filePtr.read(), irFileName, symTabManager, funcActRecords)
+        codeGen.GenBasicBlocks()
+        codeGen.BuildCode()
+
+    
+
+
+
+    

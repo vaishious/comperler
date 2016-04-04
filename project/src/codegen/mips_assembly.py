@@ -93,7 +93,7 @@ class DataRegion(object):
     def GetStringLabel(self, string):
         return self.stringSet[string]
 
-    def GenerateDataRegion(self):
+    def GenerateDataRegion(self, filePtr):
         """ Uses the global object AsmText to write its data to """
 
         dataText = ".data\n"
@@ -118,7 +118,7 @@ class DataRegion(object):
             dataText += ".align 2\n"
             dataText += "$H_%s : .word 0\n\n"%(str(hashVar))
 
-        print dataText
+        filePtr.write(dataText + "\n")
 
 
 class TextRegion(object):
@@ -146,8 +146,8 @@ class TextRegion(object):
         self.text += G.INDENT + "# " + comment
         self.text += "\n"
 
-    def WriteHeader(self):
-        print self.header
+    def WriteHeader(self, filePtr):
+        filePtr.write(self.header + "\n")
 
     def AddLibraryFunctions(self):
         for func in G.LibraryFunctionsUsed:
@@ -171,13 +171,13 @@ class TextRegion(object):
             self.text = self.text.replace("%s:\n"%(func), loadSegment)
             self.text = self.text.replace("%s_return:\n"%(func), returnSegment)
 
-    def WriteToFile(self):
+    def WriteToFile(self, filePtr):
         self.text = ".text\nmain:\n" + self.text
 
         self.WriteFunctionStacks()
 
         self.AddLibraryFunctions()
-        print self.text
+        filePtr.write(self.text + "\n")
 
 
 class Register(object):
