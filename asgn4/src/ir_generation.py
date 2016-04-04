@@ -85,7 +85,7 @@ class ListIR(object):
 def GenCode(string):
     global NextInstr, InstrMap
 
-    string = str(NextInstr) + ", " + string
+    string = '@LINE@' + str(NextInstr) + ", " + string
     NextInstr += 1
     InstrMap += [0]
 
@@ -191,7 +191,7 @@ def BackPatch(p, i):
 
     for numInstr in p:
         instr = InstrMap[numInstr]
-        instr.code = instr.code.replace('LABEL#REQUIRED', str(i))
+        instr.code = instr.code.replace('LABEL#REQUIRED', '@LINE@' + str(i))
 
 ######################################
 
@@ -208,7 +208,7 @@ def TempVar():
 
     return name
 
-def TempVarArray(width):
+def TempVarArray():
     global CurActivationRecord
 
     if not hasattr(TempVarArray, "tempVarArrayCount"):
@@ -217,7 +217,7 @@ def TempVarArray(width):
     TempVarArray.tempVarArrayCount += 1
 
     name = "t_array%d"%(TempVarArray.tempVarArrayCount)
-    CurActivationRecord.AllocateTemp(name, width*4)
+    CurActivationRecord.AllocateTemp(name)
 
     return name
 
