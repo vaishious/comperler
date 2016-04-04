@@ -472,6 +472,7 @@ class Instr3AC(object):
         self.isTarget  = False
         self.symTable  = None
         self.isCopy    = False # Is it of the form x = y
+        self.declType  = ''
 
         # Set line id
         self.lineID    = int(inpTuple[0])                    # Value error raised if input is not an integer
@@ -492,14 +493,16 @@ class Instr3AC(object):
             self.jmpTarget  =  ConvertTarget(str(inpTuple[2]))
 
         elif self.instrType.is_CALL():
-            # Line Number, Call, Label, retValTarget, paramArray
-            DEBUG.Assert(len(inpTuple) >= 5, "Expected 5-tuple for call")
+            # Line Number, Call, retValTarget, Label, paramArray
+            DEBUG.Assert(len(inpTuple) >= 4, "Expected 4-5 tuple for call")
+            DEBUG.Assert(len(inpTuple) <= 5, "Expected 4-5 tuple for call")
 
-            self.jmpLabel  = str(inpTuple[2])               
-            if len(inpTuple) == 4:
-                self.dest = Entity(str(inpTuple[3]))
+            self.jmpLabel  = str(inpTuple[3])               
+            self.dest = Entity(str(inpTuple[2]))
+            DEBUG.Assert(self.dest.is_VARIABLE(), "LHS of a CALL has to be a variable")
+
+            if len(inpTuple) == 5:
                 self.inp1 = Entity(str(inpTuple[4]))
-                DEBUG.Assert(self.dest.is_VARIABLE(), "LHS of a CALL has to be a variable")
 
         elif self.instrType.is_RETURN():
             # Line Number, Return, retVal
@@ -518,13 +521,13 @@ class Instr3AC(object):
             self.inp1 = Entity(inpTuple[2])
  
         elif self.instrType.is_KEYS():
-            # Line Number, Print, TargetVar, InputArray                                
+            # Line Number, keys, TargetVar, InputArray                                
             DEBUG.Assert(len(inpTuple) == 4, "Expected a 4-tuple for keys")
             self.dest = Entity(str(inpTuple[2]))
             self.inp1 = Entity(inpTuple[3])           
 
         elif self.instrType.is_VALUES():
-            # Line Number, Print, TargetVar, InputArray                                
+            # Line Number, keys, TargetVar, InputArray                                
             DEBUG.Assert(len(inpTuple) == 4, "Expected a 4-tuple for values")
             self.dest = Entity(str(inpTuple[2]))
             self.inp1 = Entity(inpTuple[3])
@@ -547,9 +550,10 @@ class Instr3AC(object):
             self.isTarget = True
 
         elif self.instrType.is_DECLARE():
-            # Line Number, Declare, Input                                
-            DEBUG.Assert(len(inpTuple) == 3, "Expected 3-tuple for declare")
-            self.inp1 = Entity(str(inpTuple[2]))
+            # Line Number, Declare, Type, Input                                
+            DEBUG.Assert(len(inpTuple) == 4, "Expected 4-tuple for declare")
+            self.inp1 = Entity(str(inpTuple[3]))
+            self.declType = str(inpTuple[2])
 
         elif self.instrType.is_ASSIGN():                 
             # Line Number, =, OP, dest, inp1, inp2                 
@@ -675,7 +679,7 @@ class Instr3AC(object):
             return "Read %s"%(str(self.inpTuple[2:]))
 
         if self.instrType.is_DECLARE():
-            return "declare %s"%(self.inp1)
+            return "declare %s of type %s"%(self.inp1, self.declType)
 
         if self.instrType.is_LABEL():
             return "%s : "%(str(self.label))

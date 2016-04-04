@@ -44,67 +44,11 @@ def LinkFunction(funcName):
 
     raise Exception("Did not find function : " + funcName)
 
-def Translate_Printf(parameters):
+def Translate_Printf(parameter):
     """ Custom version of Printf can be found in iolib.c in the lib/ folder """
 
-    formatString = parameters[0]
-
-    DEBUG.Assert(formatString.is_STRING(), "First argument of Printf has to be a format specifier")
-
-    G.StackSpaceMap[G.CurrFunction] = max(G.StackSpaceMap[G.CurrFunction], 4*len(parameters))
-
-    codeSegment = ""
-    
-    # We necessarily have to fetch the hash variable first.
-    # This is because it involves function calls which will overwrite 
-    # the argument registers if we setup some other argument of Printf first
-    extraRegs = [REG.s3, REG.s2, REG.s1, REG.s0]
-    criticalArgs = []
-    for (idx, param) in enumerate(parameters):
-        if param.is_HASH_VARIABLE():
-            G.AsmText.AddComment("Readying hash argument : %s"%(param))
-            tempReg = REG.tmpUsageRegs[-1]
-            regComp = REG.tmpUsageRegs[2]
-
-            if param.key.is_NUMBER():
-                G.AsmText.AddText(tempReg.LoadImmediate(param.key.value), "Load key for the hash access")
-            else:
-                regInp = TRANS.SetupRegister(param.key, regComp)
-                G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp), "Load key for the hash access")
-
-            Translate_getValue(param, tempReg, regComp) 
-
-            if idx <= 3:
-                # These are callee saved registers anyway
-                reg = extraRegs.pop()
-                criticalArgs += [[reg, idx]]
-                G.AsmText.AddText(G.INDENT + "move %s, %s"%(reg, regComp))
-
-            else:
-                G.AsmText.AddText(G.INDENT + "sw %s, %s"%(regComp, str(4*idx)+"($fp)"))
-
-        elif param.ContainsHashAccess():
-            G.AsmText.AddComment("Readying argument : %s"%(param))
-            if idx <= 3:
-                reg = extraRegs.pop()
-                criticalArgs += [[reg, idx]]
-                G.AsmText.AddText(param.CopyToRegister(reg)[:-1])
-            else:
-                G.AsmText.AddText(param.CopyToMemory(str(4*idx)+"($fp)")[:-1])
-
-    # We now push the values into the arg registers (if any)
-    for extraReg, idx in criticalArgs:
-        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[idx], extraReg), "Moving critical parameters to argument registers")
-
-    for (idx, param) in enumerate(parameters):
-        if not param.ContainsHashAccess():
-            G.AsmText.AddComment("Readying argument : %s"%(param))
-            if idx <= 3:
-                G.AsmText.AddText(param.CopyToRegister(REG.argRegs[idx])[:-1])
-            else:
-                G.AsmText.AddText(param.CopyToMemory(str(4*idx)+"($fp)")[:-1])
-
     G.CurrRegAddrTable.DumpDirtyVars()
+    G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a0, ASM.GetVarAddr(parameter)), "Passing parameter")
     G.AsmText.AddText(" ")
     G.AsmText.AddText(G.INDENT + "jal Printf")
 
@@ -117,69 +61,7 @@ def Translate_Printf(parameters):
 def Translate_Scanf(parameters):
     """ Custom version of Scanf can be found in iolib.c in the lib/ folder """
 
-    formatString = parameters[0]
-
-    DEBUG.Assert(formatString.is_STRING(), "First argument of Scanf has to be a format specifier")
-
-    G.StackSpaceMap[G.CurrFunction] = max(G.StackSpaceMap[G.CurrFunction], 4*len(parameters))
-
     codeSegment = ""
-
-    extraRegs = [REG.s3, REG.s2, REG.s1, REG.s0]
-    criticalArgs = []
-    for (idx, param) in enumerate(parameters):
-        if param.is_HASH_VARIABLE():
-            G.AsmText.AddComment("Readying hash argument : %s"%(param))
-            tempReg = REG.tmpUsageRegs[-1]
-            regComp = REG.tmpUsageRegs[2]
-
-            if idx <= 3:
-                # These are callee saved registers anyway
-                reg = extraRegs.pop()
-                criticalArgs += [[reg, idx]]
-
-                # First allocate memory and store the address returned in the callee saved register
-                # We will use this address for our Scanf call
-                Translate_alloc(reg)
-
-                TRANS.SetupDestRegHash(param, regComp, tempReg) # The value of key is stored in tempReg
-
-                # Add a new element with valRef as the pointer to the new memory allocated
-                Translate_addElement(param, tempReg, reg)
-
-            else:
-                # First allocate memory and store the address returned in the temporary register reg
-                # We will use this address for our Scanf call
-                Translate_alloc(regComp)
-
-                # Move the address to the appropriate location on the stack
-                G.AsmText.AddText(G.INDENT + "sw %s, %s"%(regComp, str(4*idx)+"($fp)"))
-
-                TRANS.SetupDestRegHash(param, REG.tmpUsageRegs[1], tempReg) # The value of key is stored in tempReg
-
-                Translate_addElement(param, tempReg, regComp)
-
-        elif param.ContainsHashAccess():
-            G.AsmText.AddComment("Readying argument : %s"%(param))
-            if idx <= 3:
-                reg = extraRegs.pop()
-                criticalArgs += [[reg, idx]]
-                G.AsmText.AddText(param.CopyAddressToRegister(reg)[:-1])
-            else:
-                G.AsmText.AddText(param.CopyAddressToMemory(str(4*idx)+"($fp)")[:-1])
-
-    # We now push the values into the arg registers (if any)
-    for extraReg, idx in criticalArgs:
-        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[idx], extraReg), "Copy critical parameters to arg registers")
-
-    for (idx, param) in enumerate(parameters):
-        if not param.ContainsHashAccess():
-            G.AsmText.AddComment("Readying argument : %s"%(param))
-            if idx <= 3:
-                G.AsmText.AddText(param.CopyAddressToRegister(REG.argRegs[idx])[:-1])
-
-            else:
-                G.AsmText.AddText(param.CopyAddressToMemory(str(4*idx)+"($fp)")[:-1])
 
     G.CurrRegAddrTable.DumpDirtyVars()
     G.AsmText.AddText(" ")
@@ -217,10 +99,20 @@ def Translate_initHash(targetVar):
 
     G.AsmText.AddText(G.INDENT + "li %s, %s"%(REG.argRegs[0], str(G.AsmData.GetHashType(targetVar.value))), "Passing the type of hash")
     G.AsmText.AddText(G.INDENT + "jal initHash", "Allocating memory and initializing the hash")
-    G.AsmText.AddText(G.INDENT + "sw $v0, %s"%(ASM.GetHashAddr(targetVar)), "Storing the returned memory address of hash")
+    G.AsmText.AddText(G.INDENT + "sw $v0, %s"%(ASM.GetVarAddr(targetVar)), "Storing the returned memory address of hash")
 
     # Add library for linking
     G.LibraryFunctionsUsed.add("initHash")
+    G.LibraryFunctionsUsed.add("alloc")
+
+def Translate_initArray(targetVar):
+    """ Array implemented can be found in arraylib.c in the lib/ folder """
+
+    G.AsmText.AddText(G.INDENT + "jal initArray", "Allocating memory and initializing the array")
+    G.AsmText.AddText(G.INDENT + "sw $v0, %s"%(ASM.GetVarAddr(targetVar)), "Storing the returned memory address of array")
+
+    # Add library for linking
+    G.LibraryFunctionsUsed.add("initArray")
     G.LibraryFunctionsUsed.add("alloc")
 
 def Translate_getValue(targetVar, idxRegister, targetReg):

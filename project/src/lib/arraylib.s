@@ -1,4 +1,4 @@
-	.file	1 "../asgn2/lib/arraylib.c"
+	.file	1 "../project/src/lib/arraylib.c"
 	.text
 	.align	2
 	.globl	initArray
@@ -12,25 +12,18 @@ initArray:
 	sw	$fp,28($sp)
 	sw	$16,24($sp)
 	move	$fp,$sp
-	sw	$4,40($fp)
-	sw	$5,44($fp)
-	li	$4,12			# 0xc
+	li	$4,8			# 0x8
 	jal	alloc
 	sw	$2,16($fp)
 	lw	$16,16($fp)
-	lw	$2,44($fp)
-	sll	$2,$2,2
-	move	$4,$2
+	li	$4,4			# 0x4
 	jal	alloc
 	sw	$2,4($16)
 	lw	$2,16($fp)
 	beq	$2,$0,$L2
 	lw	$3,16($fp)
-	lw	$2,44($fp)
+	li	$2,1			# 0x1
 	sw	$2,0($3)
-	lw	$3,16($fp)
-	lw	$2,40($fp)
-	sw	$2,8($3)
 $L2:
 	lw	$2,16($fp)
 	move	$sp,$fp

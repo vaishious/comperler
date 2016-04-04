@@ -35,7 +35,7 @@ StackSpaceMap = {}
 
 # Library functions
 LibraryFunctionsUsed = set([])
-LIBSRC = ['../lib/hashlib.s', '../lib/iolib.s', '../lib/libstd.s', '../lib/libstring.s']
+LIBSRC = ['../lib/hashlib.s', '../lib/iolib.s', '../lib/libstd.s', '../lib/libstring.s', '../lib/arraylib.s']
 
 # Exception messages for ExitWithMessage
 HashKeyError = None

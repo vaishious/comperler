@@ -19,11 +19,17 @@ import mips_assembly as ASM
 
 def Translate(instr):
     if instr.instrType.is_DECLARE():
-        if instr.inp1.is_HASH_VARIABLE():
+        if instr.declType == 'hash':
             G.CurrRegAddrTable.DumpDirtyVars()
             G.CurrRegAddrTable.Reset()
             G.AllocMap = {}
             LIB.Translate_initHash(instr.inp1)
+
+        elif instr.declType == 'array':
+            G.CurrRegAddrTable.DumpDirtyVars()
+            G.CurrRegAddrTable.Reset()
+            G.AllocMap = {}
+            LIB.Translate_initArray(instr.inp1)
 
     elif instr.instrType.is_EXIT():
         G.CurrRegAddrTable.DumpDirtyVars()
@@ -36,6 +42,11 @@ def Translate(instr):
 
     elif instr.instrType.is_CALL():
         G.CurrRegAddrTable.DumpDirtyVars()
+        if instr.inp1.is_VARIABLE():
+            reg = SetupRegister(instr.inp1, REG.a0)
+            if reg != REG.a0:
+                G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a0, reg))
+
         G.AsmText.AddText(G.INDENT + "jal %s"%(instr.jmpLabel))
         if instr.dest.is_VARIABLE():
             GenCode_CallAssignment(instr)
@@ -134,7 +145,7 @@ def SetupRegister(inp, regComp, tempReg=REG.t9, useImmediate=False):
             G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp), "Load index for the array access")
 
         # Load the array address in regComp
-        G.AsmText.AddText(G.INDENT + "la %s, %s"%(regComp, ASM.GetArrAddr(inp.value)), "Load array address")
+        G.AsmText.AddText(G.INDENT + "la %s, %s"%(regComp, ASM.GetVarAddr(inp.value)), "Load array address")
 
         # We move the index value to tempReg to multiply it by 4
         G.AsmText.AddText(G.INDENT + "sll %s, %s, 2"%(tempReg, tempReg), "Multiply index by 4")
@@ -515,7 +526,7 @@ def SetupDestRegArray(dest, regComp, tempReg=REG.tmpUsageRegs[-1]):
         G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp), "Load index for array access")
 
     # Load the array address in regComp
-    G.AsmText.AddText(G.INDENT + "la %s, %s"%(regComp, ASM.GetArrAddr(dest.value)), "Load array address")
+    G.AsmText.AddText(G.INDENT + "la %s, %s"%(regComp, ASM.GetVarAddr(dest.value)), "Load array address")
 
     # We move the index value to tempReg to multiply it by 4
     G.AsmText.AddText(G.INDENT + "sll %s, %s, 2"%(tempReg, tempReg), "Multiply index by 4")

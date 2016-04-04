@@ -187,7 +187,7 @@ class Parser(object):
             ir.code = ir.code.replace('#tempVarArrayName', p[0].place)
             ir.code = ir.code.replace('#IndexRequired', str(index+1))
 
-        p[0].code = p[2].code | IR.GenCode("=, %s[0], %s"%(p[0].place, p[2].place)) | p[3].code
+        p[0].code = IR.GenCode("declare, array, %s"%(p[0].place)) | p[2].code | IR.GenCode("=, %s[0], %s"%(p[0].place, p[2].place)) | p[3].code
 
     def p_list_elements(self, p):
         ''' list-elements : list-elements COMMA arith-bool-string-expression
@@ -211,7 +211,7 @@ class Parser(object):
         for ir in p[2].code:
             ir.code = ir.code.replace("#tempVarHashName", p[0].place)
 
-        p[0].code = p[2].code
+        p[0].code = IR.GenCode("declare, hash, %s"%(p[0].place)) | p[2].code
 
     def p_hash_elements(self, p):
         ''' hash-elements : hash-elements COMMA arith-bool-string-expression HASHARROW arith-bool-string-expression
@@ -1284,9 +1284,19 @@ class Parser(object):
 
         if len(p) == 5:
             IR.BackPatch(p[4].nextlist, IR.NextInstr)
-            p[0].code = p[4].code | IR.GenCode("=, %s, %s"%(p[2].place, p[4].place))
+            if p[2].symEntry.externalType == SYMTAB.SymTabEntry.HASH:
+                p[0].code = p[4].code | IR.GenCode("declare, hash, %s"%(p[2].place))
+            elif p[2].symEntry.externalType == SYMTAB.SymTabEntry.ARRAY:
+                p[0].code = p[4].code | IR.GenCode("declare, array, %s"%(p[2].place))
+            else:
+                p[0].code = p[4].code | IR.GenCode("=, %s, %s"%(p[2].place, p[4].place))
         else:
-            p[0].code = IR.ListIR() 
+            if p[2].symEntry.externalType == SYMTAB.SymTabEntry.HASH:
+                p[0].code = p[4].code | IR.GenCode("declare, hash, %s"%(p[2].place))
+            elif p[2].symEntry.externalType == SYMTAB.SymTabEntry.ARRAY:
+                p[0].code = p[4].code | IR.GenCode("declare, array, %s"%(p[2].place))
+            else:
+                p[0].code = IR.ListIR() 
 
     def p_string(self, p):
         ''' string : SINGQUOTSTR

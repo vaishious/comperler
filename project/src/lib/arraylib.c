@@ -11,53 +11,51 @@
 
 typedef struct Array {
     int length;
-	int *addr;
-
-    // Integers or Addresses (strings/hashes)
-    int type;
+    int *addr;
 } Array;
 
-Array *initArray(int type, int length)
+Array *initArray()
 {
-	//Working under the assumption that addresses are 4-bytes and so are integers
-	Array *arrayPtr = (Array *)alloc(sizeof(Array));
-	arrayPtr->addr = (int *)alloc(length*4);
-	
-	if (arrayPtr != NULL) {
-		arrayPtr->length = length;
-		arrayPtr->type = type;
-	}
+    // Working under the assumption that addresses are 4-bytes and so are integers
+    // We initialize with only one entry
+    Array *arrayPtr = (Array *)alloc(sizeof(Array));
+    arrayPtr->addr = (int *)alloc(4);
+    
+    if (arrayPtr != NULL) {
+            arrayPtr->length = 1;
+    }
+
     return arrayPtr;
 }
 
 int lengthOfArray(Array *arrayPtr)
 {
-	if (arrayPtr != NULL) {
-		return arrayPtr->length;
-	} else {
-		return 0;
-	}
+    if (arrayPtr != NULL) {
+        return arrayPtr->length;
+    } else {
+        return 0;
+    }
 }
 
 void *accessIndex(Array *arrayPtr, int index, char *message)
 {
-        if (index >= arrayPtr->length) {
-                //Working under the assumption that addresses are 4-bytes and so are integers
-                int *newAddr = (int *)alloc(2*(index+1)*4);
-                if (newAddr != NULL) {
-                        int it;
-                        //Copy from old memory to new memory
-                        for (it=0; it < arrayPtr->length; it++) {
-                                newAddr[it] = (arrayPtr->addr)[it];
-                        }
+    if (index >= arrayPtr->length) {
+        //Working under the assumption that addresses are 4-bytes and so are integers
+        int *newAddr = (int *)alloc(2*(index+1)*4);
+        if (newAddr != NULL) {
+            int it;
+                //Copy from old memory to new memory
+            for (it=0; it < arrayPtr->length; it++) {
+                newAddr[it] = (arrayPtr->addr)[it];
+            }
 
-                        arrayPtr->length = 2*(index+1);
-                        arrayPtr->addr = newAddr;
-                } else {
-                        // Raise an exception
-                        ExitWithMessage(message, index);
-                }
+            arrayPtr->length = 2*(index+1);
+            arrayPtr->addr = newAddr;
+        } else {
+            // Raise an exception
+            ExitWithMessage(message, index);
         }
+    }
 
-        return (void *)((arrayPtr->addr) + index);
+    return (void *)((arrayPtr->addr) + index);
 }
