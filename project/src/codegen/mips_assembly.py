@@ -46,13 +46,17 @@ class DataRegion(object):
                     self.globalVars += [var]
 
                 for var, pos in record.tempVarMap.items():
-                    self.varSet[var] = "%d($sp)"%(pos)
+                    self.varSet[var] = "%d($fp)"%(pos)
+
+                G.StackSpaceMap[func] = record.tempOffset + 16; 
             else:
                 for var, pos in record.varLocationMap.items():
-                    self.varSet[var] = "%d($sp)"%(pos)
+                    self.varSet[var] = "%d($fp)"%(pos)
 
                 for var, pos in record.tempVarMap.items():
-                    self.varSet[var] = "%d($sp)"%(record.varOffset + pos)
+                    self.varSet[var] = "%d($fp)"%(record.varOffset + pos)
+
+                G.StackSpaceMap[func] = record.varOffset + record.tempOffset + 16; 
 
     def AllocateString(self, strEntity):
         DEBUG.Assert(type(strEntity) == INSTRUCTION.Entity, "Type for AllocateString in Data-Region is not Entity")
@@ -120,7 +124,7 @@ class TextRegion(object):
 
     def WriteFunctionStacks(self):
         for (func, space) in G.StackSpaceMap.items():
-            stackSpaceRequired = space + 24
+            stackSpaceRequired = space
 
             loadSegment = "%s:\n"%(func)
             loadSegment += G.INDENT + ".frame $fp,%d,$31\n"%(stackSpaceRequired) 
@@ -129,12 +133,7 @@ class TextRegion(object):
             loadSegment += G.INDENT + "sw $ra, %d($sp)\n"%(stackSpaceRequired-8)
             loadSegment += G.INDENT + "move $fp, $sp\n"
 
-            returnSegment = G.INDENT + "lw $fp, %d($sp)"%(stackSpaceRequired-4) + G.INDENT + "# " + "Reload the fp from the previous call\n"
-            returnSegment += G.INDENT + "lw $ra, %d($sp)"%(stackSpaceRequired-8) + G.INDENT + "# " + "Reload the ra of the current call\n"
-
-
             self.text = self.text.replace("%s:\n"%(func), loadSegment)
-            self.text = self.text.replace("%s_return:\n"%(func), returnSegment)
 
     def WriteToFile(self, filePtr):
         self.text = ".text\nmain:\n" + self.text

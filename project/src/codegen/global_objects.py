@@ -31,7 +31,7 @@ CurrFunction     = 'main'
 # This map provides an easier interface to see the register allocation for the current
 # instruction
 AllocMap = {}
-StackSpaceMap = {'main' : 0}
+StackSpaceMap = {}
 
 # Library functions
 LibraryFunctionsUsed = set([])
