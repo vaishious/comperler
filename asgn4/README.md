@@ -1,9 +1,17 @@
 ## README
 
-* No building necessary as it is a python project.
+### Features
 
-* Simply run `./bin/parser ./test/test*.pl`
+* Dynamic arrays (vectors) and hashes support.
 
-* If the input file contains syntax errors, no output html file is generated.
+* If, If-Else, If-Elsif-Else, Unless, Unless-Else, Unless-Elsif-Else support.
 
-* The file test/test9_buggy.pl is a test case containing syntax errors that has been included to demonstrate the error recovery mechanism of our parser.
+* While, Until, For, Foreach, Do-While loop support with control statements Next, Redo, Last, Continue
+
+* Functions with dynamic number of parameters
+
+* Variable scoping
+
+* References (analogous to pointers) and Dereferences
+
+* String concatenation
