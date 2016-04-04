@@ -41,26 +41,23 @@ int lengthOfArray(Array *arrayPtr)
 
 void *accessIndex(Array *arrayPtr, int index, char *message)
 {
-	if (index >= arrayPtr->length) {
-		//Working under the assumption that addresses are 4-bytes and so are integers
-		int *newAddr = (int *)alloc(2*(index+1)*4);
-		if (newAddr != NULL) {
-			int it;
-			//Copy from old memory to new memory
-			for (it=0; it < arrayPtr->length; it++) {
-				newAddr[it] = (arrayPtr->addr)[it];
-			}
+        if (index >= arrayPtr->length) {
+                //Working under the assumption that addresses are 4-bytes and so are integers
+                int *newAddr = (int *)alloc(2*(index+1)*4);
+                if (newAddr != NULL) {
+                        int it;
+                        //Copy from old memory to new memory
+                        for (it=0; it < arrayPtr->length; it++) {
+                                newAddr[it] = (arrayPtr->addr)[it];
+                        }
 
-			arrayPtr->length = 2*(index+1);
-			arrayPtr->addr = newAddr;
-		} else {
-			// Raise an exception
-			ExitWithMessage(message, index);
-		}
-	}
+                        arrayPtr->length = 2*(index+1);
+                        arrayPtr->addr = newAddr;
+                } else {
+                        // Raise an exception
+                        ExitWithMessage(message, index);
+                }
+        }
 
-	return (void *)((arrayPtr->addr) + index);
-
-    // Raise an exception
-    ExitWithMessage(message, index);
+        return (void *)((arrayPtr->addr) + index);
 }
