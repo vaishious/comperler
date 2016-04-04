@@ -28,7 +28,7 @@ class SymTabEntry(object):
         self.code = []
 
     def CheckDeclaration(self):
-        return self.scopeNum != -1
+        return self.scopeNum != -1 or self.baseVarName == '_'
 
     def __str__(self):
         return repr(self.varName)

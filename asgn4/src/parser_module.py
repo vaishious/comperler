@@ -1154,7 +1154,6 @@ class Parser(object):
             if p[1] == '{':
                 newVarName = '%' + p[-2].symEntry.baseVarName
             else:
-                print p[-2]
                 newVarName = '@' + p[-2].symEntry.baseVarName
 
             p[-2].symEntry = self.symTabManager.Lookup(newVarName)
@@ -1396,10 +1395,20 @@ class Parser(object):
             p[0].code = p[0].code | IR.GenCode("return")
 
     def p_function_return(self, p):
-        ''' function-ret : RETURN expression '''
+        ''' function-ret : RETURN usable-expression '''
 
         p[0] = IR.Attributes()
         p[0].code = p[2].code | IR.GenCode("return, %s"%(p[2].place))
+
+        IR.FuncReturnMap[IR.CurFuncID] = True
+        IR.CurFuncID = 'main'
+        IR.CurActivationRecord = IR.FuncMap[IR.CurFuncID]
+
+    def p_function_return_empty(self, p):
+        ''' function-ret : RETURN empty '''
+
+        p[0] = IR.Attributes()
+        p[0].code = IR.GenCode("return")
 
         IR.FuncReturnMap[IR.CurFuncID] = True
         IR.CurFuncID = 'main'
