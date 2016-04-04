@@ -231,17 +231,6 @@ class Entity(object):
                                            self.entity == Entity.HASH_VARIABLE or
                                            self.entity == Entity.ARRAY_VARIABLE)
 
-    def AllocateGlobalMemory(self):
-        """ Allocate itself memory in the global region """
-        if self.is_SCALAR_VARIABLE():
-            G.AsmData.Allocate32(self)
-
-        elif self.is_ARRAY_VARIABLE():
-            G.AsmData.AllocateArray(self)
-
-        elif self.is_HASH_VARIABLE():
-            G.AsmData.AllocateHash(self)
-
     def IsRegisterAllocated(self):
         """ Reads the current reg-address descriptor and returns a boolean value """
         if not self.is_SCALAR_VARIABLE():
@@ -516,17 +505,11 @@ class Instr3AC(object):
             # Line Number, Print, Inputs                                
             DEBUG.Assert(len(inpTuple) >= 3, "Expected atleast a 3-tuple for print")
             self.IOArgs = map(Entity, map(str, inpTuple[2:]))
-            for arg in self.IOArgs:
-                if arg.is_SCALAR_VARIABLE():
-                    arg.AllocateGlobalMemory()
             
         elif self.instrType.is_READ():
             # Line Number, Read, Inputs                                
             DEBUG.Assert(len(inpTuple) >= 3, "Expected atleast a 3-tuple for read")
             self.IOArgs = map(Entity, map(str, inpTuple[2:]))
-            for arg in self.IOArgs:
-                if arg.is_SCALAR_VARIABLE():
-                    arg.AllocateGlobalMemory()
             
         elif self.instrType.is_ALLOC():
             # Line Number, alloc/malloc, targetVar, size
@@ -544,7 +527,6 @@ class Instr3AC(object):
             # Line Number, Declare, Input                                
             DEBUG.Assert(len(inpTuple) == 3, "Expected 3-tuple for declare")
             self.inp1 = Entity(str(inpTuple[2]))
-            self.inp1.AllocateGlobalMemory()
 
         elif self.instrType.is_ASSIGN():                 
             # Line Number, =, OP, dest, inp1, inp2                 
@@ -570,13 +552,6 @@ class Instr3AC(object):
                 self.inp2   = Entity(str(inpTuple[5]))
 
             DEBUG.Assert(self.dest.is_VARIABLE(), "LHS of an ASSIGN has to be a variable")
-
-        if self.dest.is_SCALAR_VARIABLE():
-            self.dest.AllocateGlobalMemory()
-        if self.inp1.is_SCALAR_VARIABLE():
-            self.inp1.AllocateGlobalMemory()
-        if self.inp2.is_SCALAR_VARIABLE():
-            self.inp2.AllocateGlobalMemory()
             
     def __str__(self):
         return self.PrettyPrint()

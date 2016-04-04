@@ -20,16 +20,9 @@ import library as LIB
 def GetVarAddr(variable):
     """ Get address of a variable as $V_(var_name) """
     if type(variable) == INSTRUCTION.Entity:
-        return "$V_" + str(variable.value)
+        return G.AsmData.varSet[variable.value]
     else:
-        return "$V_" + str(variable)
-
-def GetArrAddr(variable):
-    """ Get address of an array as $A_(arr_name) """
-    if type(variable) == INSTRUCTION.Entity:
-        return "$A_" + str(variable.value)
-    else:
-        return "$A_" + str(variable)
+        return G.AsmData.varSet[variable]
 
 def GetStrAddr(variable):
     """ Get address of a string as $STR_(stringNum) """
@@ -38,40 +31,28 @@ def GetStrAddr(variable):
     else:
         return "$STR_" + G.AsmData.GetStringLabel(str(variable))
 
-def GetHashAddr(variable):
-    """ Get address of a hash as $H_(var_name) """
-    if type(variable) == INSTRUCTION.Entity:
-        return "$H_" + str(variable.value)
-    else:
-        return "$H_" + str(variable)
-
 class DataRegion(object):
 
-    def __init__(self):
-        self.varSet    = set([])
-        self.hashSet   = {}
-        self.arraySet  = {}
+    def __init__(self, funcActRecords, symTabManager):
+        self.varSet = {}
+        self.globalVars = []
         self.stringSet = {}
         self.stringCnt = 0
 
+        for func, record in funcActRecords.items():
+            if func == "main":
+                for var in record.varLocationMap:
+                    self.varSet[var] = var
+                    self.globalVars += [var]
 
-    def Allocate32(self, varEntity):
-        DEBUG.Assert(type(varEntity) == INSTRUCTION.Entity, "Type for Allocate32 in Data-Region is not Entity")
-        DEBUG.Assert(varEntity.is_SCALAR_VARIABLE(), "Only scalar variable for Allocate32 in Data-Region")
+                for var, pos in record.tempVarMap.items():
+                    self.varSet[var] = "%d($sp)"%(pos)
+            else:
+                for var, pos in record.varLocationMap.items():
+                    self.varSet[var] = "%d($sp)"%(pos)
 
-        self.varSet.add(varEntity.value)
-
-    def AllocateArray(self, arrEntity):
-        DEBUG.Assert(type(arrEntity) == INSTRUCTION.Entity, "Type for AllocateArray in Data-Region is not Entity")
-        DEBUG.Assert(arrEntity.is_ARRAY_VARIABLE(), "Only array variables allowed for AllocateArray in Data-Region")
-
-
-        # We assume that the "key" value is the size of the array.
-        # We will declare it as "declare a[5]"
-
-        DEBUG.Assert(arrEntity.key.is_NUMBER(), "Size of array has to be an integer")
-
-        self.arraySet[arrEntity.value] = arrEntity.key.value
+                for var, pos in record.tempVarMap.items():
+                    self.varSet[var] = "%d($sp)"%(record.varOffset + pos)
 
     def AllocateString(self, strEntity):
         DEBUG.Assert(type(strEntity) == INSTRUCTION.Entity, "Type for AllocateString in Data-Region is not Entity")
@@ -80,12 +61,6 @@ class DataRegion(object):
         if not self.stringSet.has_key(strEntity.value):
             self.stringSet[strEntity.value] = str(self.stringCnt)
             self.stringCnt += 1
-
-    def AllocateHash(self, hashEntity):
-        DEBUG.Assert(type(hashEntity) == INSTRUCTION.Entity, "Type for AllocateHash in Data-Region is not Entity")
-        DEBUG.Assert(hashEntity.is_HASH_VARIABLE(), "Only hash variable for AllocateHash in Data-Region")
-
-        self.hashSet[hashEntity.value] = 0 if hashEntity.key.is_NUMBER() else 1
 
     def GetHashType(self, varName):
         return self.hashSet[varName]
@@ -99,24 +74,14 @@ class DataRegion(object):
         dataText = ".data\n"
 
         dataText += "# VARIABLES\n"
-        for var32 in self.varSet:
+        for var in self.globalVars:
             dataText += ".align 2\n"
-            dataText += "$V_%s : .word 0\n\n"%(str(var32))
-
-        dataText += "\n# ARRAYS\n"
-        for (arr, size) in self.arraySet.items():
-            dataText += ".align 2\n"
-            dataText += "$A_%s : .word 0:%d\n\n"%(str(arr), size)
+            dataText += "%s : .word 0\n\n"%(var)
 
         dataText += "\n# STRINGS\n"
         for (string, label) in self.stringSet.items():
             dataText += ".align 2\n"
             dataText += "$STR_%s : .asciiz \"%s\"\n"%(label, string)
-
-        dataText += "\n# HASHES\n"
-        for hashVar in self.hashSet:
-            dataText += ".align 2\n"
-            dataText += "$H_%s : .word 0\n\n"%(str(hashVar))
 
         filePtr.write(dataText + "\n")
 
