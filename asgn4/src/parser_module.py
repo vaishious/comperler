@@ -729,7 +729,7 @@ class Parser(object):
         p[0].code = p[3].code | p[6].code
 
         IR.BackPatch(p[3].falselist, p[5].instr)
-        p[0].nextlist = IR.Merge(p[3].falselist, p[6].nextlist)
+        p[0].nextlist = IR.Merge(p[3].truelist, p[6].nextlist)
         p[0].CopyLoopLists(p[6])
         p[0].falselist = p[3].truelist
 
