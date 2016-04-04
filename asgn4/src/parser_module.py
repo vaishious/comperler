@@ -37,8 +37,29 @@ class Parser(object):
                 print error_item[1]
         else:
             IR.BackPatch(p[1].nextlist, IR.NextInstr)
-            p[1].code.PrintIR()
-            self.functionDefs.PrintIR()
+            lineNum = 1
+            newMap = {}
+            finalCode = ''
+            for ir in p[1].code:
+                curLineLabel = ir.code.split(",")[0]
+                newMap[curLineLabel] = lineNum
+                lineNum = lineNum + 1
+                finalCode += ir.code + "\n"
+
+            for ir in self.functionDefs:
+                curLineLabel = ir.code.split(",")[0]
+                if curLineLabel == '':
+                    break
+
+                newMap[curLineLabel] = lineNum
+                lineNum = lineNum + 1
+                finalCode += ir.code + "\n"
+
+            for orig, new in newMap.items():
+                finalCode = finalCode.replace(orig, str(new))
+
+            print finalCode
+
 
     ### Special Rules ###
 
@@ -158,7 +179,7 @@ class Parser(object):
             if "#tempVarArrayName" in ir.code:
                 listCode += [ir]
 
-        p[0].place = IR.TempVarArray(1 + len(listCode))
+        p[0].place = IR.TempVarArray()
         for (index, ir) in enumerate(listCode):
             ir.code = ir.code.replace('#tempVarArrayName', p[0].place)
             ir.code = ir.code.replace('#IndexRequired', str(index+1))
