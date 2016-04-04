@@ -1,12 +1,8 @@
-sub Rec {
-   my $n;
-   $n = $_[0];
+#!/usr/bin/perl
 
-   if( $n > 0 ) {
-	Rec( $n - 1 );
-	print("Value of n is: $n\n");
-   }
-   return;
-}
+my %data;
+%data = ('John Paul' => 45, 'Lisa' => 30, 'Kumar' => 40);
 
-Rec(10);
+#print "\$data{'John Paul'} = $data{'John Paul'}\n";
+#print "\$data{'Lisa'} = $data{'Lisa'}\n";
+#print "\$data{'Kumar'} = $data{'Kumar'}\n";

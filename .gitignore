@@ -30,3 +30,5 @@ mips-x86.linux-xgcc/iolib.s
 parser.out
 parsetab.py
 *.html
+*.ir
+*.sym

@@ -126,6 +126,7 @@ class Parser(object):
                 p[0].loop_redo_list = p[1].loop_redo_list
                 p[0].loop_last_list = p[1].loop_last_list
 
+
  
     def p_statement(self, p):
         ''' statement : expression SEMICOLON
@@ -1108,7 +1109,6 @@ class Parser(object):
         ''' loop-control : loop-next
                          | loop-redo
                          | loop-last
-                         | GOTO ID
         '''
 
         p[0] = p[1]
