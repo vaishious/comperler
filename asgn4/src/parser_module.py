@@ -43,7 +43,6 @@ class Parser(object):
 
     def p_empty(self, p):
         ''' empty : '''
-        p[0] = ('empty', self.get_children(p))
 
     def p_error(self, p):
         if not self.error_seen:
@@ -122,7 +121,6 @@ class Parser(object):
     def p_expression(self, p):
         ''' expression : usable-expression
                        | normal-assignment
-                       | ternary-op
         '''
 
         p[0] = p[1]
@@ -132,6 +130,7 @@ class Parser(object):
                               | list-expression
                               | hash-expression
                               | stdin
+                              | ternary-op
         '''
 
         p[0] = p[1]
@@ -1114,31 +1113,44 @@ class Parser(object):
         p[0].symEntry = p[-1].symEntry
         if not p[-1].isArrowOp:
             if p[1] == '{':
-                newVarName = '%' + p[-1].symEntry.baseVarName
+                newVarName = '%' + p[-2].symEntry.baseVarName
             else:
-                newVarName = '@' + p[-1].symEntry.baseVarName
+                newVarName = '@' + p[-2].symEntry.baseVarName
 
-            p[-1].symEntry = self.symTabManager.Lookup(newVarName)
-            p[0].symEntry = p[-1].symEntry
-            p[-1].place = p[-1].symEntry.place
+            p[-2].symEntry = self.symTabManager.Lookup(newVarName)
+            p[0].symEntry = p[-2].symEntry
+            p[-2].place = p[-2].symEntry.place
+            p[0].nextlist = p[2].nextlist
 
-        p[0].place = "%s%s%s%s"%(p[-1].place, p[1], p[2].place, p[3])
-        p[0].hasNumericKey = p[2].isConstantNumeric
-        p[0].key = p[2].place
-        p[0].accessType = p[1]
-        p[0].code = p[2].code | p[-1].code
+            p[0].place = "%s%s%s%s"%(p[-2].place, p[1], p[2].place, p[3])
+            p[0].hasNumericKey = p[2].isConstantNumeric
+            p[0].key = p[2].place
+            p[0].accessType = p[1]
+            p[0].code = p[2].code | p[-2].code
+
+            if (p[0].nextlist != []):
+                IR.BackPatch(p[0].nextlist, IR.NextInstr)
+                p[0].code = p[0].code | IR.GenCode("nop")
+        else:
+            IR.BackPatch(p[2].nextlist, p[-2].instr)
+
+            p[0].place = "%s%s%s%s"%(p[-1].place, p[1], p[2].place, p[3])
+            p[0].hasNumericKey = p[2].isConstantNumeric
+            p[0].key = p[2].place
+            p[0].accessType = p[1]
+            p[0].code = p[2].code | p[-1].code
 
     def p_arrow(self, p):
         ''' arrow : ARROW '''
 
         p[0] = IR.Attributes()
 
-        p[0].symEntry = p[-1].symEntry
+        p[0].symEntry = p[-2].symEntry
         if p[0].symEntry.externalType != SYMTAB.SymTabEntry.SCALAR:
             raise PerlTypeError("Dereferenced object must be a scalar value")
 
         p[0].place = IR.TempVar()
-        p[0].code = p[-1].code | IR.GenCode("=, $, %s, %s"%(p[0].place, p[-1].place))
+        p[0].code = p[-2].code | IR.GenCode("=, $, %s, %s"%(p[0].place, p[-2].place))
         p[0].isArrowOp = True
  
     def p_access_error(self, p):
@@ -1155,14 +1167,16 @@ class Parser(object):
     #   $hashref->{"KEY"} = "VALUE";  # Hash element
 
     def p_variable_arrows_and_accesses(self, p):
-        ''' arrows_and_accesses : arrow access
-                                | access
+        ''' arrows_and_accesses : MARK-backpatch arrow access
+                                | MARK-backpatch access
         '''
 
-        if len(p) == 3:
-            p[0] = p[2]
+        if len(p) == 4:
+            p[0] = p[3]
+            p[0].nextlist = p[3].nextlist
         else:
-            p[0] = p[1]
+            p[0] = p[2]
+            p[0].nextlist = p[2].nextlist
 
     def p_variable_lhs(self, p):
         ''' var-lhs : var-name-lhs-strict
@@ -1207,9 +1221,11 @@ class Parser(object):
         p[0] = IR.Attributes()
 
         if p[3].opCode == '=':
-            p[0].code = p[4].code | p[1].code | IR.GenCode("=, %s, %s"%(p[1].place, p[4].place)) 
+            IR.BackPatch(p[4].nextlist, IR.NextInstr)
+            p[0].code = p[1].code | p[4].code | IR.GenCode("=, %s, %s"%(p[1].place, p[4].place)) 
         else:
-            p[0].code = p[4].code | p[1].code | IR.GenCode("=, %s, %s, %s, %s"%(p[3].opCode, p[1].place, p[1].place, p[4].place))
+            IR.BackPatch(p[4].nextlist, IR.NextInstr)
+            p[0].code = p[1].code | p[4].code | IR.GenCode("=, %s, %s, %s, %s"%(p[3].opCode, p[1].place, p[1].place, p[4].place))
 
     def empty_assignment(self, p): # Used for FOR loop
         ''' normal-assignment : empty '''
@@ -1230,9 +1246,10 @@ class Parser(object):
         p[0] = IR.Attributes()
 
         if len(p) == 5:
+            IR.BackPatch(p[4].nextlist, IR.NextInstr)
             p[0].code = p[4].code | IR.GenCode("=, %s, %s"%(p[2].place, p[4].place))
         else:
-            p[0].code = IR.ListIR() # TODO
+            p[0].code = IR.ListIR() 
 
     def p_variable_array_decl(self, p):
         ''' variable-strict-decl : MY var-name-lhs-strict access '''
@@ -1346,11 +1363,29 @@ class Parser(object):
         IR.CurFuncID = 'main'
         IR.CurActivationRecord = IR.FuncMap[IR.CurFuncID]
 
+    def p_mark_ternary_ass1(self, p):
+        ''' MARK-ternary-assignment1 : '''
+        
+        p[0] = IR.Attributes()
+        p[0].place = IR.TempVar()
+        p[0].code = IR.GenCode("=, %s, %s"%(p[0].place, p[-1].place))
+
     def p_ternary_operator(self, p):
-        ''' ternary-op : boolean-expression TERNARY_CONDOP usable-expression COLON usable-expression
+        ''' ternary-op : boolean-expression TERNARY_CONDOP MARK-backpatch usable-expression MARK-ternary-assignment1 MARK-backpatch-nextlist COLON MARK-backpatch usable-expression 
                        | LPAREN ternary-op RPAREN
         '''
-        p[0] = ('ternary-op', self.get_children(p))
+
+        if len(p) == 4:
+            p[0] = p[2]
+        else:
+            p[0] = IR.Attributes()
+            p[0].place = p[5].place
+            IR.BackPatch(p[1].truelist, p[3].instr)
+            IR.BackPatch(p[1].falselist, p[8].instr)
+
+            p[0].nextlist = IR.Merge(p[6].nextlist, p[9].nextlist)
+
+            p[0].code = p[1].code | p[4].code | p[5].code | p[6].code | p[9].code | IR.GenCode("=, %s, %s"%(p[5].place, p[9].place))
 
     # Build the parser
     # error_seen decides if we should print the .html file or not at the end
@@ -1376,9 +1411,3 @@ class Parser(object):
         IR.CurActivationRecord = IR.FuncMap[IR.CurFuncID]
 
         return self.parser.parse(input)
-
-    def get_children(self, p):
-        children = []
-        for i in xrange(1,len(p)):
-            children.append(p[i])
-        return children
