@@ -1319,7 +1319,7 @@ class Parser(object):
         '''
 
         p[0] = IR.Attributes()
-        p[0].code = p[2].code | IR.GenCode("%s, %s"%(p[1], p[2].place)) 
+        p[0].code = p[2].code | IR.GenCode("%s, %s"%(p[1].place, p[2].place)) 
 
     def p_function_call(self, p):
         ''' function-call : builtin-func-call
