@@ -1234,7 +1234,7 @@ class Parser(object):
         p[0].symEntry = self.symTabManager.Lookup(varName)
 
         p[0].place = IR.TempVar()
-        p[0].code = IR.GenCode("=, &, %s, %s"%(p[0].place, p[0].symEntry.place))
+        p[0].code = IR.GenCode("=, ref, %s, %s"%(p[0].place, p[0].symEntry.place))
 
     def p_variable(self, p):
         ''' variable : var-lhs MARK-check-declaration
@@ -1341,7 +1341,11 @@ class Parser(object):
         '''
 
         p[0] = IR.Attributes()
-        p[0].code = p[2].code | IR.GenCode("%s, %s"%(p[1].place, p[2].place)) 
+        if p[1].place == 'print':
+            p[0].code = p[2].code | IR.GenCode("%s, %s"%(p[1].place, p[2].place)) 
+        else:
+            p[0].place = IR.TempVar()
+            p[0].code = p[2].code | IR.GenCode("%s, %s, %s"%(p[1].place, p[0].place, p[2].place))
 
     def p_function_call(self, p):
         ''' function-call : builtin-func-call
@@ -1357,9 +1361,9 @@ class Parser(object):
             p[0].place = IR.TempVar()
 
             if len(p) == 3:
-                p[0].code = p[2].code | IR.GenCode("=, call, %s, %s, %s"%(p[0].place, p[1], p[2].place))
+                p[0].code = p[2].code | IR.GenCode("call, %s, %s, %s"%(p[0].place, p[1], p[2].place))
             else:
-                p[0].code = IR.GenCode("=, call, %s, %s"%(p[0].place, p[1]))
+                p[0].code = IR.GenCode("call, %s, %s"%(p[0].place, p[1]))
 
     def p_function_call_error(self, p):
         ''' function-call : ID LPAREN error RPAREN

@@ -32,7 +32,7 @@ class InstrType(object):
 
 
     # Enum for holding these values
-    ASSIGN, IFGOTO, STRIFGOTO, GOTO, CALL, RETURN, PRINT, READ, LABEL, DECLARE, EXIT, NOP, ALLOC = range(13)
+    ASSIGN, IFGOTO, STRIFGOTO, GOTO, CALL, RETURN, PRINT, KEYS, VALUES, READ, LABEL, DECLARE, EXIT, NOP, ALLOC = range(15)
 
     typeMap = { 
                 "="          : ASSIGN,        "assign" : ASSIGN,       "ASSIGN"    : ASSIGN,
@@ -42,6 +42,8 @@ class InstrType(object):
                 "call"       : CALL,                                   "CALL"      : CALL,
                 "ret"        : RETURN,        "return" : RETURN,       "RETURN"    : RETURN,       "RET" : RETURN,
                 "print"      : PRINT,         "printf" : PRINT,        "PRINT"     : PRINT,
+                "keys"       : KEYS,          "KEYS"   : KEYS,
+                "values"     : VALUES,        "VALUES" : VALUES,
                 "read"       : READ,          "scanf"  : READ,         "READ"      : READ,
                 "label"      : LABEL,         "Label"  : LABEL,        "LABEL"     : LABEL,
                 "declare"    : DECLARE,       "decl"   : DECLARE,      "DECLARE"   : DECLARE,
@@ -65,6 +67,8 @@ class InstrType(object):
     def is_CALL(self)       : return self.instrType == InstrType.CALL
     def is_RETURN(self)     : return self.instrType == InstrType.RETURN
     def is_PRINT(self)      : return self.instrType == InstrType.PRINT
+    def is_KEYS(self)       : return self.instrType == InstrType.PRINT
+    def is_VALUES(self)     : return self.instrType == InstrType.PRINT
     def is_READ(self)       : return self.instrType == InstrType.READ
     def is_ALLOC(self)      : return self.instrType == InstrType.ALLOC
     def is_LABEL(self)      : return self.instrType == InstrType.LABEL
@@ -79,6 +83,8 @@ class InstrType(object):
                                    self.instrType == InstrType.EXIT or
                                    self.instrType == InstrType.CALL or
                                    self.instrType == InstrType.PRINT or
+                                   self.instrType == InstrType.KEYS or
+                                   self.instrType == InstrType.VALUES or
                                    self.instrType == InstrType.ALLOC or
                                    self.instrType == InstrType.READ)
 
@@ -91,7 +97,7 @@ class OperationType(object):
     """ # Will add more later
 
     # Set up an enum
-    PLUS, MINUS, MULT, DIV, MOD, LT, GT, LEQ, GEQ, EQ, NE, BOR, BAND, BNOT, BXOR, LSHIFT, RSHIFT, NONE = range(18)
+    PLUS, MINUS, MULT, DIV, MOD, LT, GT, LEQ, GEQ, EQ, NE, BOR, BAND, BNOT, BXOR, LSHIFT, RSHIFT, REFERENCE, DEREFERENCE, NONE = range(20)
 
     typeMap = {
                 "+"     : PLUS,          "plus"     : PLUS,
@@ -111,6 +117,7 @@ class OperationType(object):
                 "^"     : BXOR,          "bxor"     : BXOR,
                 "<<"    : LSHIFT,        "lshift"   : LSHIFT,
                 ">>"    : RSHIFT,        "rshift"   : RSHIFT,
+                "ref"   : REFERENCE,     "$"        : DEREFERENCE,  
                 ""      : NONE
               }
 
@@ -123,42 +130,46 @@ class OperationType(object):
         self.opType = OperationType.typeMap[inpType]
 
     def __str__(self):
-        if self.is_PLUS()   : return "+" 
-        if self.is_MINUS()  : return "-"
-        if self.is_MULT()   : return "*"
-        if self.is_DIV()    : return "/"
-        if self.is_MOD()    : return "%"
-        if self.is_LT()     : return "<"
-        if self.is_GT()     : return ">"
-        if self.is_LEQ()    : return "<="
-        if self.is_GEQ()    : return ">="
-        if self.is_EQ()     : return "=="
-        if self.is_NE()     : return "!="
-        if self.is_BOR()    : return "|" 
-        if self.is_BAND()   : return "&"
-        if self.is_BNOT()   : return "~"
-        if self.is_BXOR()   : return "^" 
-        if self.is_LSHIFT() : return "<<"
-        if self.is_RSHIFT() : return ">>"
+        if self.is_PLUS()        : return "+" 
+        if self.is_MINUS()       : return "-"
+        if self.is_MULT()        : return "*"
+        if self.is_DIV()         : return "/"
+        if self.is_MOD()         : return "%"
+        if self.is_LT()          : return "<"
+        if self.is_GT()          : return ">"
+        if self.is_LEQ()         : return "<="
+        if self.is_GEQ()         : return ">="
+        if self.is_EQ()          : return "=="
+        if self.is_NE()          : return "!="
+        if self.is_BOR()         : return "|" 
+        if self.is_BAND()        : return "&"
+        if self.is_BNOT()        : return "~"
+        if self.is_BXOR()        : return "^" 
+        if self.is_LSHIFT()      : return "<<"
+        if self.is_RSHIFT()      : return ">>"
+        if self.is_REFERENCE()   : return "\\"
+        if self.is_DEREFERENCE() : return "$"
 
-    def is_PLUS(self)   : return self.opType == OperationType.PLUS
-    def is_MINUS(self)  : return self.opType == OperationType.MINUS
-    def is_MULT(self)   : return self.opType == OperationType.MULT
-    def is_DIV(self)    : return self.opType == OperationType.DIV
-    def is_MOD(self)    : return self.opType == OperationType.MOD
-    def is_LT(self)     : return self.opType == OperationType.LT
-    def is_GT(self)     : return self.opType == OperationType.GT
-    def is_LEQ(self)    : return self.opType == OperationType.LEQ
-    def is_GEQ(self)    : return self.opType == OperationType.GEQ
-    def is_EQ(self)     : return self.opType == OperationType.EQ
-    def is_NE(self)     : return self.opType == OperationType.NE
-    def is_BOR(self)    : return self.opType == OperationType.BOR
-    def is_BAND(self)   : return self.opType == OperationType.BAND
-    def is_BNOT(self)   : return self.opType == OperationType.BNOT
-    def is_BXOR(self)   : return self.opType == OperationType.BXOR
-    def is_LSHIFT(self) : return self.opType == OperationType.LSHIFT
-    def is_RSHIFT(self) : return self.opType == OperationType.RSHIFT
-    def is_NONE(self)   : return self.opType == OperationType.NONE
+    def is_PLUS(self)        : return self.opType == OperationType.PLUS
+    def is_MINUS(self)       : return self.opType == OperationType.MINUS
+    def is_MULT(self)        : return self.opType == OperationType.MULT
+    def is_DIV(self)         : return self.opType == OperationType.DIV
+    def is_MOD(self)         : return self.opType == OperationType.MOD
+    def is_LT(self)          : return self.opType == OperationType.LT
+    def is_GT(self)          : return self.opType == OperationType.GT
+    def is_LEQ(self)         : return self.opType == OperationType.LEQ
+    def is_GEQ(self)         : return self.opType == OperationType.GEQ
+    def is_EQ(self)          : return self.opType == OperationType.EQ
+    def is_NE(self)          : return self.opType == OperationType.NE
+    def is_BOR(self)         : return self.opType == OperationType.BOR
+    def is_BAND(self)        : return self.opType == OperationType.BAND
+    def is_BNOT(self)        : return self.opType == OperationType.BNOT
+    def is_BXOR(self)        : return self.opType == OperationType.BXOR
+    def is_LSHIFT(self)      : return self.opType == OperationType.LSHIFT
+    def is_RSHIFT(self)      : return self.opType == OperationType.RSHIFT
+    def is_REFERENCE(self)   : return self.opType == OperationType.REFERENCE
+    def is_DEREFERENCE(self) : return self.opType == OperationType.DEREFERENCE
+    def is_NONE(self)        : return self.opType == OperationType.NONE
 
 
 class Entity(object):
@@ -481,13 +492,13 @@ class Instr3AC(object):
             self.jmpTarget  =  ConvertTarget(str(inpTuple[2]))
 
         elif self.instrType.is_CALL():
-            # Line Number, Call, Label, retValTarget
-            DEBUG.Assert(len(inpTuple) >= 3, "Expected 3/4-tuple for call")
-            DEBUG.Assert(len(inpTuple) <= 4, "Expected 3/4-tuple for call")
+            # Line Number, Call, Label, retValTarget, paramArray
+            DEBUG.Assert(len(inpTuple) >= 5, "Expected 5-tuple for call")
 
             self.jmpLabel  = str(inpTuple[2])               
             if len(inpTuple) == 4:
                 self.dest = Entity(str(inpTuple[3]))
+                self.inp1 = Entity(str(inpTuple[4]))
                 DEBUG.Assert(self.dest.is_VARIABLE(), "LHS of a CALL has to be a variable")
 
         elif self.instrType.is_RETURN():
@@ -628,10 +639,7 @@ class Instr3AC(object):
             return "GOTO %s"%(self.jmpTarget)
 
         if self.instrType.is_CALL():
-            if self.dest.is_VARIABLE():
-                return "%s = call %s"%(self.dest, str(self.jmpLabel))
-            else:
-                return "call %s %s"%(str(self.jmpLabel), self.dest)
+            return "%s = call %s(%s)"%(self.dest, str(self.jmpLabel), str(self.inp1))
 
         if self.instrType.is_RETURN():
             return "return %s"%(self.inp1)
