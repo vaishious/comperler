@@ -438,7 +438,14 @@ def GenCode_2OPASSIGN(instr, regDest, regInp):
     elif instr.opType.is_PLUS():
         G.AsmText.AddText(G.INDENT + "move %s, %s"%(regDest, regInp),
                                      "%s = +%s"%(instr.dest, instr.inp1))
-    
+
+    elif instr.opType.is_REFERENCE():
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(regDest, ASM.GetVarAddr(instr.inp1)),
+                                     "%s = \\%s"%(instr.dest, instr.inp1))
+ 
+    elif instr.opType.is_DEREFERENCE():
+        G.AsmText.AddText(G.INDENT + "lw %s, 0(%s)"%(regDest, regInp),
+                                     "%s = $%s"%(instr.dest, instr.inp1))   
     else:
         raise Exception("%s : Instruction not recognized in 2OPAssign"%(instr))
 
