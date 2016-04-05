@@ -46,17 +46,17 @@ class DataRegion(object):
                     self.globalVars += [var]
 
                 for var, pos in record.tempVarMap.items():
-                    self.varSet[var] = "%d($fp)"%(pos)
+                    self.varSet[var] = "%d($fp)"%(16 + pos) # MIPS calling convention stores arguments in the first 16 bytes
 
-                G.StackSpaceMap[func] = record.tempOffset + 16; 
+                G.StackSpaceMap[func] = record.tempOffset + 24; # Extra 16 bytes for arguments, 8 bytes for fp and ra
             else:
                 for var, pos in record.varLocationMap.items():
                     self.varSet[var] = "%d($fp)"%(pos)
 
                 for var, pos in record.tempVarMap.items():
-                    self.varSet[var] = "%d($fp)"%(record.varOffset + pos)
+                    self.varSet[var] = "%d($fp)"%(16 + record.varOffset + pos) # MIPS calling convention stores arguments in the first 16 bytes
 
-                G.StackSpaceMap[func] = record.varOffset + record.tempOffset + 16; 
+                G.StackSpaceMap[func] = record.varOffset + record.tempOffset + 24; 
 
     def AllocateString(self, strEntity):
         DEBUG.Assert(type(strEntity) == INSTRUCTION.Entity, "Type for AllocateString in Data-Region is not Entity")

@@ -37,23 +37,20 @@ int lengthOfArray(Array_t *arrayPtr)
     }
 }
 
-void *accessIndex(Array_t *arrayPtr, int index)
+int *accessIndex(Array_t *arrayPtr, int index)
 {
     if (index >= arrayPtr->length) {
         //Working under the assumption that addresses are 4-bytes and so are integers
-        int *newAddr = (int *)alloc(2*(index+1)*4);
-        if (newAddr != NULL) {
-            int it;
-                //Copy from old memory to new memory
-            for (it=0; it < arrayPtr->length; it++) {
-                newAddr[it] = (arrayPtr->addr)[it];
-            }
-
-            arrayPtr->length = 2*(index+1);
-            arrayPtr->addr = newAddr;
+        int *newAddr = (int *)alloc((index+1)*8);
+        int it;
+            //Copy from old memory to new memory
+        for (it=0; it < arrayPtr->length; it++) {
+            newAddr[it] = arrayPtr->addr[it];
         }
-        
+
+        arrayPtr->length = 2*(index+1);
+        arrayPtr->addr = (int *)newAddr;
     }
 
-    return (void *)((arrayPtr->addr) + index);
+    return (int *)(arrayPtr->addr + index);
 }

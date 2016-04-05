@@ -149,6 +149,96 @@ ReadString:
 	j	$31
 	.end	ReadString
 	.align	2
+	.globl	PrintfNormal
+	.ent	PrintfNormal
+PrintfNormal:
+	.frame	$fp,40,$31		# vars= 16, regs= 2/0, args= 16, extra= 0
+	.mask	0xc0000000,-4
+	.fmask	0x00000000,0
+	sw	$4,0($sp)
+	sw	$5,4($sp)
+	sw	$6,8($sp)
+	sw	$7,12($sp)
+	subu	$sp,$sp,40
+	sw	$31,36($sp)
+	sw	$fp,32($sp)
+	move	$fp,$sp
+	sw	$4,40($fp)
+	addu	$2,$fp,44
+	sw	$2,16($fp)
+$L8:
+	lw	$2,40($fp)
+	lb	$2,0($2)
+	bne	$2,$0,$L10
+	j	$L7
+$L10:
+	lw	$2,40($fp)
+	lb	$3,0($2)
+	li	$2,37			# 0x25
+	bne	$3,$2,$L11
+	lw	$2,40($fp)
+	addu	$2,$2,1
+	sw	$2,40($fp)
+	lw	$2,40($fp)
+	lb	$3,0($2)
+	li	$2,100			# 0x64
+	bne	$3,$2,$L12
+	lw	$2,16($fp)
+	lw	$2,0($2)
+	sw	$2,20($fp)
+	lw	$4,20($fp)
+	jal	PrintInt
+	lw	$2,16($fp)
+	addu	$2,$2,4
+	sw	$2,16($fp)
+	j	$L18
+$L12:
+	lw	$2,40($fp)
+	lb	$3,0($2)
+	li	$2,115			# 0x73
+	bne	$3,$2,$L14
+	lw	$2,16($fp)
+	lw	$2,0($2)
+	sw	$2,28($fp)
+	lw	$4,28($fp)
+	jal	PrintString
+	lw	$2,16($fp)
+	addu	$2,$2,4
+	sw	$2,16($fp)
+	j	$L18
+$L14:
+	lw	$2,40($fp)
+	lb	$3,0($2)
+	li	$2,99			# 0x63
+	bne	$3,$2,$L7
+	lw	$2,16($fp)
+	lbu	$2,0($2)
+	sb	$2,24($fp)
+	lb	$2,24($fp)
+	move	$4,$2
+	jal	PrintChar
+	lw	$2,16($fp)
+	addu	$2,$2,1
+	sw	$2,16($fp)
+	j	$L18
+$L11:
+	lw	$2,40($fp)
+	lb	$2,0($2)
+	move	$4,$2
+	jal	PrintChar
+$L18:
+	lw	$2,40($fp)
+	addu	$2,$2,1
+	sw	$2,40($fp)
+	j	$L8
+$L7:
+	move	$sp,$fp
+	lw	$31,36($sp)
+	lw	$fp,32($sp)
+	addu	$sp,$sp,40
+	j	$31
+	.end	PrintfNormal
+	.align	2
 	.globl	Printf
 	.ent	Printf
 Printf:
@@ -167,23 +257,23 @@ Printf:
 	sw	$2,16($fp)
 	li	$2,1			# 0x1
 	sw	$2,20($fp)
-$L8:
+$L20:
 	lw	$2,16($fp)
 	lb	$2,0($2)
-	bne	$2,$0,$L10
-	j	$L7
-$L10:
+	bne	$2,$0,$L22
+	j	$L19
+$L22:
 	lw	$2,16($fp)
 	lb	$3,0($2)
 	li	$2,37			# 0x25
-	bne	$3,$2,$L11
+	bne	$3,$2,$L23
 	lw	$2,16($fp)
 	addu	$2,$2,1
 	sw	$2,16($fp)
 	lw	$2,16($fp)
 	lb	$3,0($2)
 	li	$2,100			# 0x64
-	bne	$3,$2,$L12
+	bne	$3,$2,$L24
 	lw	$4,48($fp)
 	lw	$5,20($fp)
 	jal	accessIndex
@@ -194,12 +284,12 @@ $L10:
 	lw	$2,20($fp)
 	addu	$2,$2,1
 	sw	$2,20($fp)
-	j	$L18
-$L12:
+	j	$L30
+$L24:
 	lw	$2,16($fp)
 	lb	$3,0($2)
 	li	$2,115			# 0x73
-	bne	$3,$2,$L14
+	bne	$3,$2,$L26
 	lw	$4,48($fp)
 	lw	$5,20($fp)
 	jal	accessIndex
@@ -210,12 +300,12 @@ $L12:
 	lw	$2,20($fp)
 	addu	$2,$2,1
 	sw	$2,20($fp)
-	j	$L18
-$L14:
+	j	$L30
+$L26:
 	lw	$2,16($fp)
 	lb	$3,0($2)
 	li	$2,99			# 0x63
-	bne	$3,$2,$L7
+	bne	$3,$2,$L19
 	lw	$4,48($fp)
 	lw	$5,20($fp)
 	jal	accessIndex
@@ -227,18 +317,18 @@ $L14:
 	lw	$2,20($fp)
 	addu	$2,$2,1
 	sw	$2,20($fp)
-	j	$L18
-$L11:
+	j	$L30
+$L23:
 	lw	$2,16($fp)
 	lb	$2,0($2)
 	move	$4,$2
 	jal	PrintChar
-$L18:
+$L30:
 	lw	$2,16($fp)
 	addu	$2,$2,1
 	sw	$2,16($fp)
-	j	$L8
-$L7:
+	j	$L20
+$L19:
 	move	$sp,$fp
 	lw	$31,44($sp)
 	lw	$fp,40($sp)
@@ -263,23 +353,23 @@ Scanf:
 	sw	$4,40($fp)
 	addu	$2,$fp,44
 	sw	$2,16($fp)
-$L20:
+$L32:
 	lw	$2,40($fp)
 	lb	$2,0($2)
-	bne	$2,$0,$L22
-	j	$L19
-$L22:
+	bne	$2,$0,$L34
+	j	$L31
+$L34:
 	lw	$2,40($fp)
 	lb	$3,0($2)
 	li	$2,37			# 0x25
-	bne	$3,$2,$L23
+	bne	$3,$2,$L35
 	lw	$2,40($fp)
 	addu	$2,$2,1
 	sw	$2,40($fp)
 	lw	$2,40($fp)
 	lb	$3,0($2)
 	li	$2,100			# 0x64
-	bne	$3,$2,$L24
+	bne	$3,$2,$L36
 	lw	$2,16($fp)
 	lw	$2,0($2)
 	sw	$2,20($fp)
@@ -290,12 +380,12 @@ $L22:
 	lw	$2,16($fp)
 	addu	$2,$2,4
 	sw	$2,16($fp)
-	j	$L23
-$L24:
+	j	$L35
+$L36:
 	lw	$2,40($fp)
 	lb	$3,0($2)
 	li	$2,99			# 0x63
-	bne	$3,$2,$L26
+	bne	$3,$2,$L38
 	lw	$2,16($fp)
 	lw	$2,0($2)
 	sw	$2,24($fp)
@@ -306,12 +396,12 @@ $L24:
 	lw	$2,16($fp)
 	addu	$2,$2,4
 	sw	$2,16($fp)
-	j	$L23
-$L26:
+	j	$L35
+$L38:
 	lw	$2,40($fp)
 	lb	$3,0($2)
 	li	$2,115			# 0x73
-	bne	$3,$2,$L19
+	bne	$3,$2,$L31
 	lw	$2,16($fp)
 	lw	$2,0($2)
 	sw	$2,28($fp)
@@ -321,12 +411,12 @@ $L26:
 	lw	$2,16($fp)
 	addu	$2,$2,4
 	sw	$2,16($fp)
-$L23:
+$L35:
 	lw	$2,40($fp)
 	addu	$2,$2,1
 	sw	$2,40($fp)
-	j	$L20
-$L19:
+	j	$L32
+$L31:
 	move	$sp,$fp
 	lw	$31,36($sp)
 	lw	$fp,32($sp)

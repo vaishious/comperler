@@ -1,8 +1,20 @@
-my $b = 1;
-my $a = 1;
-while ($b < 5) {
-   $a = $a * $b;
-   $b++;
-} 
+my $b = 5;
+my $a = 0;
+my $sum = 0;
 
-print("Factorial of %d = %d\n", $b - 1, $a);
+while ($a < $b) {
+    my $c = 0;
+    while ($c < $b) {
+        my $d = 0;
+        while ($d < $b) {
+            $sum = $sum + 1;
+            $d += 1;
+        }
+        $c += 1;
+    }
+    $a += 1;
+}
+
+print ("Cube of %d is %d\n", $b, $sum);
+
+

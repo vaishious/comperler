@@ -66,7 +66,7 @@ accessIndex:
 	.frame	$fp,32,$31		# vars= 8, regs= 2/0, args= 16, extra= 0
 	.mask	0xc0000000,-4
 	.fmask	0x00000000,0
-	subu	$sp,$sp,32
+	subu	$sp,$sp,64
 	sw	$31,28($sp)
 	sw	$fp,24($sp)
 	move	$fp,$sp
@@ -83,17 +83,15 @@ accessIndex:
 	move	$4,$2
 	jal	alloc
 	sw	$2,16($fp)
-	lw	$2,16($fp)
-	beq	$2,$0,$L7
 	sw	$0,20($fp)
-$L9:
+$L8:
 	lw	$2,32($fp)
 	lw	$3,20($fp)
 	lw	$2,0($2)
 	slt	$2,$3,$2
-	bne	$2,$0,$L12
-	j	$L10
-$L12:
+	bne	$2,$0,$L11
+	j	$L9
+$L11:
 	lw	$2,20($fp)
 	sll	$3,$2,2
 	lw	$2,16($fp)
@@ -108,8 +106,8 @@ $L12:
 	lw	$2,20($fp)
 	addu	$2,$2,1
 	sw	$2,20($fp)
-	j	$L9
-$L10:
+	j	$L8
+$L9:
 	lw	$3,32($fp)
 	lw	$2,36($fp)
 	sll	$2,$2,1

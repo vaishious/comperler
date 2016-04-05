@@ -82,8 +82,7 @@ void ReadString(char *buffer, unsigned int length) {
         : [BufferAddr] "r" (buffer), [Length] "r" (length));
 }
 
-/*
-void Printf(char *formatSpecifier, ...) {
+void PrintfNormal(char *formatSpecifier, ...) {
 
     // Very inefficient implementation. System call for every character. 
     // Enough for this assignment. Will optimize during the final project compilation
@@ -122,7 +121,7 @@ void Printf(char *formatSpecifier, ...) {
 
         formatSpecifier++;
     }
-}*/
+}
 
 void Printf(Array_t *parameters) {
 

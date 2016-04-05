@@ -609,7 +609,10 @@ class Parser(object):
         '''
 
         p[0] = IR.Attributes()
-        p[0].opCode = p[1]
+        if p[1] != '=':
+            p[0].opCode = p[1][:-1]
+        else:
+            p[0].opCode = p[1]
 
     def p_branch(self, p):
         ''' branch : if-elsif-else
