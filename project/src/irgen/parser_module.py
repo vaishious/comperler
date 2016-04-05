@@ -1142,7 +1142,7 @@ class Parser(object):
 
         for i in xrange(depthDeref):
             p[0].place = IR.TempVar()
-            p[0].code = p[0].code | IR.GenCode("=, $, %s, %s"%(p[1].place, targetVar))
+            p[0].code = p[0].code | IR.GenCode("=, $, %s, %s"%(p[0].place, targetVar))
             targetVar = p[0].place
 
     # For array and hash access

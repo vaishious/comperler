@@ -444,7 +444,7 @@ def GenCode_2OPASSIGN(instr, regDest, regInp):
                                      "%s = +%s"%(instr.dest, instr.inp1))
 
     elif instr.opType.is_REFERENCE():
-        G.AsmText.AddText(G.INDENT + "move %s, %s"%(regDest, ASM.GetVarAddr(instr.inp1)),
+        G.AsmText.AddText(G.INDENT + "la %s, %s"%(regDest, ASM.GetVarAddr(instr.inp1)),
                                      "%s = \\%s"%(instr.dest, instr.inp1))
  
     elif instr.opType.is_DEREFERENCE():
