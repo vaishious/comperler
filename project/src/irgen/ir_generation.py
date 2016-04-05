@@ -86,7 +86,7 @@ class ListIR(object):
 def GenCode(string):
     global NextInstr, InstrMap
 
-    string = '@LINE@' + str(NextInstr) + ", " + string
+    string = '@LINE@' + str(NextInstr) + '@' + ", " + string
     NextInstr += 1
     InstrMap += [0]
 
@@ -192,7 +192,7 @@ def BackPatch(p, i):
 
     for numInstr in p:
         instr = InstrMap[numInstr]
-        instr.code = instr.code.replace('LABEL#REQUIRED', '@LINE@' + str(i))
+        instr.code = instr.code.replace('LABEL#REQUIRED', '@LINE@' + str(i) + '@')
 
 ######################################
 

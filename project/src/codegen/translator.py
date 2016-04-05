@@ -54,7 +54,7 @@ def Translate(instr):
     elif instr.instrType.is_PRINT():
         if instr.ContainsHashAccess():
             G.CurrRegAddrTable.DumpDirtyVars()
-        LIB.Translate_Printf(instr.IOArgs)
+        LIB.Translate_Printf(instr.inp1)
 
     elif instr.instrType.is_READ():
         if instr.ContainsHashAccess():
@@ -82,9 +82,9 @@ def Translate(instr):
     elif instr.instrType.is_IFGOTO() or instr.instrType.is_STRIFGOTO():
         # We can safely clobber registers here because this is the last
         # instruction of the basic block
-        if (instr.dest.is_HASH_VARIABLE() or 
-            instr.inp1.is_HASH_VARIABLE() or
-            instr.inp2.is_HASH_VARIABLE()):
+        if (instr.dest.is_ARRAY_OR_HASH() or 
+            instr.inp1.is_ARRAY_OR_HASH() or
+            instr.inp2.is_ARRAY_OR_HASH()):
 
             G.CurrRegAddrTable.DumpDirtyVars()
             G.CurrRegAddrTable.Reset()
@@ -94,9 +94,9 @@ def Translate(instr):
         Translate_IFGOTO(instr)
 
     elif instr.instrType.is_ASSIGN():
-        if (instr.dest.is_HASH_VARIABLE() or 
-            instr.inp1.is_HASH_VARIABLE() or
-            instr.inp2.is_HASH_VARIABLE()):
+        if (instr.dest.is_ARRAY_OR_HASH() or 
+            instr.inp1.is_ARRAY_OR_HASH() or
+            instr.inp2.is_ARRAY_OR_HASH()):
 
             G.CurrRegAddrTable.DumpDirtyVars()
             G.CurrRegAddrTable.Reset()
@@ -144,14 +144,7 @@ def SetupRegister(inp, regComp, tempReg=REG.t9, useImmediate=False):
             regInp = SetupRegister(inp.key, regComp)
             G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp), "Load index for the array access")
 
-        # Load the array address in regComp
-        G.AsmText.AddText(G.INDENT + "la %s, %s"%(regComp, ASM.GetVarAddr(inp.value)), "Load array address")
-
-        # We move the index value to tempReg to multiply it by 4
-        G.AsmText.AddText(G.INDENT + "sll %s, %s, 2"%(tempReg, tempReg), "Multiply index by 4")
-        G.AsmText.AddText(G.INDENT + "add %s, %s, %s"%(regComp, regComp, tempReg), "Add index as an offset to array address")
-        G.AsmText.AddText(G.INDENT + "lw %s, 0(%s)"%(regComp, regComp), "Extract array value")
-
+        LIB.Translate_getArrayValue(inp, tempReg, regComp)
         reg = regComp
 
     elif inp.is_HASH_VARIABLE():
@@ -163,7 +156,7 @@ def SetupRegister(inp, regComp, tempReg=REG.t9, useImmediate=False):
             regInp = SetupRegister(inp.key, regComp)
             G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp), "Load key for the hash access")
 
-        LIB.Translate_getValue(inp, tempReg, regComp) 
+        LIB.Translate_getHashValue(inp, tempReg, regComp) 
         reg = regComp
 
     DEBUG.Assert(reg, "Line %d: Unable to setup register for %s."%(G.CurrInstruction.lineID, str(inp.value)))
@@ -525,12 +518,7 @@ def SetupDestRegArray(dest, regComp, tempReg=REG.tmpUsageRegs[-1]):
         regInp = SetupRegister(dest.key, regComp)
         G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp), "Load index for array access")
 
-    # Load the array address in regComp
-    G.AsmText.AddText(G.INDENT + "la %s, %s"%(regComp, ASM.GetVarAddr(dest.value)), "Load array address")
-
-    # We move the index value to tempReg to multiply it by 4
-    G.AsmText.AddText(G.INDENT + "sll %s, %s, 2"%(tempReg, tempReg), "Multiply index by 4")
-    G.AsmText.AddText(G.INDENT + "add %s, %s, %s"%(regComp, regComp, tempReg), "Add index as an offset to array address")
+    LIB.Translate_getArrayIndexAddress(dest, tempReg, regComp)
 
 def SetupDestRegHash(dest, regComp, tempReg=REG.tmpUsageRegs[-1]):
     if dest.key.is_NUMBER():
@@ -538,5 +526,4 @@ def SetupDestRegHash(dest, regComp, tempReg=REG.tmpUsageRegs[-1]):
     else:
         regInp = SetupRegister(dest.key, regComp)
         G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp), "Load key for the hash access")
-
 

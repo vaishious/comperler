@@ -81,7 +81,7 @@ int addElement(Hash *hashPtr, char *key, int keyInt, void *valRef)
     return 0;
 }
 
-void *getValue(Hash *hashPtr, char *key, int keyInt, char *message)
+void *getHashValue(Hash *hashPtr, char *key, int keyInt, char *message)
 {
     Element *elemPtr;
     if((elemPtr = findMatch(hashPtr, key, keyInt)))

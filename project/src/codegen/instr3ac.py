@@ -183,7 +183,7 @@ class Entity(object):
     doubleQuoteString = r'\"([^\\]|(\\[\s\S]))*?\"'
     string            = r'(' + singleQuoteString + r'|' + doubleQuoteString + r')'
     number            = r'[-]?\d+'
-    identifier        = r'[a-zA-Z_][a-zA-Z0-9_\$\%@]*'
+    identifier        = r'[a-zA-Z_][a-zA-Z0-9_]*'
     arrayAccess       = identifier + r'\[' + r'(.*)' + r'\]'
     hashAccess        = identifier + r'\{'  + r'(.*)' + r'\}'
 
@@ -236,6 +236,7 @@ class Entity(object):
     def is_SCALAR_VARIABLE(self) : return self.entity == Entity.SCALAR_VARIABLE
     def is_ARRAY_VARIABLE(self)  : return self.entity == Entity.ARRAY_VARIABLE
     def is_HASH_VARIABLE(self)   : return self.entity == Entity.HASH_VARIABLE
+    def is_ARRAY_OR_HASH(self)   : return self.is_ARRAY_VARIABLE() or self.is_HASH_VARIABLE()
     def is_STRING(self)          : return self.entity == Entity.STRING
     def is_NONE(self)            : return self.entity == Entity.NONE
     def is_VARIABLE(self)        : return (self.entity == Entity.SCALAR_VARIABLE or
@@ -267,7 +268,7 @@ class Entity(object):
             return G.INDENT + "la %s, %s\n"%(reg, ASM.GetStrAddr(self))
 
         if self.is_HASH_VARIABLE():
-            return G.INDENT + "lw %s, %s\n"%(reg, ASM.GetHashAddr(self))
+            return G.INDENT + "lw %s, %s\n"%(reg, ASM.GetVarAddr(self))
 
         if self.is_SCALAR_VARIABLE():
             if self.IsRegisterAllocated():
@@ -276,26 +277,7 @@ class Entity(object):
                 return G.INDENT + "lw %s, %s\n"%(reg, ASM.GetVarAddr(self))
 
         if self.is_ARRAY_VARIABLE():
-            tempReg = REG.tmpUsageRegs[-1]
-            regComp = reg
-            codeSegment = ""
-
-            if self.key.is_NUMBER():
-                codeSegment += tempReg.LoadImmediate(self.key.value) + "\n"
-
-            else:
-                regInp = TRANS.SetupRegister(self.key, regComp)
-                codeSegment += G.INDENT + "move %s, %s\n"%(tempReg, regInp)
-
-            # Load the array address in regComp
-            codeSegment += G.INDENT + "la %s, %s\n"%(regComp, ASM.GetArrAddr(self.value))
-
-            # We move the index value to tempReg to multiply it by 4
-            codeSegment += G.INDENT + "sll %s, %s, 2\n"%(tempReg, tempReg)
-            codeSegment += G.INDENT + "add %s, %s, %s\n"%(regComp, regComp, tempReg)
-            codeSegment += G.INDENT + "lw %s, 0(%s)\n"%(regComp, regComp)
-            
-            return codeSegment
+            return G.INDENT + "lw %s, %s\n"%(reg, ASM.GetVarAddr(self))
 
         raise Exception("Can't copy value to register")
 

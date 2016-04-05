@@ -48,7 +48,7 @@ def Translate_Printf(parameter):
     """ Custom version of Printf can be found in iolib.c in the lib/ folder """
 
     G.CurrRegAddrTable.DumpDirtyVars()
-    G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a0, ASM.GetVarAddr(parameter)), "Passing parameter")
+    G.AsmText.AddText(G.INDENT + "lw %s, %s"%(REG.a0, ASM.GetVarAddr(parameter)), "Passing parameter")
     G.AsmText.AddText(" ")
     G.AsmText.AddText(G.INDENT + "jal Printf")
 
@@ -57,6 +57,8 @@ def Translate_Printf(parameter):
     G.LibraryFunctionsUsed.add("PrintInt")
     G.LibraryFunctionsUsed.add("PrintChar")
     G.LibraryFunctionsUsed.add("PrintString")
+    G.LibraryFunctionsUsed.add("accessIndex")
+    G.LibraryFunctionsUsed.add("lengthOfArray")
 
 def Translate_Scanf(parameters):
     """ Custom version of Scanf can be found in iolib.c in the lib/ folder """
@@ -115,7 +117,39 @@ def Translate_initArray(targetVar):
     G.LibraryFunctionsUsed.add("initArray")
     G.LibraryFunctionsUsed.add("alloc")
 
-def Translate_getValue(targetVar, idxRegister, targetReg):
+def Translate_getArrayValue(targetVar, idxRegister, targetReg):
+    """ Array implementation can be found in arraylib.c in the lib/ folder """
+
+    DEBUG.Assert(targetVar.is_ARRAY_VARIABLE(), "Argument of getValue should be an array pointer")
+
+    G.AsmText.AddText(targetVar.CopyToRegister(REG.argRegs[0])[:-1])
+    G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[1], idxRegister))
+
+    G.AsmText.AddText(G.INDENT + "jal accessIndex", "Searching for value in array")
+    G.AsmText.AddText(G.INDENT + "lw %s, 0(%s)"%(targetReg, REG.v0), "Store result back into a designated register")
+
+    # Add library for linking
+    G.LibraryFunctionsUsed.add("accessIndex")
+    G.LibraryFunctionsUsed.add("lengthOfArray")
+    G.LibraryFunctionsUsed.add("ExitWithMessage")
+
+def Translate_getArrayIndexAddress(targetVar, idxRegister, targetReg):
+    """ Array implementation can be found in arraylib.c in the lib/ folder """
+
+    DEBUG.Assert(targetVar.is_ARRAY_VARIABLE(), "Argument of getValue should be an array pointer")
+
+    G.AsmText.AddText(targetVar.CopyToRegister(REG.argRegs[0])[:-1])
+    G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[1], idxRegister))
+
+    G.AsmText.AddText(G.INDENT + "jal accessIndex", "Searching for address in array")
+    G.AsmText.AddText(G.INDENT + "move %s, %s"%(targetReg, REG.v0), "Store result back into a designated register")
+
+    # Add library for linking
+    G.LibraryFunctionsUsed.add("accessIndex")
+    G.LibraryFunctionsUsed.add("lengthOfArray")
+    G.LibraryFunctionsUsed.add("ExitWithMessage")
+
+def Translate_getHashValue(targetVar, idxRegister, targetReg):
     """ Hash implementation can be found in hashlib.c in the lib/ folder """
 
     DEBUG.Assert(targetVar.is_HASH_VARIABLE(), "Argument of getValue should be a hash pointer")
@@ -132,11 +166,11 @@ def Translate_getValue(targetVar, idxRegister, targetReg):
 
     G.AsmText.AddText(G.HashKeyError.CopyAddressToRegister(REG.argRegs[3])[:-1])
 
-    G.AsmText.AddText(G.INDENT + "jal getValue", "Searching for value in hash")
+    G.AsmText.AddText(G.INDENT + "jal getHashValue", "Searching for value in hash")
     G.AsmText.AddText(G.INDENT + "lw %s, 0(%s)"%(targetReg, REG.v0), "Store result back into a designated register")
 
     # Add library for linking
-    G.LibraryFunctionsUsed.add("getValue")
+    G.LibraryFunctionsUsed.add("getHashValue")
     G.LibraryFunctionsUsed.add("ExitWithMessage")
 
 def Translate_addElement(targetVar, idxRegister, valReg):

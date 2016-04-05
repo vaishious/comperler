@@ -1,4 +1,4 @@
-	.file	1 "../project/src/lib/arraylib.c"
+	.file	1 "arraylib.c"
 	.text
 	.align	2
 	.globl	initArray
@@ -72,7 +72,6 @@ accessIndex:
 	move	$fp,$sp
 	sw	$4,32($fp)
 	sw	$5,36($fp)
-	sw	$6,40($fp)
 	lw	$2,32($fp)
 	lw	$3,36($fp)
 	lw	$2,0($2)
@@ -85,7 +84,7 @@ accessIndex:
 	jal	alloc
 	sw	$2,16($fp)
 	lw	$2,16($fp)
-	beq	$2,$0,$L8
+	beq	$2,$0,$L7
 	sw	$0,20($fp)
 $L9:
 	lw	$2,32($fp)
@@ -119,11 +118,6 @@ $L10:
 	lw	$3,32($fp)
 	lw	$2,16($fp)
 	sw	$2,4($3)
-	j	$L7
-$L8:
-	lw	$4,40($fp)
-	lw	$5,36($fp)
-	jal	ExitWithMessage
 $L7:
 	lw	$4,32($fp)
 	lw	$2,36($fp)

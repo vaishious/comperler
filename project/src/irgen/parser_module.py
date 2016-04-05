@@ -56,6 +56,7 @@ class Parser(object):
                 lineNum = lineNum + 1
                 finalCode += ir.code + "\n"
 
+            #print finalCode
             for orig, new in newMap.items():
                 finalCode = finalCode.replace(orig, str(new))
 
@@ -1284,12 +1285,14 @@ class Parser(object):
 
         if len(p) == 5:
             IR.BackPatch(p[4].nextlist, IR.NextInstr)
-            if p[2].symEntry.externalType == SYMTAB.SymTabEntry.HASH:
-                p[0].code = p[4].code | IR.GenCode("declare, hash, %s"%(p[2].place))
-            elif p[2].symEntry.externalType == SYMTAB.SymTabEntry.ARRAY:
-                p[0].code = p[4].code | IR.GenCode("declare, array, %s"%(p[2].place))
-            else:
-                p[0].code = p[4].code | IR.GenCode("=, %s, %s"%(p[2].place, p[4].place))
+            #if p[2].symEntry.externalType == SYMTAB.SymTabEntry.HASH:
+                #p[0].code = p[4].code | IR.GenCode("declare, hash, %s"%(p[2].place)) | IR.GenCode("=, %s, %s"%(p[2].place, p[4].place))
+
+            #elif p[2].symEntry.externalType == SYMTAB.SymTabEntry.ARRAY:
+                #p[0].code = p[4].code | IR.GenCode("declare, array, %s"%(p[2].place)) | IR.GenCode("=, %s, %s"%(p[2].place, p[4].place))
+            #else:
+                #p[0].code = p[4].code | IR.GenCode("=, %s, %s"%(p[2].place, p[4].place))
+            p[0].code = p[4].code | IR.GenCode("=, %s, %s"%(p[2].place, p[4].place))
         else:
             if p[2].symEntry.externalType == SYMTAB.SymTabEntry.HASH:
                 p[0].code = p[4].code | IR.GenCode("declare, hash, %s"%(p[2].place))

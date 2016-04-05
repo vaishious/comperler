@@ -1,4 +1,4 @@
-	.file	1 "../asgn2/lib/libstring.c"
+	.file	1 "libstring.c"
 	.text
 	.align	2
 	.globl	strCmp

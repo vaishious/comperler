@@ -9,16 +9,16 @@
 
 #define NULL 0
 
-typedef struct Array {
+typedef struct structArray {
     int length;
     int *addr;
-} Array;
+} Array_t;
 
-Array *initArray()
+Array_t *initArray()
 {
     // Working under the assumption that addresses are 4-bytes and so are integers
     // We initialize with only one entry
-    Array *arrayPtr = (Array *)alloc(sizeof(Array));
+    Array_t *arrayPtr = (Array_t *)alloc(sizeof(Array_t));
     arrayPtr->addr = (int *)alloc(4);
     
     if (arrayPtr != NULL) {
@@ -28,7 +28,7 @@ Array *initArray()
     return arrayPtr;
 }
 
-int lengthOfArray(Array *arrayPtr)
+int lengthOfArray(Array_t *arrayPtr)
 {
     if (arrayPtr != NULL) {
         return arrayPtr->length;
@@ -37,7 +37,7 @@ int lengthOfArray(Array *arrayPtr)
     }
 }
 
-void *accessIndex(Array *arrayPtr, int index, char *message)
+void *accessIndex(Array_t *arrayPtr, int index)
 {
     if (index >= arrayPtr->length) {
         //Working under the assumption that addresses are 4-bytes and so are integers
@@ -51,10 +51,8 @@ void *accessIndex(Array *arrayPtr, int index, char *message)
 
             arrayPtr->length = 2*(index+1);
             arrayPtr->addr = newAddr;
-        } else {
-            // Raise an exception
-            ExitWithMessage(message, index);
         }
+        
     }
 
     return (void *)((arrayPtr->addr) + index);

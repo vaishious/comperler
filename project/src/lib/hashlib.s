@@ -167,9 +167,9 @@ $L11:
 	j	$31
 	.end	addElement
 	.align	2
-	.globl	getValue
-	.ent	getValue
-getValue:
+	.globl	getHashValue
+	.ent	getHashValue
+getHashValue:
 	.frame	$fp,32,$31		# vars= 8, regs= 2/0, args= 16, extra= 0
 	.mask	0xc0000000,-4
 	.fmask	0x00000000,0
@@ -195,6 +195,7 @@ getValue:
 $L16:
 	lw	$4,44($fp)
 	lw	$5,36($fp)
+	lw	$6,40($fp)
 	jal	ExitWithMessage
 $L15:
 	lw	$2,20($fp)
@@ -203,4 +204,4 @@ $L15:
 	lw	$fp,24($sp)
 	addu	$sp,$sp,32
 	j	$31
-	.end	getValue
+	.end	getHashValue

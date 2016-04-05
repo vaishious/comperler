@@ -7,6 +7,14 @@
  * 3. Now the .s file will run on SPIM
  */
 
+/*#include "arraylib.c"*/
+
+
+typedef struct structArray {
+    int length;
+    int *addr;
+} Array_t;
+
 void PrintInt(signed int outNum) { 
     asm("
             move $a0, %[Input]
@@ -74,6 +82,7 @@ void ReadString(char *buffer, unsigned int length) {
         : [BufferAddr] "r" (buffer), [Length] "r" (length));
 }
 
+/*
 void Printf(char *formatSpecifier, ...) {
 
     // Very inefficient implementation. System call for every character. 
@@ -103,6 +112,47 @@ void Printf(char *formatSpecifier, ...) {
                 argChar = *((char *) argPtr);
                 PrintChar(argChar);
                 argPtr += sizeof(char);
+            } else {
+                return;
+            }
+
+        } else {
+            PrintChar((*formatSpecifier));
+        }
+
+        formatSpecifier++;
+    }
+}*/
+
+void Printf(Array_t *parameters) {
+
+    char *formatSpecifier = (*((char **) accessIndex(parameters, 0)));
+    int argIndex = 1;
+
+    int argInt;
+
+    char argChar;
+    char *argStr;
+
+    while((*formatSpecifier) != '\0') {
+        if ((*formatSpecifier) == '%') {
+            formatSpecifier++;
+
+            if ((*formatSpecifier) == 'd') {
+                argInt = *((int *) accessIndex(parameters, argIndex));
+                PrintInt(argInt);
+                argIndex++;
+
+            } else if ((*formatSpecifier) == 's') {
+                argStr = (char *) *((char **) accessIndex(parameters, argIndex));
+                PrintString(argStr);
+                argIndex++;
+
+            } else if ((*formatSpecifier) == 'c') {
+                argChar = *((char *) accessIndex(parameters, argIndex));
+                PrintChar(argChar);
+                argIndex++;
+
             } else {
                 return;
             }

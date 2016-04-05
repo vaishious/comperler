@@ -152,90 +152,97 @@ ReadString:
 	.globl	Printf
 	.ent	Printf
 Printf:
-	.frame	$fp,40,$31		# vars= 16, regs= 2/0, args= 16, extra= 0
+	.frame	$fp,48,$31		# vars= 24, regs= 2/0, args= 16, extra= 0
 	.mask	0xc0000000,-4
 	.fmask	0x00000000,0
-	sw	$4,0($sp)
-	sw	$5,4($sp)
-	sw	$6,8($sp)
-	sw	$7,12($sp)
-	subu	$sp,$sp,40
-	sw	$31,36($sp)
-	sw	$fp,32($sp)
+	subu	$sp,$sp,48
+	sw	$31,44($sp)
+	sw	$fp,40($sp)
 	move	$fp,$sp
-	sw	$4,40($fp)
-	addu	$2,$fp,44
+	sw	$4,48($fp)
+	lw	$4,48($fp)
+	move	$5,$0
+	jal	accessIndex
+	lw	$2,0($2)
 	sw	$2,16($fp)
+	li	$2,1			# 0x1
+	sw	$2,20($fp)
 $L8:
-	lw	$2,40($fp)
+	lw	$2,16($fp)
 	lb	$2,0($2)
 	bne	$2,$0,$L10
 	j	$L7
 $L10:
-	lw	$2,40($fp)
+	lw	$2,16($fp)
 	lb	$3,0($2)
 	li	$2,37			# 0x25
 	bne	$3,$2,$L11
-	lw	$2,40($fp)
+	lw	$2,16($fp)
 	addu	$2,$2,1
-	sw	$2,40($fp)
-	lw	$2,40($fp)
+	sw	$2,16($fp)
+	lw	$2,16($fp)
 	lb	$3,0($2)
 	li	$2,100			# 0x64
 	bne	$3,$2,$L12
-	lw	$2,16($fp)
+	lw	$4,48($fp)
+	lw	$5,20($fp)
+	jal	accessIndex
 	lw	$2,0($2)
-	sw	$2,20($fp)
-	lw	$4,20($fp)
+	sw	$2,24($fp)
+	lw	$4,24($fp)
 	jal	PrintInt
-	lw	$2,16($fp)
-	addu	$2,$2,4
-	sw	$2,16($fp)
+	lw	$2,20($fp)
+	addu	$2,$2,1
+	sw	$2,20($fp)
 	j	$L18
 $L12:
-	lw	$2,40($fp)
+	lw	$2,16($fp)
 	lb	$3,0($2)
 	li	$2,115			# 0x73
 	bne	$3,$2,$L14
-	lw	$2,16($fp)
+	lw	$4,48($fp)
+	lw	$5,20($fp)
+	jal	accessIndex
 	lw	$2,0($2)
-	sw	$2,28($fp)
-	lw	$4,28($fp)
+	sw	$2,32($fp)
+	lw	$4,32($fp)
 	jal	PrintString
-	lw	$2,16($fp)
-	addu	$2,$2,4
-	sw	$2,16($fp)
+	lw	$2,20($fp)
+	addu	$2,$2,1
+	sw	$2,20($fp)
 	j	$L18
 $L14:
-	lw	$2,40($fp)
+	lw	$2,16($fp)
 	lb	$3,0($2)
 	li	$2,99			# 0x63
 	bne	$3,$2,$L7
-	lw	$2,16($fp)
+	lw	$4,48($fp)
+	lw	$5,20($fp)
+	jal	accessIndex
 	lbu	$2,0($2)
-	sb	$2,24($fp)
-	lb	$2,24($fp)
+	sb	$2,28($fp)
+	lb	$2,28($fp)
 	move	$4,$2
 	jal	PrintChar
-	lw	$2,16($fp)
+	lw	$2,20($fp)
 	addu	$2,$2,1
-	sw	$2,16($fp)
+	sw	$2,20($fp)
 	j	$L18
 $L11:
-	lw	$2,40($fp)
+	lw	$2,16($fp)
 	lb	$2,0($2)
 	move	$4,$2
 	jal	PrintChar
 $L18:
-	lw	$2,40($fp)
+	lw	$2,16($fp)
 	addu	$2,$2,1
-	sw	$2,40($fp)
+	sw	$2,16($fp)
 	j	$L8
 $L7:
 	move	$sp,$fp
-	lw	$31,36($sp)
-	lw	$fp,32($sp)
-	addu	$sp,$sp,40
+	lw	$31,44($sp)
+	lw	$fp,40($sp)
+	addu	$sp,$sp,48
 	j	$31
 	.end	Printf
 	.align	2
@@ -306,7 +313,6 @@ $L26:
 	li	$2,115			# 0x73
 	bne	$3,$2,$L19
 	lw	$2,16($fp)
-	lw	$2,0($2)
 	lw	$2,0($2)
 	sw	$2,28($fp)
 	lw	$4,28($fp)

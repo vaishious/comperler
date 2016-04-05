@@ -24,7 +24,8 @@ class SymTabEntry(object):
 
         self.baseVarName = variable[1:]
 
-        self.place = self.baseVarName + variable[0] # To differentiate between namespaces for arrays, hashes and scalars
+        typeMap = {SymTabEntry.SCALAR : "SCALAR", SymTabEntry.HASH : "HASH", SymTabEntry.ARRAY : "ARRAY"}
+        self.place = typeMap[self.externalType] + "__" + self.baseVarName # To differentiate between namespaces for arrays, hashes and scalars
         self.code = []
 
     def CheckDeclaration(self):
