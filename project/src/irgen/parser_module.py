@@ -174,21 +174,28 @@ class Parser(object):
 
         p[0] = p[1]
 
+    def p_mark_declare_array(self, p):
+        ''' MARK-declare-array : '''
+
+        p[0] = IR.Attributes()
+        p[0].place = IR.TempVarArray()
+        p[0].code = IR.GenCode("declare, array, %s"%(p[0].place))
+
     def p_list_expression(self, p):
-        ''' list-expression : LPAREN arith-bool-string-expression list-elements RPAREN '''
+        ''' list-expression : LPAREN arith-bool-string-expression MARK-declare-array list-elements RPAREN '''
 
         p[0] = IR.Attributes()
         listCode = []
-        for ir in p[3].code:
+        for ir in p[4].code:
             if "#tempVarArrayName" in ir.code:
                 listCode += [ir]
 
-        p[0].place = IR.TempVarArray()
+        p[0].place = p[3].place
         for (index, ir) in enumerate(listCode):
             ir.code = ir.code.replace('#tempVarArrayName', p[0].place)
             ir.code = ir.code.replace('#IndexRequired', str(index+1))
 
-        p[0].code = IR.GenCode("declare, array, %s"%(p[0].place)) | p[2].code | IR.GenCode("=, %s[0], %s"%(p[0].place, p[2].place)) | p[3].code
+        p[0].code = p[2].code | p[3].code | IR.GenCode("=, %s[0], %s"%(p[0].place, p[2].place)) | p[4].code
 
     def p_list_elements(self, p):
         ''' list-elements : list-elements COMMA arith-bool-string-expression
@@ -205,14 +212,7 @@ class Parser(object):
     def p_hash_expression(self, p):
         ''' hash-expression : LPAREN hash-elements RPAREN '''
 
-        p[0] = IR.Attributes()
-
-        p[0].place = IR.TempVarHash()
-
-        for ir in p[2].code:
-            ir.code = ir.code.replace("#tempVarHashName", p[0].place)
-
-        p[0].code = IR.GenCode("declare, hash, %s"%(p[0].place)) | p[2].code
+        p[0] = p[2]
 
     def p_hash_elements(self, p):
         ''' hash-elements : hash-elements COMMA arith-bool-string-expression HASHARROW arith-bool-string-expression
@@ -222,9 +222,11 @@ class Parser(object):
         p[0] = IR.Attributes()
 
         if len(p) == 4:
-            p[0].code = p[1].code | p[3].code | IR.GenCode("=, #tempVarHashName{%s}, %s"%(p[1].place, p[3].place))
+            p[0].place = IR.TempVarHash()
+            p[0].code = p[1].code | p[3].code | IR.GenCode("declare, hash, %s"%(p[0].place)) | IR.GenCode("=, %s{%s}, %s"%(p[0].place, p[1].place, p[3].place))
         else:
-            p[0].code = p[1].code | p[3].code | p[5].code | IR.GenCode("=, #tempVarHashName{%s}, %s"%(p[3].place, p[5].place))
+            p[0].place = p[1].place 
+            p[0].code = p[1].code | p[3].code | p[5].code | IR.GenCode("=, %s{%s}, %s"%(p[1].place, p[3].place, p[5].place))
 
     def p_arith_bool_string_expression(self, p):
         ''' arith-bool-string-expression : arith-boolean-expression
