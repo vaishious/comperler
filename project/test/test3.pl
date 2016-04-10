@@ -4,7 +4,7 @@ sub Rec {
 
    if( $n > 0 ) {
 	Rec( $n - 1 );
-	print("Value of n is: $n\n");
+	print("Value of n is: %d\n", $n);
    }
    return;
 }

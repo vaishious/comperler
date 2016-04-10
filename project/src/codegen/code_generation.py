@@ -15,15 +15,11 @@ import mips_assembly as ASM
 import global_objects as G
 
 import shlex
+import re
 # List of Imports End
 
 def LexerIR(inpString):
-    lex = shlex.shlex(inpString)
-    lex.whitespace_split = True
-    lex.whitespace = ", "
-    lex.commenters = '#'
-    return list(lex)
-
+    return re.findall(r'(?:[^\s,"]|"(?:\\.|[^"])*")+', inpString)
 
 class CodeGenerator(object):
     """ 

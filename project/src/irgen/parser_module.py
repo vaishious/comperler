@@ -99,11 +99,17 @@ class Parser(object):
         p[0] = IR.Attributes()
 
         if len(p) == 2:
-            p[0].code = p[1].code
-            p[0].nextlist = p[1].nextlist
-            p[0].loop_next_list = p[1].loop_next_list
-            p[0].loop_redo_list = p[1].loop_redo_list
-            p[0].loop_last_list = p[1].loop_last_list
+            if not p[1].isFunctionDef:
+                p[0].code = p[1].code
+            else:
+                self.functionDefs = self.functionDefs | p[1].code
+                p[0].code = IR.ListIR()
+
+                p[0].nextlist = p[1].nextlist
+                p[0].loop_next_list = p[1].loop_next_list
+                p[0].loop_redo_list = p[1].loop_redo_list
+                p[0].loop_last_list = p[1].loop_last_list
+
         else:
             if not p[3].isFunctionDef:
                 p[0].code = p[1].code | p[3].code
@@ -1307,8 +1313,7 @@ class Parser(object):
                 p[0].code = IR.ListIR() 
 
     def p_string(self, p):
-        ''' string : SINGQUOTSTR
-                   | DOUBQUOTSTR
+        ''' string : DOUBQUOTSTR 
         '''
 
         p[0] = IR.Attributes()
