@@ -1307,8 +1307,7 @@ class Parser(object):
                 p[0].code = IR.ListIR() 
 
     def p_string(self, p):
-        ''' string : SINGQUOTSTR
-                   | DOUBQUOTSTR
+        ''' string : DOUBQUOTSTR 
         '''
 
         p[0] = IR.Attributes()

@@ -15,15 +15,11 @@ import mips_assembly as ASM
 import global_objects as G
 
 import shlex
+import re
 # List of Imports End
 
 def LexerIR(inpString):
-    lex = shlex.shlex(inpString)
-    lex.whitespace_split = True
-    lex.whitespace = ", "
-    lex.commenters = '#'
-    return list(lex)
-
+    return re.findall(r'(?:[^\s,"]|"(?:\\.|[^"])*")+', inpString)
 
 class CodeGenerator(object):
     """ 
@@ -58,6 +54,7 @@ class CodeGenerator(object):
         # Create an instance of the instruction class for each line
         for line in text:
             instrTuple = LexerIR(line)
+            print instrTuple
             if instrTuple == []:
                 continue
 
