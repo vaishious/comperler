@@ -48,6 +48,9 @@ def Translate(instr):
                 G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a0, reg))
 
         G.AsmText.AddText(G.INDENT + "jal %s"%(instr.jmpLabel))
+        if instr.inp1.is_VARIABLE():
+            G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
+
         if instr.dest.is_VARIABLE():
             GenCode_CallAssignment(instr)
 

@@ -51,6 +51,7 @@ def Translate_Printf(parameter):
     G.AsmText.AddText(G.INDENT + "lw %s, %s"%(REG.a0, ASM.GetVarAddr(parameter)), "Passing parameter")
     G.AsmText.AddText(" ")
     G.AsmText.AddText(G.INDENT + "jal Printf")
+    G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
 
     # Add library for linking
     G.LibraryFunctionsUsed.add("Printf")
@@ -68,6 +69,7 @@ def Translate_Scanf(parameters):
     G.CurrRegAddrTable.DumpDirtyVars()
     G.AsmText.AddText(" ")
     G.AsmText.AddText(G.INDENT + "jal Scanf")
+    G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
 
     # Add library for linking
     G.LibraryFunctionsUsed.add("Scanf")
@@ -90,6 +92,7 @@ def Translate_StrCmp(str1, str2):
 
     codeSegment += G.INDENT + "jal strCmp\n"
     G.AsmText.AddText(codeSegment)
+    G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
 
     # Add library for linking
     G.LibraryFunctionsUsed.add("strCmp")
@@ -102,6 +105,7 @@ def Translate_initHash(targetVar):
     G.AsmText.AddText(G.INDENT + "li %s, %s"%(REG.argRegs[0], str(G.AsmData.GetHashType(targetVar.value))), "Passing the type of hash")
     G.AsmText.AddText(G.INDENT + "jal initHash", "Allocating memory and initializing the hash")
     G.AsmText.AddText(G.INDENT + "sw $v0, %s"%(ASM.GetVarAddr(targetVar)), "Storing the returned memory address of hash")
+    G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
 
     # Add library for linking
     G.LibraryFunctionsUsed.add("initHash")
@@ -112,6 +116,7 @@ def Translate_initArray(targetVar):
 
     G.AsmText.AddText(G.INDENT + "jal initArray", "Allocating memory and initializing the array")
     G.AsmText.AddText(G.INDENT + "sw $v0, %s"%(ASM.GetVarAddr(targetVar)), "Storing the returned memory address of array")
+    G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
 
     # Add library for linking
     G.LibraryFunctionsUsed.add("initArray")
@@ -127,6 +132,7 @@ def Translate_getArrayValue(targetVar, idxRegister, targetReg):
 
     G.AsmText.AddText(G.INDENT + "jal accessIndex", "Searching for value in array")
     G.AsmText.AddText(G.INDENT + "lw %s, 0(%s)"%(targetReg, REG.v0), "Store result back into a designated register")
+    G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
 
     # Add library for linking
     G.LibraryFunctionsUsed.add("accessIndex")
@@ -143,6 +149,7 @@ def Translate_getArrayIndexAddress(targetVar, idxRegister, targetReg):
 
     G.AsmText.AddText(G.INDENT + "jal accessIndex", "Searching for address in array")
     G.AsmText.AddText(G.INDENT + "move %s, %s"%(targetReg, REG.v0), "Store result back into a designated register")
+    G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
 
     # Add library for linking
     G.LibraryFunctionsUsed.add("accessIndex")
@@ -168,6 +175,7 @@ def Translate_getHashValue(targetVar, idxRegister, targetReg):
 
     G.AsmText.AddText(G.INDENT + "jal getHashValue", "Searching for value in hash")
     G.AsmText.AddText(G.INDENT + "lw %s, 0(%s)"%(targetReg, REG.v0), "Store result back into a designated register")
+    G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
 
     # Add library for linking
     G.LibraryFunctionsUsed.add("getHashValue")
@@ -191,6 +199,7 @@ def Translate_addElement(targetVar, idxRegister, valReg):
 
     G.AsmText.AddText(" ")
     G.AsmText.AddText(G.INDENT + "jal addElement", "Add element to the hash")
+    G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
 
     # Add library for linking
     G.LibraryFunctionsUsed.add("addElement")
@@ -225,6 +234,7 @@ def Translate_alloc(targetReg, sizeEntity=4):
     G.AsmText.AddText(G.INDENT + "jal alloc", "Call malloc")
     if targetReg != REG.v0:
         G.AsmText.AddText(G.INDENT + "move %s, %s"%(targetReg, REG.v0), "Load returned pointer into targetReg")
+    G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
 
     # Add library for linking
     G.LibraryFunctionsUsed.add("alloc")

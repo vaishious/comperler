@@ -20,8 +20,12 @@ import library as LIB
 def GetVarAddr(variable):
     """ Get address of a variable as $V_(var_name) """
     if type(variable) == INSTRUCTION.Entity:
+        if (variable.value == "ARRAY___"):
+            return "16($fp)"
         return G.AsmData.varSet[variable.value]
     else:
+        if (variable == "ARRAY___"):
+            return "16($fp)"
         return G.AsmData.varSet[variable]
 
 def GetStrAddr(variable):
@@ -46,17 +50,17 @@ class DataRegion(object):
                     self.globalVars += [var]
 
                 for var, pos in record.tempVarMap.items():
-                    self.varSet[var] = "%d($fp)"%(16 + pos) # MIPS calling convention stores arguments in the first 16 bytes
+                    self.varSet[var] = "%d($fp)"%(32 + pos) # MIPS calling convention stores arguments in the first 16 bytes
 
-                G.StackSpaceMap[func] = record.tempOffset + 24; # Extra 16 bytes for arguments, 8 bytes for fp and ra
+                G.StackSpaceMap[func] = record.tempOffset + 40; # Extra 16 bytes for callee arguments, 8 bytes for fp and ra, and 16 bytes for custom function arguments 
             else:
                 for var, pos in record.varLocationMap.items():
                     self.varSet[var] = "%d($fp)"%(pos)
 
                 for var, pos in record.tempVarMap.items():
-                    self.varSet[var] = "%d($fp)"%(16 + record.varOffset + pos) # MIPS calling convention stores arguments in the first 16 bytes
+                    self.varSet[var] = "%d($fp)"%(32 + record.varOffset + pos) # MIPS calling convention stores arguments in the first 16 bytes
 
-                G.StackSpaceMap[func] = record.varOffset + record.tempOffset + 24; 
+                G.StackSpaceMap[func] = record.varOffset + record.tempOffset + 40; 
 
     def AllocateString(self, strEntity):
         DEBUG.Assert(type(strEntity) == INSTRUCTION.Entity, "Type for AllocateString in Data-Region is not Entity")
@@ -129,6 +133,7 @@ class TextRegion(object):
             loadSegment = "%s:\n"%(func)
             loadSegment += G.INDENT + ".frame $fp,%d,$31\n"%(stackSpaceRequired) 
             loadSegment += G.INDENT + "subu $sp, $sp, %d\n"%(stackSpaceRequired) 
+            loadSegment += G.INDENT + "sw $a0, %d($sp)\n"%(16)
             loadSegment += G.INDENT + "sw $fp, %d($sp)\n"%(stackSpaceRequired-4)
             loadSegment += G.INDENT + "sw $ra, %d($sp)\n"%(stackSpaceRequired-8)
             loadSegment += G.INDENT + "move $fp, $sp\n"

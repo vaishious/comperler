@@ -54,7 +54,6 @@ class CodeGenerator(object):
         # Create an instance of the instruction class for each line
         for line in text:
             instrTuple = LexerIR(line)
-            print instrTuple
             if instrTuple == []:
                 continue
 
