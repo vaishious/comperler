@@ -228,9 +228,15 @@ class Parser(object):
         p[0] = IR.Attributes()
 
         if len(p) == 4:
+            if p[1].isConstantNumeric == True:
+                p[1].place = "\"" + p[1].place + "\""
+
             p[0].place = IR.TempVarHash()
             p[0].code = p[1].code | p[3].code | IR.GenCode("declare, hash, %s"%(p[0].place)) | IR.GenCode("=, %s{%s}, %s"%(p[0].place, p[1].place, p[3].place))
         else:
+            if p[3].isConstantNumeric == True:
+                p[3].place = "\"" + p[3].place + "\""
+
             p[0].place = p[1].place 
             p[0].code = p[1].code | p[3].code | p[5].code | IR.GenCode("=, %s{%s}, %s"%(p[1].place, p[3].place, p[5].place))
 
@@ -1156,6 +1162,9 @@ class Parser(object):
         ''' access : LBRACKET usable-expression RBRACKET
                    | LBLOCK usable-expression RBLOCK
         '''
+
+        if p[1] == '{' and p[2].isConstantNumeric == True:
+            p[2].place = "\"" + p[2].place + "\""
 
         p[0] = IR.Attributes()
 
