@@ -1,5 +1,7 @@
 my $abc = 2+3;
+my $pqr;
 $pqr = 3**4;
+$b = 10;
 if ($abc < $pqr) {
 	$mno = 3;
 }

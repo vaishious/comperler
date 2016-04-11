@@ -98,9 +98,9 @@ def Translate_StrCmp(str1, str2):
 def Translate_initHash(targetVar):
     """ Hash implementation can be found in hashlib.c in the lib/ folder """
 
-    DEBUG.Assert(targetVar.is_HASH_VARIABLE(), "Argument of initHash should be a hash pointer")
+    #DEBUG.Assert(targetVar.is_HASH_VARIABLE(), "Argument of initHash should be a hash pointer")
 
-    G.AsmText.AddText(G.INDENT + "li %s, %s"%(REG.argRegs[0], str(G.AsmData.GetHashType(targetVar.value))), "Passing the type of hash")
+    #G.AsmText.AddText(G.INDENT + "li %s, %s"%(REG.argRegs[0], str(G.AsmData.GetHashType(targetVar.value))), "Passing the type of hash")
     G.AsmText.AddText(G.INDENT + "jal initHash", "Allocating memory and initializing the hash")
     G.AsmText.AddText(G.INDENT + "sw $v0, %s"%(ASM.GetVarAddr(targetVar)), "Storing the returned memory address of hash")
     G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
@@ -162,12 +162,7 @@ def Translate_getHashValue(targetVar, idxRegister, targetReg):
 
     G.AsmText.AddText(targetVar.CopyToRegister(REG.argRegs[0])[:-1])
 
-    if G.AsmData.GetHashType(targetVar.value) == 1:
-        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[2], REG.zero), "Zero out the int argument")
-        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[1], idxRegister), "Load key")
-    else:
-        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[1], REG.zero), "Zero out the char * argument")
-        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[2], idxRegister), "Load key")
+    G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[1], idxRegister), "Load key")
 
     G.AsmText.AddText(G.HashKeyError.CopyAddressToRegister(REG.argRegs[3])[:-1])
 
@@ -186,12 +181,7 @@ def Translate_addElement(targetVar, idxRegister, valReg):
 
     G.AsmText.AddText(targetVar.CopyToRegister(REG.argRegs[0])[:-1])
 
-    if G.AsmData.GetHashType(targetVar.value) == 1:
-        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[2], REG.zero), "Zero out the int argument")
-        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[1], idxRegister), "Load key")
-    else:
-        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[1], REG.zero), "Zero out the char * argument")
-        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[2], idxRegister), "Load key")
+    G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[1], idxRegister), "Load key")
 
     G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[3], valReg), "Load value")
 

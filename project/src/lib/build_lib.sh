@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-CWDIR="/home/rbavishi/Courses/CS335/comperler/mips-x86.linux-xgcc"
+CWDIR="/home/$USER/Courses/CS335/comperler/mips-x86.linux-xgcc"
 export PATH+=":$CWDIR"
 
 ../../../mips-x86.linux-xgcc/mips-gcc -S arraylib.c

@@ -436,6 +436,9 @@ def GenCode_2OPASSIGN(instr, regDest, regInp):
     elif instr.opType.is_MINUS():
         G.AsmText.AddText(G.INDENT + "negu %s, %s"%(regDest, regInp),
                                      "%s = -%s"%(instr.dest, instr.inp1))
+    elif instr.opType.is_PLUS():
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(regDest, regInp),
+                                     "%s = +%s"%(instr.dest, instr.inp1))
     
     else:
         raise Exception("%s : Instruction not recognized in 2OPAssign"%(instr))
