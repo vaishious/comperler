@@ -29,6 +29,8 @@ class Parser(object):
         ('left', 'ARROW'),
     )
 
+    TYPE_UNKNOWN, TYPE_STRING, TYPE_INT, TYPE_ARRAY, TYPE_HASH = range(5)
+
     def p_start_state(self, p):
         ''' start-state : statements '''
         if self.error_seen:
@@ -1129,6 +1131,7 @@ class Parser(object):
         p[0] = IR.Attributes()
         p[0].symEntry = self.symTabManager.Lookup(p[1])
         p[0].place = p[0].symEntry.place
+        p[0].typePlace = p[0].symEntry.typePlace
         p[0].code = IR.ListIR()
 
     def p_dereference(self, p):
@@ -1303,12 +1306,12 @@ class Parser(object):
                 #p[0].code = p[4].code | IR.GenCode("declare, array, %s"%(p[2].place)) | IR.GenCode("=, %s, %s"%(p[2].place, p[4].place))
             #else:
                 #p[0].code = p[4].code | IR.GenCode("=, %s, %s"%(p[2].place, p[4].place))
-            p[0].code = p[4].code | IR.GenCode("=, %s, %s"%(p[2].place, p[4].place))
+            p[0].code = p[4].code | IR.GenCode("=, %s, %s"%(p[2].typePlace, p[4].typePlace)) | IR.GenCode("=, %s, %s"%(p[2].place, p[4].place))
         else:
             if p[2].symEntry.externalType == SYMTAB.SymTabEntry.HASH:
-                p[0].code = IR.GenCode("declare, hash, %s"%(p[2].place))
+                p[0].code = IR.GenCode("declare, hash, %s"%(p[2].place)) | IR.GenCode("=, %s, %d"%(p[2].typePlace, TYPE_HASH))
             elif p[2].symEntry.externalType == SYMTAB.SymTabEntry.ARRAY:
-                p[0].code = IR.GenCode("declare, array, %s"%(p[2].place))
+                p[0].code = IR.GenCode("declare, array, %s"%(p[2].place)) | IR.GenCode("=, %s, %d"%(p[2].typePlace, TYPE_ARRAY))
             else:
                 p[0].code = IR.ListIR() 
 
@@ -1319,6 +1322,7 @@ class Parser(object):
         p[0] = IR.Attributes()
 
         p[0].place = str(p[1])
+        p[0].typePlace = TYPE_STRING
         p[0].code = IR.ListIR()  # No code
 
     def p_numeric(self, p):
@@ -1331,6 +1335,7 @@ class Parser(object):
         p[0] = IR.Attributes()
 
         p[0].place = str(p[1])
+        p[0].typePlace = TYPE_INT
         p[0].code = IR.ListIR() # No code 
         p[0].isConstantNumeric = True
 

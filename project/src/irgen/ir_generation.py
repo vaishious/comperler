@@ -110,6 +110,7 @@ class Attributes(object):
     def __init__(self):
 
         self.place = None
+        self.typePlace = 0
         self.code  = None
         self.booleanExprCode = None
 
@@ -206,6 +207,19 @@ def TempVar():
 
     name = "t%d"%(TempVar.tempVarCount)
     CurActivationRecord.AllocateTemp(name)
+
+    return name
+
+def TempTypeVar():
+    global CurActivationRecord
+
+    if not hasattr(TempTypeVar, "tempTypeVarCount"):
+        TempTypeVar.tempTypeVarCount = 0
+
+    TempTypeVar.tempTypeVarCount += 1
+
+    name = "TYPE_t%d"%(TempTypeVar.tempTypeVarCount)
+    CurActivationRecord.AllocateTypeTemp(name)
 
     return name
 
