@@ -187,7 +187,8 @@ class Parser(object):
 
         p[0] = IR.Attributes()
         p[0].place = IR.TempVarArray()
-        p[0].code = IR.GenCode("declare, array, %s"%(p[0].place))
+        p[0].typePlace = IR.TempTypeVar()
+        p[0].code = IR.GenCode("declare, array, %s"%(p[0].place)) | IR.GenCode("typeassign, %s, %d"%(p[0].typePlace, TYPE_ARRAY))
 
     def p_list_expression(self, p):
         ''' list-expression : LPAREN arith-bool-string-expression MARK-declare-array list-elements RPAREN '''
@@ -199,11 +200,12 @@ class Parser(object):
                 listCode += [ir]
 
         p[0].place = p[3].place
+        p[0].typePlace = p[3].typePlace
         for (index, ir) in enumerate(listCode):
             ir.code = ir.code.replace('#tempVarArrayName', p[0].place)
             ir.code = ir.code.replace('#IndexRequired', str(index+1))
 
-        p[0].code = p[2].code | p[3].code | IR.GenCode("=, %s[0], %s"%(p[0].place, p[2].place)) | p[4].code
+        p[0].code = p[2].code | p[3].code | IR.GenCode("typeassign, %s[0], %s"%(p[0].place, p[2].typePlace)) | IR.GenCode("=, %s[0], %s"%(p[0].place, p[2].place)) | p[4].code
 
     def p_list_elements(self, p):
         ''' list-elements : list-elements COMMA arith-bool-string-expression
@@ -213,7 +215,7 @@ class Parser(object):
         p[0] = IR.Attributes()
 
         if len(p) != 2:
-            p[0].code = p[1].code | p[3].code | IR.GenCode("=, #tempVarArrayName[#IndexRequired], %s"%(p[3].place))
+            p[0].code = p[1].code | p[3].code | IR.GenCode("typeassign, #tempVarArrayName[#IndexRequired], %s"%(p[3].typePlace)) | IR.GenCode("=, #tempVarArrayName[#IndexRequired], %s"%(p[3].place))
         else:
             p[0].code = IR.ListIR()
 
@@ -231,10 +233,12 @@ class Parser(object):
 
         if len(p) == 4:
             p[0].place = IR.TempVarHash()
-            p[0].code = p[1].code | p[3].code | IR.GenCode("declare, hash, %s"%(p[0].place)) | IR.GenCode("=, %s{%s}, %s"%(p[0].place, p[1].place, p[3].place))
+            p[0].typePlace = IR.TempTypeVar()
+            p[0].code = p[1].code | p[3].code | IR.GenCode("declare, hash, %s"%(p[0].place)) | IR.GenCode("typeassign, %s, %d"%(p[0].typePlace, TYPE_HASH)) | IR.GenCode("=, %s{%s}, %s"%(p[0].place, p[1].place, p[3].place))
         else:
             p[0].place = p[1].place 
-            p[0].code = p[1].code | p[3].code | p[5].code | IR.GenCode("=, %s{%s}, %s"%(p[1].place, p[3].place, p[5].place))
+            p[0].typePlace = p[1].typePlace
+            p[0].code = p[1].code | p[3].code | p[5].code | IR.GenCode("typeassign, %s{%s}, %s"%(p[1].place, p[3].place, p[5].typePlace)) | IR.GenCode("=, %s{%s}, %s"%(p[1].place, p[3].place, p[5].place))
 
     def p_arith_bool_string_expression(self, p):
         ''' arith-bool-string-expression : arith-boolean-expression
@@ -246,12 +250,13 @@ class Parser(object):
 
         if p[0].isBooleanExpression:
             p[0].place = IR.TempVar()
+            p[0].typePlace = IR.TempTypeVar()
 
             IR.BackPatch(p[0].truelist, IR.NextInstr)
-            p[0].code = p[0].code | IR.GenCode("=, %s, 1"%(p[0].place))
+            p[0].code = p[0].code | IR.GenCode("typeassign, %s, %d"%(p[0].typePlace, TYPE_INT)) | IR.GenCode("=, %s, 1"%(p[0].place))
 
             IR.BackPatch(p[1].falselist, IR.NextInstr)
-            p[0].code = p[0].code | IR.GenCode("=, %s, 0"%(p[0].place))
+            p[0].code = p[0].code | IR.GenCode("typeassign, %s, %d"%(p[0].typePlace, TYPE_INT)) | IR.GenCode("=, %s, 0"%(p[0].place))
 
     def p_arith_expression(self, p):
         ''' arith-expression : numeric
@@ -298,7 +303,8 @@ class Parser(object):
         p[0] = IR.Attributes()
 
         p[0].place = TempVar()
-        p[0].code = p[2].code | IR.GenCode("=, %s, %s, %s"%(p[1], p[0].place, p[2].place))
+        p[0].typePlace = TempTypeVar()
+        p[0].code = p[2].code | IR.GenCode("typecheck, %s, %s"%(p[1], p[2].typePlace)) | IR.GenCode("typeassign, %s, %d"%(p[0].typePlace, TYPE_INT)) | IR.GenCode("=, %s, %s, %s"%(p[1], p[0].place, p[2].place))
 
     def p_arith_increment_decrement(self, p):
         ''' arith-increment-decrement : var-lhs MARK-check-declaration INC 
@@ -311,12 +317,14 @@ class Parser(object):
         if type(p[1] == IR.Attributes):
 
             p[0].place = IR.TempVar()
-            p[0].code = IR.GenCode("=, %s, %s"%(p[0].place, p[1].place)) | IR.GenCode("=, %s, %s, %s, %s"%(p[3][0], p[1].place, p[1].place, "1"))
+            p[0].typePlace = IR.TempTypeVar()
+            p[0].code = IR.GenCode("=, %s, %d"%(p[0].typePlace, TYPE_INT)) | IR.GenCode("=, %s, %s"%(p[0].place, p[1].place)) | IR.GenCode("typecheck, %s, %s, %d"%(p[3][0], p[1].typePlace, TYPE_INT)) | IR.GenCode("typeassign, %s, %d"%(p[1].typePlace, TYPE_INT)) | IR.GenCode("=, %s, %s, %s, %s"%(p[3][0], p[1].place, p[1].place, "1"))
 
         else:
 
             p[0].place = p[2].place
-            p[0].code = IR.GenCode("=, %s, %s, %s, %s"%(p[1][0], p[2].place, p[2].place, "1"))
+            p[0].typePlace = p[2].typePlace
+            p[0].code = IR.GenCode("typecheck, %s, %s, %d"%(p[1][0], p[2].typePlace, TYPE_INT)) | IR.GenCode("typeassign, %s, %d"%(p[2].typePlace, TYPE_INT)) | IR.GenCode("=, %s, %s, %s, %s"%(p[1][0], p[2].place, p[2].place, "1"))
 
     def p_arith_binary_op(self, p):
         ''' arith-binary-op : arith-boolean-expression PLUS arith-boolean-expression 
@@ -375,7 +383,8 @@ class Parser(object):
         p[0] = IR.Attributes()
 
         p[0].place = IR.TempVar()
-        p[0].code = p[1].code | p[3].code | IR.GenCode("=, %s, %s, %s, %s"%(p[2], p[0].place, p[1].place, p[3].place))
+        p[0].typePlace = IR.TempTypeVar()
+        p[0].code = p[1].code | p[3].code | IR.GenCode("typecheckassign, %s, %s, %s, %s"%(p[2], p[0].typePlace, p[1].typePlace, p[3].typePlace)) | | IR.GenCode("=, %s, %s, %s, %s"%(p[2], p[0].place, p[1].place, p[3].place))
 
     def p_mark_backpatch(self, p):
         ''' MARK-backpatch : '''
@@ -391,7 +400,7 @@ class Parser(object):
 
         if not p[-2].isBooleanExpression:
             p[-2].truelist = IR.MakeList(IR.NextInstr)
-            p[-2].code = p[-2].code | IR.GenCode("ifgoto, !=, %s, 0, LABEL#REQUIRED"%(p[-2].place))
+            p[-2].code = p[-2].code | IR.GenCode("typecheck, !=, %s, %d"%(p[-2].typePlace, TYPE_INT)) | IR.GenCode("ifgoto, !=, %s, 0, LABEL#REQUIRED"%(p[-2].place))
 
             p[-2].falselist = IR.MakeList(IR.NextInstr)
             p[-2].code = p[-2].code | IR.GenCode("goto, LABEL#REQUIRED")
@@ -416,7 +425,7 @@ class Parser(object):
 
         if not p[4].isBooleanExpression:
             p[4].truelist = IR.MakeList(IR.NextInstr)
-            p[4].code = p[4].code | IR.GenCode("ifgoto, !=, %s, 0, LABEL#REQUIRED"%(p[4].place))
+            p[4].code = p[4].code | IR.GenCode("typecheck, !=, %s, %d"%(p[4].typePlace, TYPE_INT)) | IR.GenCode("ifgoto, !=, %s, 0, LABEL#REQUIRED"%(p[4].place))
 
             p[4].falselist = IR.MakeList(IR.NextInstr)
             p[4].code = p[4].code | IR.GenCode("goto, LABEL#REQUIRED")
@@ -424,8 +433,9 @@ class Parser(object):
         IR.BackPatch(p[1].truelist, p[3].instr)
         p[0].truelist = p[4].truelist
         p[0].falselist = IR.Merge(p[4].falselist, p[1].falselist)
+        p[0].typePlace = IR.TempTypeVar()
 
-        p[0].code = p[1].code | p[4].code
+        p[0].code = p[1].code | p[4].code | IR.GenCode("typeassign, %s, %d"%(p[0].typePlace, TYPE_INT))
 
     def p_boolean_or(self, p):
         ''' boolean-or  : arith-boolean-expression LOR MARK-backpatch-special arith-boolean-expression
@@ -445,7 +455,7 @@ class Parser(object):
 
         if not p[4].isBooleanExpression:
             p[4].truelist = IR.MakeList(IR.NextInstr)
-            p[4].code = p[4].code | IR.GenCode("ifgoto, !=, %s, 0, LABEL#REQUIRED"%(p[4].place))
+            p[4].code = p[4].code | IR.GenCode("typecheck, !=, %s, %d"%(p[4].typePlace, TYPE_INT)) | IR.GenCode("ifgoto, !=, %s, 0, LABEL#REQUIRED"%(p[4].place))
 
             p[4].falselist = IR.MakeList(IR.NextInstr)
             p[4].code = p[4].code | IR.GenCode("goto, LABEL#REQUIRED")
@@ -453,8 +463,9 @@ class Parser(object):
         IR.BackPatch(p[1].falselist, p[3].instr)
         p[0].truelist = IR.Merge(p[1].truelist, p[4].truelist)
         p[0].falselist = p[4].falselist
+        p[0].typePlace = IR.TempTypeVar()
 
-        p[0].code = p[1].code | p[4].code
+        p[0].code = p[1].code | p[4].code | IR.GenCode("typeassign, %s, %d"%(p[0].typePlace, TYPE_INT))
 
     def p_relop(self, p):
         ''' boolean-relop : arith-boolean-expression LT arith-boolean-expression
@@ -491,13 +502,14 @@ class Parser(object):
         '''
 
         p[0] = IR.Attributes()
+        p[0].typePlace = IR.TempTypeVar()
 
         p[0].truelist = IR.MakeList(IR.NextInstr)
         p[0].code = p[1].code | p[3].code
-        p[0].code = p[0].code | IR.GenCode("ifgoto, %s, %s, %s, LABEL#REQUIRED"%(p[2], p[1].place, p[3].place))
+        p[0].code = p[0].code | IR.GenCode("typecheck, %s, %s, %s"%(p[2], p[1].typePlace, p[3].typePlace)) | IR.GenCode("typeassign, %s, %d"%(p[0].typePlace, 0)) |IR.GenCode("ifgoto, %s, %s, %s, LABEL#REQUIRED"%(p[2], p[1].place, p[3].place))
 
         p[0].falselist = IR.MakeList(IR.NextInstr)
-        p[0].code = p[0].code | IR.GenCode("goto, LABEL#REQUIRED")
+        p[0].code = p[0].code | IR.GenCode("goto, LABEL#REQUIRED") | IR.GenCode("typeassign, %s, %d"%(p[0].typePlace, TYPE_INT))
 
     def p_boolean_not(self, p):
         ''' boolean-not : LNOT var
@@ -507,10 +519,11 @@ class Parser(object):
         '''
 
         p[0] = IR.Attributes()
+        p[0].typePlace = IR.TempTypeVar()
 
         if not p[2].isBooleanExpression:
             p[2].truelist = IR.MakeList(IR.NextInstr)
-            p[2].code = p[2].code | IR.GenCode("ifgoto, !=, %s, 0, LABEL#REQUIRED"%(p[2].place))
+            p[2].code = p[2].code | IR.GenCode("typecheck, !=, %s, %d"%(p[2].typePlace, TYPE_INT)) | IR.GenCode("ifgoto, !=, %s, 0, LABEL#REQUIRED"%(p[2].place))
 
             p[2].falselist = IR.MakeList(IR.NextInstr)
             p[2].code = p[2].code | IR.GenCode("goto, LABEL#REQUIRED")
@@ -518,7 +531,7 @@ class Parser(object):
         p[0].truelist = p[2].falselist
         p[0].falselist = p[2].truelist
 
-        p[0].code = p[2].code
+        p[0].code = p[2].code | IR.GenCode("typeassign, %s, %d"%(p[0].typePlace, TYPE_INT))
 
     def p_boolean_expression(self, p):
         ''' boolean-expression : boolean-and
@@ -556,7 +569,8 @@ class Parser(object):
         op = {'+' : '+', '.' : 'strcat', 'x' : 'strmul'}
 
         p[0].place = IR.TempVar()
-        p[0].code = p[1].code | p[3].code | IR.GenCode("=, %s, %s, %s, %s"%(op[p[2]], p[0].place, p[1].place, p[3].place))
+        p[0].typePlace = IR.TempTypeVar()
+        p[0].code = p[1].code | p[3].code | IR.GenCode("typecheck, %s, %s, %s"%(op[p[2]], p[1].typePlace, p[3].typePlace)) | IR.GenCode("typeassign, %s, %d"%(p[0].typePlace, TYPE_STRING)) | IR.GenCode("=, %s, %s, %s, %s"%(op[p[2]], p[0].place, p[1].place, p[3].place))
 
     def p_string_boolean_op(self, p):
         ''' string-boolean-expression : string-expression STRLT string-expression
@@ -593,10 +607,11 @@ class Parser(object):
         '''
 
         p[0] = IR.Attributes()
+        p[0].typePlace = IR.TempTypeVar()
 
         p[0].truelist = IR.MakeList(IR.NextInstr)
         p[0].code = p[1].code | p[3].code
-        p[0].code = p[0].code | IR.GenCode("ifgoto, %s, %s, %s, LABEL#REQUIRED"%('str'+p[2], p[1].place, p[3].place))
+        p[0].code = p[0].code | IR.GenCode("typecheck, %s, %s, %s"%('str'+p[2], p[1].typePlace, p[3].typePlace)) | IR.GenCode("ifgoto, %s, %s, %s, LABEL#REQUIRED"%('str'+p[2], p[1].place, p[3].place))
 
         p[0].falselist = IR.MakeList(IR.NextInstr)
         p[0].code = p[0].code | IR.GenCode("goto, LABEL#REQUIRED")
@@ -1148,11 +1163,14 @@ class Parser(object):
         
         p[0].code = IR.ListIR()
         targetVar = p[0].symEntry.place 
+        targetType = p[0].symEntry.typePlace
 
         for i in xrange(depthDeref):
             p[0].place = IR.TempVar()
-            p[0].code = p[0].code | IR.GenCode("=, $, %s, %s"%(p[0].place, targetVar))
+            p[0].typePlace = IR.TempTypeVar()
+            p[0].code = p[0].code | IR.GenCode("type, $, %s, %s"%(p[0].typePlace, targetType)) | IR.GenCode("=, $, %s, %s"%(p[0].place, targetVar))
             targetVar = p[0].place
+            targetType = p[0].typePlace
 
     # For array and hash access
     def p_access(self, p):
@@ -1172,9 +1190,11 @@ class Parser(object):
             p[-2].symEntry = self.symTabManager.Lookup(newVarName)
             p[0].symEntry = p[-2].symEntry
             p[-2].place = p[-2].symEntry.place
+            p[-2].typePlace = p[-2].symEntry.typePlace
             p[0].nextlist = p[2].nextlist
 
             p[0].place = "%s%s%s%s"%(p[-2].place, p[1], p[2].place, p[3])
+            p[0].typePlace = "%s%s%s%s"%(p[-2].place, p[1], p[2].place, p[3])  ## List elements themselves contain the type
             p[0].hasNumericKey = p[2].isConstantNumeric
             p[0].key = p[2].place
             p[0].accessType = p[1]
@@ -1187,6 +1207,7 @@ class Parser(object):
             IR.BackPatch(p[2].nextlist, p[-2].instr)
 
             p[0].place = "%s%s%s%s"%(p[-1].place, p[1], p[2].place, p[3])
+            p[0].typePlace = "%s%s%s%s"%(p[-1].place, p[1], p[2].place, p[3])  ## List elements themselves contain the type
             p[0].hasNumericKey = p[2].isConstantNumeric
             p[0].key = p[2].place
             p[0].accessType = p[1]
@@ -1202,7 +1223,8 @@ class Parser(object):
             raise PerlTypeError("Dereferenced object must be a scalar value")
 
         p[0].place = IR.TempVar()
-        p[0].code = p[-2].code | IR.GenCode("=, $, %s, %s"%(p[0].place, p[-2].place))
+        p[0].typePlace = IR.TempTypeVar()
+        p[0].code = p[-2].code | IR.GenCode("type, $, %s, %s"%(p[0].typePlace, p[-2].typePlace)) | IR.GenCode("=, $, %s, %s"%(p[0].place, p[-2].place))
         p[0].isArrowOp = True
  
     def p_access_error(self, p):
@@ -1249,7 +1271,8 @@ class Parser(object):
         p[0].symEntry = self.symTabManager.Lookup(varName)
 
         p[0].place = IR.TempVar()
-        p[0].code = IR.GenCode("=, ref, %s, %s"%(p[0].place, p[0].symEntry.place))
+        p[0].typePlace = IR.TempTypeVar()
+        p[0].code = IR.GenCode("type, ref, %s, %s"%(p[0].typePlace, p[0].symEntry.typePlace)) | IR.GenCode("=, ref, %s, %s"%(p[0].place, p[0].symEntry.place))
 
     def p_variable(self, p):
         ''' variable : var-lhs MARK-check-declaration
@@ -1274,10 +1297,10 @@ class Parser(object):
 
         if p[3].opCode == '=':
             IR.BackPatch(p[4].nextlist, IR.NextInstr)
-            p[0].code = p[1].code | p[4].code | IR.GenCode("=, %s, %s"%(p[1].place, p[4].place)) 
+            p[0].code = p[1].code | p[4].code | IR.GenCode("type, %s, %s"%(p[1].typePlace, p[4].typePlace)) | IR.GenCode("=, %s, %s"%(p[1].place, p[4].place)) 
         else:
             IR.BackPatch(p[4].nextlist, IR.NextInstr)
-            p[0].code = p[1].code | p[4].code | IR.GenCode("=, %s, %s, %s, %s"%(p[3].opCode, p[1].place, p[1].place, p[4].place))
+            p[0].code = p[1].code | p[4].code | IR.GenCode("type, %s, %s, %s, %s"%(p[3].opCode, p[1].typePlace, p[1].typePlace, p[4].typePlace)) | IR.GenCode("=, %s, %s, %s, %s"%(p[3].opCode, p[1].place, p[1].place, p[4].place))
 
     def empty_assignment(self, p): # Used for FOR loop
         ''' normal-assignment : empty '''
@@ -1294,6 +1317,7 @@ class Parser(object):
 
         p[2].symEntry.InsertLocally(self.symTabManager)
         p[2].place = p[2].symEntry.place
+        p[2].typePlace = p[2].symEntry.typePlace
 
         p[0] = IR.Attributes()
 
@@ -1313,7 +1337,7 @@ class Parser(object):
             elif p[2].symEntry.externalType == SYMTAB.SymTabEntry.ARRAY:
                 p[0].code = IR.GenCode("declare, array, %s"%(p[2].place)) | IR.GenCode("=, %s, %d"%(p[2].typePlace, TYPE_ARRAY))
             else:
-                p[0].code = IR.ListIR() 
+                p[0].code = IR.GenCode("=, %s, %d"%(p[2].typePlace, TYPE_INT))
 
     def p_string(self, p):
         ''' string : DOUBQUOTSTR 
@@ -1322,7 +1346,7 @@ class Parser(object):
         p[0] = IR.Attributes()
 
         p[0].place = str(p[1])
-        p[0].typePlace = TYPE_STRING
+        p[0].typePlace = str(TYPE_STRING)
         p[0].code = IR.ListIR()  # No code
 
     def p_numeric(self, p):
@@ -1335,7 +1359,7 @@ class Parser(object):
         p[0] = IR.Attributes()
 
         p[0].place = str(p[1])
-        p[0].typePlace = TYPE_INT
+        p[0].typePlace = str(TYPE_INT)
         p[0].code = IR.ListIR() # No code 
         p[0].isConstantNumeric = True
 
@@ -1345,6 +1369,7 @@ class Parser(object):
         p[0] = IR.Attributes()
 
         p[0].place = IR.TempVar()
+        p[0].typePlace = TYPE_STRING
 
         p[0].code = IR.GenCode("=, alloc, %s, 1000"%(p[0].place)) | IR.GenCode("read, \"%s\", " + p[0].place) # We currently only read a string of max 1000 size  
 
@@ -1387,6 +1412,7 @@ class Parser(object):
             p[0] = IR.Attributes()
             p[0].isFunctionCall = True
             p[0].place = IR.TempVar()
+            p[0].typePlace = IR.TempTypeVar()
 
             if len(p) == 3:
                 p[0].code = p[2].code | IR.GenCode("call, %s, %s, %s"%(p[0].place, p[1], p[2].place))
@@ -1449,7 +1475,8 @@ class Parser(object):
         
         p[0] = IR.Attributes()
         p[0].place = IR.TempVar()
-        p[0].code = IR.GenCode("=, %s, %s"%(p[0].place, p[-1].place))
+        p[0].typePlace = IR.TempTypeVar()
+        p[0].code = IR.GenCode("type, %s, %s"%(p[0].typePlace, p[-1].typePlace)) | IR.GenCode("=, %s, %s"%(p[0].place, p[-1].place))
 
     def p_ternary_operator(self, p):
         ''' ternary-op : boolean-expression TERNARY_CONDOP MARK-backpatch usable-expression MARK-ternary-assignment1 MARK-backpatch-nextlist COLON MARK-backpatch usable-expression 
@@ -1461,12 +1488,13 @@ class Parser(object):
         else:
             p[0] = IR.Attributes()
             p[0].place = p[5].place
+            p[0].typePlace = p[5].typePlace
             IR.BackPatch(p[1].truelist, p[3].instr)
             IR.BackPatch(p[1].falselist, p[8].instr)
 
             p[0].nextlist = IR.Merge(p[6].nextlist, p[9].nextlist)
 
-            p[0].code = p[1].code | p[4].code | p[5].code | p[6].code | p[9].code | IR.GenCode("=, %s, %s"%(p[5].place, p[9].place))
+            p[0].code = p[1].code | p[4].code | p[5].code | p[6].code | p[9].code | IR.GenCode("type, %s, %s"%(p[5].typePlace, p[9].typePlace)) | IR.GenCode("=, %s, %s"%(p[5].place, p[9].place))
 
     # Build the parser
     # error_seen decides if we should print the .html file or not at the end

@@ -27,6 +27,7 @@ class SymTabEntry(object):
         typeMap = {SymTabEntry.SCALAR : "SCALAR", SymTabEntry.HASH : "HASH", SymTabEntry.ARRAY : "ARRAY"}
         self.place = typeMap[self.externalType] + "__" + self.baseVarName # To differentiate between namespaces for arrays, hashes and scalars
         self.typePlace = "TYPE__" + self.place
+
         self.code = []
 
     def CheckDeclaration(self):
@@ -44,7 +45,9 @@ class SymTabEntry(object):
         self.scopeNum = symTabManager.curScope
         self.place = self.place + "_scope_" + str(self.scopeNum)
         self.typePlace = self.typePlace + "_scope_" + str(self.scopeNum)
+        self.containerTypes = self.containerTypes + "_scope_" + str(self.scopeNum)
         IR.CurActivationRecord.AllocateVariable(self.place, self.width*4)
+        IR.CurActivationRecord.AllocateVariable(self.typePlace, self.width*4)
 
         symTabManager.curSymTab.Insert(self, self.varName)
 
