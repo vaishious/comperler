@@ -9,3 +9,4 @@ export PATH+=":$CWDIR"
 ../../../mips-x86.linux-xgcc/mips-gcc -S libstd.c
 ../../../mips-x86.linux-xgcc/mips-gcc -S libstring.c
 ../../../mips-x86.linux-xgcc/mips-gcc -S typechecking.c
+../../../mips-x86.linux-xgcc/mips-gcc -S dynlib.c
