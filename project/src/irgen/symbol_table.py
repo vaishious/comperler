@@ -45,7 +45,6 @@ class SymTabEntry(object):
         self.scopeNum = symTabManager.curScope
         self.place = self.place + "_scope_" + str(self.scopeNum)
         self.typePlace = self.typePlace + "_scope_" + str(self.scopeNum)
-        self.containerTypes = self.containerTypes + "_scope_" + str(self.scopeNum)
         IR.CurActivationRecord.AllocateVariable(self.place, self.width*4)
         IR.CurActivationRecord.AllocateVariable(self.typePlace, self.width*4)
 

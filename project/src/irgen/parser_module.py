@@ -3,6 +3,7 @@ import symbol_table as SYMTAB
 import ir_generation as IR
 import debug as DEBUG
 
+TYPE_UNKNOWN, TYPE_STRING, TYPE_INT, TYPE_ARRAY, TYPE_HASH = range(5)
 class Parser(object):
 
     precedence = (
@@ -29,7 +30,6 @@ class Parser(object):
         ('left', 'ARROW'),
     )
 
-    TYPE_UNKNOWN, TYPE_STRING, TYPE_INT, TYPE_ARRAY, TYPE_HASH = range(5)
 
     def p_start_state(self, p):
         ''' start-state : statements '''
@@ -384,7 +384,7 @@ class Parser(object):
 
         p[0].place = IR.TempVar()
         p[0].typePlace = IR.TempTypeVar()
-        p[0].code = p[1].code | p[3].code | IR.GenCode("typecheckassign, %s, %s, %s, %s"%(p[2], p[0].typePlace, p[1].typePlace, p[3].typePlace)) | | IR.GenCode("=, %s, %s, %s, %s"%(p[2], p[0].place, p[1].place, p[3].place))
+        p[0].code = p[1].code | p[3].code | IR.GenCode("typecheckassign, %s, %s, %s, %s"%(p[2], p[0].typePlace, p[1].typePlace, p[3].typePlace)) | IR.GenCode("=, %s, %s, %s, %s"%(p[2], p[0].place, p[1].place, p[3].place))
 
     def p_mark_backpatch(self, p):
         ''' MARK-backpatch : '''
