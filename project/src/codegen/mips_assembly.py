@@ -61,7 +61,6 @@ class DataRegion(object):
                     self.varSet[var] = "%d($fp)"%(32 + record.varOffset + pos) # MIPS calling convention stores arguments in the first 16 bytes
 
                 G.StackSpaceMap[func] = record.varOffset + record.tempOffset + 40; 
-                print "Hola", func, G.StackSpaceMap[func]
 
     def AllocateString(self, strEntity):
         DEBUG.Assert(type(strEntity) == INSTRUCTION.Entity, "Type for AllocateString in Data-Region is not Entity")
@@ -130,7 +129,6 @@ class TextRegion(object):
     def WriteFunctionStacks(self):
         for (func, space) in G.StackSpaceMap.items():
             stackSpaceRequired = space
-            print func, stackSpaceRequired
 
             loadSegment = "%s:\n"%(func)
             loadSegment += G.INDENT + ".frame $fp,%d,$31\n"%(stackSpaceRequired) 
