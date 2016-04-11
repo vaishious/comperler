@@ -11,7 +11,6 @@
 
 typedef struct Element {
     char *key;	// Should be NULL terminated
-    int keyInt;
     void *valRef;
     struct Element *next;
 } Element;
@@ -23,23 +22,17 @@ typedef struct Hash {
     int length;
 
     // Integers or Addresses (strings/hashes)
-    int type;
+    // int type;
 } Hash;
 
-Element *findMatch(Hash *hashPtr, char *s, int keyInt)
+Element *findMatch(Hash *hashPtr, char *s)
 {
     int i;
     Element *elemPtr = hashPtr->first;
 
     for (i=0; i < hashPtr->length; i++) {
-        if (hashPtr->type == 0) {
-            if (elemPtr->keyInt == keyInt)
-                break;
-        }
-        else {
-            if(!strCmp(elemPtr->key, s))
-                break;
-        }
+		if(!strCmp(elemPtr->key, s))
+			break;
 
         elemPtr = elemPtr->next;
     }
@@ -47,28 +40,25 @@ Element *findMatch(Hash *hashPtr, char *s, int keyInt)
     return elemPtr;
 }
 
-Hash *initHash(int type)
+Hash *initHash()
 {
     Hash *hashPtr = (Hash *)alloc(sizeof(Hash));
     hashPtr->first = hashPtr->last = 0;
     hashPtr->length = 0;
-    hashPtr->type = type;
     return hashPtr;
 }
 
-int addElement(Hash *hashPtr, char *key, int keyInt, void *valRef)
+int addElement(Hash *hashPtr, char *key, void *valRef)
 {
     Element *elemPtr;
-    if((elemPtr = findMatch(hashPtr, key, keyInt))) {
+    if((elemPtr = findMatch(hashPtr, key))) {
         elemPtr->key = key;
-        elemPtr->keyInt = keyInt;
         elemPtr->valRef = valRef;
         return 0;
     }
 
     elemPtr = (Element *)alloc(sizeof(Element));
     elemPtr->key = key;
-    elemPtr->keyInt = keyInt;
     elemPtr->valRef = valRef;
     elemPtr->next = 0;
     if(hashPtr->length == 0)
@@ -81,12 +71,12 @@ int addElement(Hash *hashPtr, char *key, int keyInt, void *valRef)
     return 0;
 }
 
-void *getHashValue(Hash *hashPtr, char *key, int keyInt, char *message)
+void *getHashValue(Hash *hashPtr, char *key, char *message)
 {
     Element *elemPtr;
-    if((elemPtr = findMatch(hashPtr, key, keyInt)))
+    if((elemPtr = findMatch(hashPtr, key)))
             return elemPtr->valRef;
 
     // Raise an exception
-    ExitWithMessage(message, key, keyInt);
+    ExitWithMessage(message, key);
 }
