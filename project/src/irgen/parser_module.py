@@ -3,6 +3,8 @@ import symbol_table as SYMTAB
 import ir_generation as IR
 import debug as DEBUG
 
+TYPE_UNKNOWN, TYPE_STRING, TYPE_INT, TYPE_ARRAY, TYPE_HASH = range(5)
+
 class Parser(object):
 
     precedence = (
@@ -29,7 +31,6 @@ class Parser(object):
         ('left', 'ARROW'),
     )
 
-    TYPE_UNKNOWN, TYPE_STRING, TYPE_INT, TYPE_ARRAY, TYPE_HASH = range(5)
 
     def p_start_state(self, p):
         ''' start-state : statements '''
@@ -107,10 +108,10 @@ class Parser(object):
                 self.functionDefs = self.functionDefs | p[1].code
                 p[0].code = IR.ListIR()
 
-                p[0].nextlist = p[1].nextlist
-                p[0].loop_next_list = p[1].loop_next_list
-                p[0].loop_redo_list = p[1].loop_redo_list
-                p[0].loop_last_list = p[1].loop_last_list
+            p[0].nextlist = p[1].nextlist
+            p[0].loop_next_list = p[1].loop_next_list
+            p[0].loop_redo_list = p[1].loop_redo_list
+            p[0].loop_last_list = p[1].loop_last_list
 
         else:
             if not p[3].isFunctionDef:
@@ -390,7 +391,7 @@ class Parser(object):
 
         p[0].place = IR.TempVar()
         p[0].typePlace = IR.TempTypeVar()
-        p[0].code = p[1].code | p[3].code | IR.GenCode("typecheckassign, %s, %s, %s, %s"%(p[2], p[0].typePlace, p[1].typePlace, p[3].typePlace)) | | IR.GenCode("=, %s, %s, %s, %s"%(p[2], p[0].place, p[1].place, p[3].place))
+        p[0].code = p[1].code | p[3].code | IR.GenCode("typecheckassign, %s, %s, %s, %s"%(p[2], p[0].typePlace, p[1].typePlace, p[3].typePlace)) | IR.GenCode("=, %s, %s, %s, %s"%(p[2], p[0].place, p[1].place, p[3].place))
 
     def p_mark_backpatch(self, p):
         ''' MARK-backpatch : '''
@@ -405,8 +406,9 @@ class Parser(object):
         p[0] = IR.Attributes()
 
         if not p[-2].isBooleanExpression:
+            p[-2].code = p[-2].code | IR.GenCode("typecheck, !=, %s, %d"%(p[-2].typePlace, TYPE_INT))
             p[-2].truelist = IR.MakeList(IR.NextInstr)
-            p[-2].code = p[-2].code | IR.GenCode("typecheck, !=, %s, %d"%(p[-2].typePlace, TYPE_INT)) | IR.GenCode("ifgoto, !=, %s, 0, LABEL#REQUIRED"%(p[-2].place))
+            p[-2].code = p[-2].code | IR.GenCode("ifgoto, !=, %s, 0, LABEL#REQUIRED"%(p[-2].place))
 
             p[-2].falselist = IR.MakeList(IR.NextInstr)
             p[-2].code = p[-2].code | IR.GenCode("goto, LABEL#REQUIRED")
@@ -430,8 +432,9 @@ class Parser(object):
         p[0] = IR.Attributes()
 
         if not p[4].isBooleanExpression:
+            p[4].code = p[4].code | IR.GenCode("typecheck, !=, %s, %d"%(p[4].typePlace, TYPE_INT))
             p[4].truelist = IR.MakeList(IR.NextInstr)
-            p[4].code = p[4].code | IR.GenCode("typecheck, !=, %s, %d"%(p[4].typePlace, TYPE_INT)) | IR.GenCode("ifgoto, !=, %s, 0, LABEL#REQUIRED"%(p[4].place))
+            p[4].code = p[4].code | IR.GenCode("ifgoto, !=, %s, 0, LABEL#REQUIRED"%(p[4].place))
 
             p[4].falselist = IR.MakeList(IR.NextInstr)
             p[4].code = p[4].code | IR.GenCode("goto, LABEL#REQUIRED")
@@ -460,8 +463,9 @@ class Parser(object):
         p[0] = IR.Attributes()
 
         if not p[4].isBooleanExpression:
+            p[4].code = p[4].code | IR.GenCode("typecheck, !=, %s, %d"%(p[4].typePlace, TYPE_INT))
             p[4].truelist = IR.MakeList(IR.NextInstr)
-            p[4].code = p[4].code | IR.GenCode("typecheck, !=, %s, %d"%(p[4].typePlace, TYPE_INT)) | IR.GenCode("ifgoto, !=, %s, 0, LABEL#REQUIRED"%(p[4].place))
+            p[4].code = p[4].code | IR.GenCode("ifgoto, !=, %s, 0, LABEL#REQUIRED"%(p[4].place))
 
             p[4].falselist = IR.MakeList(IR.NextInstr)
             p[4].code = p[4].code | IR.GenCode("goto, LABEL#REQUIRED")
@@ -510,12 +514,13 @@ class Parser(object):
         p[0] = IR.Attributes()
         p[0].typePlace = IR.TempTypeVar()
 
+        p[0].code = p[1].code | p[3].code | IR.GenCode("typecheck, %s, %s, %s"%(p[2], p[1].typePlace, p[3].typePlace)) | IR.GenCode("typeassign, %s, %d"%(p[0].typePlace, 0)) 
         p[0].truelist = IR.MakeList(IR.NextInstr)
-        p[0].code = p[1].code | p[3].code
-        p[0].code = p[0].code | IR.GenCode("typecheck, %s, %s, %s"%(p[2], p[1].typePlace, p[3].typePlace)) | IR.GenCode("typeassign, %s, %d"%(p[0].typePlace, 0)) |IR.GenCode("ifgoto, %s, %s, %s, LABEL#REQUIRED"%(p[2], p[1].place, p[3].place))
+        p[0].code = p[0].code | IR.GenCode("ifgoto, %s, %s, %s, LABEL#REQUIRED"%(p[2], p[1].place, p[3].place))
 
         p[0].falselist = IR.MakeList(IR.NextInstr)
-        p[0].code = p[0].code | IR.GenCode("goto, LABEL#REQUIRED") | IR.GenCode("typeassign, %s, %d"%(p[0].typePlace, TYPE_INT))
+        p[0].code = p[0].code | IR.GenCode("goto, LABEL#REQUIRED")
+        p[0].code = p[0].code | IR.GenCode("typeassign, %s, %d"%(p[0].typePlace, TYPE_INT))
 
     def p_boolean_not(self, p):
         ''' boolean-not : LNOT var
@@ -528,8 +533,9 @@ class Parser(object):
         p[0].typePlace = IR.TempTypeVar()
 
         if not p[2].isBooleanExpression:
+            p[2].code = p[2].code | IR.GenCode("typecheck, !=, %s, %d"%(p[2].typePlace, TYPE_INT))
             p[2].truelist = IR.MakeList(IR.NextInstr)
-            p[2].code = p[2].code | IR.GenCode("typecheck, !=, %s, %d"%(p[2].typePlace, TYPE_INT)) | IR.GenCode("ifgoto, !=, %s, 0, LABEL#REQUIRED"%(p[2].place))
+            p[2].code = p[2].code | IR.GenCode("ifgoto, !=, %s, 0, LABEL#REQUIRED"%(p[2].place))
 
             p[2].falselist = IR.MakeList(IR.NextInstr)
             p[2].code = p[2].code | IR.GenCode("goto, LABEL#REQUIRED")
@@ -615,9 +621,10 @@ class Parser(object):
         p[0] = IR.Attributes()
         p[0].typePlace = IR.TempTypeVar()
 
-        p[0].truelist = IR.MakeList(IR.NextInstr)
         p[0].code = p[1].code | p[3].code
-        p[0].code = p[0].code | IR.GenCode("typecheck, %s, %s, %s"%('str'+p[2], p[1].typePlace, p[3].typePlace)) | IR.GenCode("ifgoto, %s, %s, %s, LABEL#REQUIRED"%('str'+p[2], p[1].place, p[3].place))
+        p[0].code = p[0].code | IR.GenCode("typecheck, %s, %s, %s"%('str'+p[2], p[1].typePlace, p[3].typePlace))
+        p[0].truelist = IR.MakeList(IR.NextInstr)
+        p[0].code = p[0].code | IR.GenCode("ifgoto, %s, %s, %s, LABEL#REQUIRED"%('str'+p[2], p[1].place, p[3].place))
 
         p[0].falselist = IR.MakeList(IR.NextInstr)
         p[0].code = p[0].code | IR.GenCode("goto, LABEL#REQUIRED")
