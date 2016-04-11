@@ -89,7 +89,6 @@ class BasicBlock(object):
             if instr.instrType.is_LABEL():
                 G.AsmText.AddText("%s:"%(instr.label))
                 G.CurrFunction = instr.label
-                G.StackSpaceMap[G.CurrFunction] = 0
 
             elif instr.IsTarget():
                 # Add a label L_<line_no> for each line in the input
