@@ -34,8 +34,8 @@ AllocMap = {}
 StackSpaceMap = {}
 
 # Library functions
-LibraryFunctionsUsed = set([])
-LIBSRC = ['../lib/hashlib.s', '../lib/iolib.s', '../lib/libstd.s', '../lib/libstring.s', '../lib/arraylib.s']
+LibraryFunctionsUsed = set(['typecheck_PLUS', 'PrintString'])
+LIBSRC = ['../lib/hashlib.s', '../lib/iolib.s', '../lib/libstd.s', '../lib/libstring.s', '../lib/arraylib.s', '../lib/typechecking.s']
 
 # Exception messages for ExitWithMessage
 HashKeyError = None

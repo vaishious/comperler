@@ -32,24 +32,25 @@ class InstrType(object):
 
 
     # Enum for holding these values
-    ASSIGN, IFGOTO, STRIFGOTO, GOTO, CALL, RETURN, PRINT, KEYS, VALUES, READ, LABEL, DECLARE, EXIT, NOP, ALLOC = range(15)
+    ASSIGN, TYPECHECK, TYPEASSIGN, TYPECHECKASSIGN, IFGOTO, STRIFGOTO, GOTO, CALL, RETURN, PRINT, KEYS, VALUES, READ, LABEL, DECLARE, EXIT, NOP, ALLOC = range(18)
 
     typeMap = { 
-                "="          : ASSIGN,        "assign" : ASSIGN,       "ASSIGN"    : ASSIGN,
-                "ifgoto"     : IFGOTO,                                 "IFGOTO"    : IFGOTO,
-                "strifgoto"  : STRIFGOTO,                              "STRIFGOTO" : STRIFGOTO,    "str_ifgoto" : STRIFGOTO,
-                "goto"       : GOTO,          "jmp"    : GOTO,         "GOTO"      : GOTO, 
-                "call"       : CALL,                                   "CALL"      : CALL,
-                "ret"        : RETURN,        "return" : RETURN,       "RETURN"    : RETURN,       "RET" : RETURN,
-                "print"      : PRINT,         "printf" : PRINT,        "PRINT"     : PRINT,
-                "keys"       : KEYS,          "KEYS"   : KEYS,
-                "values"     : VALUES,        "VALUES" : VALUES,
-                "read"       : READ,          "scanf"  : READ,         "READ"      : READ,
-                "label"      : LABEL,         "Label"  : LABEL,        "LABEL"     : LABEL,
-                "declare"    : DECLARE,       "decl"   : DECLARE,      "DECLARE"   : DECLARE,
-                "alloc"      : ALLOC,         "malloc" : ALLOC,        "ALLOC"     : ALLOC,
-                "exit"       : EXIT,          "quit"   : EXIT,         "EXIT"      : EXIT,         "done" : EXIT,
-                "nop"        : NOP,           ""       : NOP,          "NOP"       : NOP
+                "="          : ASSIGN,           "assign"     : ASSIGN,       "ASSIGN"          : ASSIGN,
+                "ifgoto"     : IFGOTO,                                        "IFGOTO"          : IFGOTO,
+                "strifgoto"  : STRIFGOTO,                                     "STRIFGOTO"       : STRIFGOTO,    "str_ifgoto" : STRIFGOTO,
+                "goto"       : GOTO,             "jmp"        : GOTO,         "GOTO"            : GOTO, 
+                "call"       : CALL,                                          "CALL"            : CALL,
+                "ret"        : RETURN,           "return"     : RETURN,       "RETURN"          : RETURN,       "RET" : RETURN,
+                "print"      : PRINT,            "printf"     : PRINT,        "PRINT"           : PRINT,
+                "keys"       : KEYS,             "KEYS"       : KEYS,
+                "values"     : VALUES,           "VALUES"     : VALUES,
+                "read"       : READ,             "scanf"      : READ,         "READ"            : READ,
+                "label"      : LABEL,            "Label"      : LABEL,        "LABEL"           : LABEL,
+                "declare"    : DECLARE,          "decl"       : DECLARE,      "DECLARE"         : DECLARE,
+                "alloc"      : ALLOC,            "malloc"     : ALLOC,        "ALLOC"           : ALLOC,
+                "exit"       : EXIT,             "quit"       : EXIT,         "EXIT"            : EXIT,         "done" : EXIT,
+                "typecheck"  : TYPECHECKASSIGN,  "typeassign" : TYPEASSIGN,   "typecheckassign" : TYPECHECKASSIGN, 
+                "nop"        : NOP,              ""           : NOP,          "NOP"             : NOP
               }
 
     def __init__(self, inpType):
@@ -60,21 +61,24 @@ class InstrType(object):
         
         self.instrType = InstrType.typeMap[inpType]
 
-    def is_ASSIGN(self)     : return self.instrType == InstrType.ASSIGN
-    def is_IFGOTO(self)     : return self.instrType == InstrType.IFGOTO
-    def is_STRIFGOTO(self)  : return self.instrType == InstrType.STRIFGOTO
-    def is_GOTO(self)       : return self.instrType == InstrType.GOTO
-    def is_CALL(self)       : return self.instrType == InstrType.CALL
-    def is_RETURN(self)     : return self.instrType == InstrType.RETURN
-    def is_PRINT(self)      : return self.instrType == InstrType.PRINT
-    def is_KEYS(self)       : return self.instrType == InstrType.KEYS
-    def is_VALUES(self)     : return self.instrType == InstrType.VALUES
-    def is_READ(self)       : return self.instrType == InstrType.READ
-    def is_ALLOC(self)      : return self.instrType == InstrType.ALLOC
-    def is_LABEL(self)      : return self.instrType == InstrType.LABEL
-    def is_DECLARE(self)    : return self.instrType == InstrType.DECLARE
-    def is_EXIT(self)       : return self.instrType == InstrType.EXIT
-    def is_NOP(self)        : return self.instrType == InstrType.NOP
+    def is_ASSIGN(self)          : return self.instrType == InstrType.ASSIGN
+    def is_IFGOTO(self)          : return self.instrType == InstrType.IFGOTO
+    def is_STRIFGOTO(self)       : return self.instrType == InstrType.STRIFGOTO
+    def is_GOTO(self)            : return self.instrType == InstrType.GOTO
+    def is_CALL(self)            : return self.instrType == InstrType.CALL
+    def is_RETURN(self)          : return self.instrType == InstrType.RETURN
+    def is_PRINT(self)           : return self.instrType == InstrType.PRINT
+    def is_KEYS(self)            : return self.instrType == InstrType.KEYS
+    def is_VALUES(self)          : return self.instrType == InstrType.VALUES
+    def is_READ(self)            : return self.instrType == InstrType.READ
+    def is_ALLOC(self)           : return self.instrType == InstrType.ALLOC
+    def is_LABEL(self)           : return self.instrType == InstrType.LABEL
+    def is_DECLARE(self)         : return self.instrType == InstrType.DECLARE
+    def is_EXIT(self)            : return self.instrType == InstrType.EXIT
+    def is_TYPECHECK(self)       : return self.instrType == InstrType.TYPECHECK
+    def is_TYPEASSIGN(self)      : return self.instrType == InstrType.TYPEASSIGN
+    def is_TYPECHECKASSIGN(self) : return self.instrType == InstrType.TYPECHECKASSIGN 
+    def is_NOP(self)             : return self.instrType == InstrType.NOP
 
     def is_JMP(self)     : return (self.instrType == InstrType.IFGOTO or
                                    self.instrType == InstrType.STRIFGOTO or
@@ -561,6 +565,40 @@ class Instr3AC(object):
                 self.inp2   = Entity(str(inpTuple[5]))
 
             DEBUG.Assert(self.dest.is_VARIABLE(), "LHS of an ASSIGN has to be a variable")
+
+        elif self.instrType.is_TYPEASSIGN():
+            # Line Number, typeassign, dest, inp1
+            DEBUG.Assert(len(inpTuple) == 4, "Expected a 4-tuple for typeassign")
+
+            self.dest = Entity(str(inpTuple[2]))
+            self.inp1 = Entity(str(inpTuple[3]))
+
+            DEBUG.Assert(self.dest.is_VARIABLE(), "LHS of a TYPEASSIGN has to be a variable")
+
+        elif self.instrType.is_TYPECHECK():
+            # Line Number, typecheck, op, inp1, inp2
+            # Line Number, typecheck, op, inp1
+            DEBUG.Assert(len(inpTuple) >= 4, "Expected a 4/5-tuple for typecheck")
+            DEBUG.Assert(len(inpTuple) <= 5, "Expected a 4/5-tuple for typecheck")
+
+            self.opType = OperationType(str(inpTuple[2]))
+            self.inp1 = Entity(str(inpTuple[3])) 
+
+            if len(inpTuple) == 5:
+                self.inp2 = Entity(str(inpTuple[4]))
+
+        elif self.instrType.is_TYPECHECKASSIGN():
+            # Line Number, typecheckassign, op, dest, inp1, inp2
+            # Line Number, typecheckassign, op, dest, inp1
+            DEBUG.Assert(len(inpTuple) >= 5, "Expected a 5/6-tuple for typecheck")
+            DEBUG.Assert(len(inpTuple) <= 6, "Expected a 5/6-tuple for typecheck")
+
+            self.opType = OperationType(str(inpTuple[2]))
+            self.dest = Entity(str(inpTuple[3]))
+            self.inp1 = Entity(str(inpTuple[4]))
+
+            if len(inpTuple) == 6:
+                self.inp2 = Entity(str(inpTuple[5]))
             
     def __str__(self):
         return self.PrettyPrint()
@@ -677,6 +715,21 @@ class Instr3AC(object):
                     return "%s = %s%s"%(self.dest, self.opType, self.inp1)
             else:
                 return "%s = %s %s %s"%(self.dest, self.inp1, self.opType, self.inp2)
+
+        if self.instrType.is_TYPECHECK():
+            if self.inp2.is_NONE():
+                return "typecheck %s%s"%(self.opType, self.inp1)
+            else:
+                return "typecheck %s %s %s"%(self.inp1, self.opType, self.inp2)
+
+        if self.instrType.is_TYPEASSIGN():
+            return "%s typeassign %s"%(self.dest, self.inp1)
+
+        if self.instrType.is_TYPECHECKASSIGN():
+            if self.inp2.is_NONE():
+                return "%s typecheckassign %s%s"%(self.dest, self.opType, self.inp1)
+            else:
+                return "%s typecheckassign (%s %s %s)"%(self.dest, self.inp1, self.opType, self.inp2)
         
 def ConvertTarget(inpString):
     if inpString.isdigit():

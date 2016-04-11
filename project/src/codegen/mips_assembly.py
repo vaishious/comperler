@@ -40,8 +40,13 @@ class DataRegion(object):
     def __init__(self, funcActRecords, symTabManager):
         self.varSet = {}
         self.globalVars = []
+        self.specialVars = ["OPCONTROL", "OP1_TYPECAST", "OP2_TYPECAST"]
         self.stringSet = {}
         self.stringCnt = 0
+
+        self.errorMessages = {
+                "TYPE_ERROR_PLUS" : "Sorry, both quantities have to be integers\n"
+                }
 
         for func, record in funcActRecords.items():
             if func == "main":
@@ -90,6 +95,16 @@ class DataRegion(object):
         for (string, label) in self.stringSet.items():
             dataText += ".align 2\n"
             dataText += "$STR_%s : .asciiz \"%s\"\n"%(label, string)
+
+        dataText += "\n# SPECIAL VARIABLES\n"
+        for var in self.specialVars:
+            dataText += ".align 2\n"
+            dataText += "%s : .word 0\n\n"%(var)
+
+        dataText += "\n# ERROR MESSAGES\n"
+        for (label, string) in self.errorMessages.items():
+            dataText += ".align 2\n"
+            dataText += "%s : .asciiz \"%s\"\n"%(label, string)
 
         filePtr.write(dataText + "\n")
 

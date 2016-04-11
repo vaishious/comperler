@@ -514,7 +514,7 @@ class Parser(object):
         p[0] = IR.Attributes()
         p[0].typePlace = IR.TempTypeVar()
 
-        p[0].code = p[1].code | p[3].code | IR.GenCode("typecheck, %s, %s, %s"%(p[2], p[1].typePlace, p[3].typePlace)) | IR.GenCode("typeassign, %s, %d"%(p[0].typePlace, 0)) 
+        p[0].code = p[1].code | p[3].code | IR.GenCode("typecheck, %s, %s, %s"%(p[2], p[1].typePlace, p[3].typePlace)) | IR.GenCode("typeassign, %s, %d"%(p[0].typePlace, TYPE_INT)) 
         p[0].truelist = IR.MakeList(IR.NextInstr)
         p[0].code = p[0].code | IR.GenCode("ifgoto, %s, %s, %s, LABEL#REQUIRED"%(p[2], p[1].place, p[3].place))
 
@@ -1313,10 +1313,10 @@ class Parser(object):
 
         if p[3].opCode == '=':
             IR.BackPatch(p[4].nextlist, IR.NextInstr)
-            p[0].code = p[1].code | p[4].code | IR.GenCode("type, %s, %s"%(p[1].typePlace, p[4].typePlace)) | IR.GenCode("=, %s, %s"%(p[1].place, p[4].place)) 
+            p[0].code = p[1].code | p[4].code | IR.GenCode("typeassign, %s, %s"%(p[1].typePlace, p[4].typePlace)) | IR.GenCode("=, %s, %s"%(p[1].place, p[4].place)) 
         else:
             IR.BackPatch(p[4].nextlist, IR.NextInstr)
-            p[0].code = p[1].code | p[4].code | IR.GenCode("type, %s, %s, %s, %s"%(p[3].opCode, p[1].typePlace, p[1].typePlace, p[4].typePlace)) | IR.GenCode("=, %s, %s, %s, %s"%(p[3].opCode, p[1].place, p[1].place, p[4].place))
+            p[0].code = p[1].code | p[4].code | IR.GenCode("typecheckassign, %s, %s, %s, %s"%(p[3].opCode, p[1].typePlace, p[1].typePlace, p[4].typePlace)) | IR.GenCode("=, %s, %s, %s, %s"%(p[3].opCode, p[1].place, p[1].place, p[4].place))
 
     def empty_assignment(self, p): # Used for FOR loop
         ''' normal-assignment : empty '''
@@ -1346,12 +1346,12 @@ class Parser(object):
                 #p[0].code = p[4].code | IR.GenCode("declare, array, %s"%(p[2].place)) | IR.GenCode("=, %s, %s"%(p[2].place, p[4].place))
             #else:
                 #p[0].code = p[4].code | IR.GenCode("=, %s, %s"%(p[2].place, p[4].place))
-            p[0].code = p[4].code | IR.GenCode("=, %s, %s"%(p[2].typePlace, p[4].typePlace)) | IR.GenCode("=, %s, %s"%(p[2].place, p[4].place))
+            p[0].code = p[4].code | IR.GenCode("typeassign, %s, %s"%(p[2].typePlace, p[4].typePlace)) | IR.GenCode("=, %s, %s"%(p[2].place, p[4].place))
         else:
             if p[2].symEntry.externalType == SYMTAB.SymTabEntry.HASH:
-                p[0].code = IR.GenCode("declare, hash, %s"%(p[2].place)) | IR.GenCode("=, %s, %d"%(p[2].typePlace, TYPE_HASH))
+                p[0].code = IR.GenCode("declare, hash, %s"%(p[2].place)) | IR.GenCode("typeassign, %s, %d"%(p[2].typePlace, TYPE_HASH))
             elif p[2].symEntry.externalType == SYMTAB.SymTabEntry.ARRAY:
-                p[0].code = IR.GenCode("declare, array, %s"%(p[2].place)) | IR.GenCode("=, %s, %d"%(p[2].typePlace, TYPE_ARRAY))
+                p[0].code = IR.GenCode("declare, array, %s"%(p[2].place)) | IR.GenCode("typeassign, %s, %d"%(p[2].typePlace, TYPE_ARRAY))
             else:
                 p[0].code = IR.GenCode("=, %s, %d"%(p[2].typePlace, TYPE_INT))
 

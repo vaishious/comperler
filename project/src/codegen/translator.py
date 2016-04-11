@@ -107,6 +107,27 @@ def Translate(instr):
 
         Translate_ASSIGN(instr)
 
+    elif instr.instrType.is_TYPECHECK():
+        G.CurrRegAddrTable.DumpDirtyVars()
+        G.CurrRegAddrTable.Reset()
+        G.AllocMap = {}
+
+        Translate_TYPECHECK(instr)
+
+    elif instr.instrType.is_TYPEASSIGN():
+        G.CurrRegAddrTable.DumpDirtyVars()
+        G.CurrRegAddrTable.Reset()
+        G.AllocMap = {}
+
+        Translate_TYPEASSIGN(instr)
+
+    elif instr.instrType.is_TYPECHECKASSIGN():
+        G.CurrRegAddrTable.DumpDirtyVars()
+        G.CurrRegAddrTable.Reset()
+        G.AllocMap = {}
+
+        Translate_TYPECHECKASSIGN(instr)
+
 def SetupRegister(inp, regComp, tempReg=REG.t9, useImmediate=False):
     # Setup the input in a register, using regComp, if required
 
@@ -529,4 +550,18 @@ def SetupDestRegHash(dest, regComp, tempReg=REG.tmpUsageRegs[-1]):
     else:
         regInp = SetupRegister(dest.key, regComp)
         G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp), "Load key for the hash access")
+
+
+def Translate_TYPECHECKASSIGN(instr):
+    reg1 = SetupRegister(instr.inp1, REG.tmpUsageRegs[0])
+    reg2 = SetupRegister(instr.inp2, REG.tmpUsageRegs[1])
+    G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a0, reg1))
+    G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a1, reg2))
+    G.AsmText.AddText(G.INDENT + "jal typecheck_PLUS")
+
+def Translate_TYPEASSIGN(instr):
+    reg1 = SetupRegister(instr.inp1, REG.tmpUsageRegs[0])
+    G.AsmText.AddText(G.INDENT + "sw %s, %s"%(reg1, ASM.GetVarAddr(instr.dest)), "Store it back")
+
+
 

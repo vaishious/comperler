@@ -16,7 +16,7 @@ initArray:
 	jal	alloc
 	sw	$2,16($fp)
 	lw	$16,16($fp)
-	li	$4,4			# 0x4
+	li	$4,8			# 0x8
 	jal	alloc
 	sw	$2,4($16)
 	lw	$2,16($fp)
@@ -66,7 +66,7 @@ accessIndex:
 	.frame	$fp,32,$31		# vars= 8, regs= 2/0, args= 16, extra= 0
 	.mask	0xc0000000,-4
 	.fmask	0x00000000,0
-	subu	$sp,$sp,64
+	subu	$sp,$sp,32
 	sw	$31,28($sp)
 	sw	$fp,24($sp)
 	move	$fp,$sp
@@ -78,8 +78,8 @@ accessIndex:
 	slt	$2,$3,$2
 	bne	$2,$0,$L7
 	lw	$2,36($fp)
-	sll	$2,$2,3
-	addu	$2,$2,8
+	sll	$2,$2,4
+	addu	$2,$2,16
 	move	$4,$2
 	jal	alloc
 	sw	$2,16($fp)
@@ -93,12 +93,12 @@ $L8:
 	j	$L9
 $L11:
 	lw	$2,20($fp)
-	sll	$3,$2,2
+	sll	$3,$2,3
 	lw	$2,16($fp)
 	addu	$5,$3,$2
 	lw	$4,32($fp)
 	lw	$2,20($fp)
-	sll	$3,$2,2
+	sll	$3,$2,3
 	lw	$2,4($4)
 	addu	$2,$3,$2
 	lw	$2,0($2)
@@ -119,7 +119,7 @@ $L9:
 $L7:
 	lw	$4,32($fp)
 	lw	$2,36($fp)
-	sll	$3,$2,2
+	sll	$3,$2,3
 	lw	$2,4($4)
 	addu	$2,$3,$2
 	move	$sp,$fp
@@ -128,3 +128,73 @@ $L7:
 	addu	$sp,$sp,32
 	j	$31
 	.end	accessIndex
+	.align	2
+	.globl	accessIndexType
+	.ent	accessIndexType
+accessIndexType:
+	.frame	$fp,32,$31		# vars= 8, regs= 2/0, args= 16, extra= 0
+	.mask	0xc0000000,-4
+	.fmask	0x00000000,0
+	subu	$sp,$sp,32
+	sw	$31,28($sp)
+	sw	$fp,24($sp)
+	move	$fp,$sp
+	sw	$4,32($fp)
+	sw	$5,36($fp)
+	lw	$2,32($fp)
+	lw	$3,36($fp)
+	lw	$2,0($2)
+	slt	$2,$3,$2
+	bne	$2,$0,$L13
+	lw	$2,36($fp)
+	sll	$2,$2,4
+	addu	$2,$2,16
+	move	$4,$2
+	jal	alloc
+	sw	$2,16($fp)
+	sw	$0,20($fp)
+$L14:
+	lw	$2,32($fp)
+	lw	$3,20($fp)
+	lw	$2,0($2)
+	slt	$2,$3,$2
+	bne	$2,$0,$L17
+	j	$L15
+$L17:
+	lw	$2,20($fp)
+	sll	$3,$2,3
+	lw	$2,16($fp)
+	addu	$5,$3,$2
+	lw	$4,32($fp)
+	lw	$2,20($fp)
+	sll	$3,$2,3
+	lw	$2,4($4)
+	addu	$2,$3,$2
+	lw	$2,0($2)
+	sw	$2,0($5)
+	lw	$2,20($fp)
+	addu	$2,$2,1
+	sw	$2,20($fp)
+	j	$L14
+$L15:
+	lw	$3,32($fp)
+	lw	$2,36($fp)
+	sll	$2,$2,1
+	addu	$2,$2,2
+	sw	$2,0($3)
+	lw	$3,32($fp)
+	lw	$2,16($fp)
+	sw	$2,4($3)
+$L13:
+	lw	$4,32($fp)
+	lw	$2,36($fp)
+	sll	$3,$2,3
+	lw	$2,4($4)
+	addu	$2,$3,$2
+	addu	$2,$2,4
+	move	$sp,$fp
+	lw	$31,28($sp)
+	lw	$fp,24($sp)
+	addu	$sp,$sp,32
+	j	$31
+	.end	accessIndexType
