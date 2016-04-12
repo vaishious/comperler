@@ -82,12 +82,13 @@ def Translate(instr):
         G.AsmText.AddText(G.INDENT + "lw $ra, %d($sp)"%(stackSpaceRequired-8), "Reload the ra of current call")
         G.AsmText.AddText(G.INDENT + "jr $ra")
 
-    elif instr.instrType.is_IFGOTO() or instr.instrType.is_STRIFGOTO():
+    elif instr.instrType.is_IFGOTO():
         # We can safely clobber registers here because this is the last
         # instruction of the basic block
         if (instr.dest.is_ARRAY_OR_HASH() or 
             instr.inp1.is_ARRAY_OR_HASH() or
-            instr.inp2.is_ARRAY_OR_HASH()):
+            instr.inp2.is_ARRAY_OR_HASH() or
+            instr.opType.is_STRING_OP()):
 
             G.CurrRegAddrTable.DumpDirtyVars()
             G.CurrRegAddrTable.Reset()
@@ -199,20 +200,15 @@ def SetupRegister(inp, regComp, tempReg=REG.t9, useImmediate=False, loadTypeVal=
     return reg
 
 def Translate_IFGOTO(instr):
-    optype = INSTRUCTION.OperationType
-    cmp_ops = [optype.LT, optype.GT, optype.LEQ, optype.GEQ, optype.EQ, optype.NE]
-    
-    DEBUG.Assert(instr.opType.opType in cmp_ops,"Invalid operator for IFGOTO.")
-
-    # If operands are strings
-    if StrTranslate_IFGOTO(instr):
-        return
 
     # Instead of separately handling the cases in which one or both of
     # the operands is a number, load both operands into registers and 
     # operate only on the registers.
     reg1 = SetupRegister(instr.inp1, REG.tmpUsageRegs[0])
-    reg2 = SetupRegister(instr.inp2, REG.tmpUsageRegs[1], useImmediate=True)
+    if instr.opType.is_STRING_OP():
+        reg2 = SetupRegister(instr.inp2, REG.tmpUsageRegs[1])
+    else:
+        reg2 = SetupRegister(instr.inp2, REG.tmpUsageRegs[1], useImmediate=True)
 
     if instr.opType.is_EQ():
         G.AsmText.AddText(G.INDENT + "beq %s, %s, %s"%(reg1, reg2, instr.jmpTarget))
@@ -248,23 +244,33 @@ def Translate_IFGOTO(instr):
             G.AsmText.AddText(G.INDENT + "sge %s, %s, %s"%(reg1, reg1, reg2))
             G.AsmText.AddText(G.INDENT + "bgtz %s, %s"%(reg1, instr.jmpTarget))
 
-def StrTranslate_IFGOTO(instr):
-    if instr.instrType.is_STRIFGOTO():
-        LIB.Translate_StrCmp(instr.inp1,instr.inp2)
-        if instr.opType.is_EQ():
-            G.AsmText.AddText(G.INDENT + "beqz $v0, %s"%(instr.jmpTarget))
-        if instr.opType.is_NE():
-            G.AsmText.AddText(G.INDENT + "bne $v0, %s, %s"%(REG.zero, instr.jmpTarget))
-        elif instr.opType.is_GEQ():
-            G.AsmText.AddText(G.INDENT + "bgez $v0, %s"%(instr.jmpTarget))
-        elif instr.opType.is_LEQ():
-            G.AsmText.AddText(G.INDENT + "blez $v0, %s"%(instr.jmpTarget))
-        elif instr.opType.is_LT():
-            G.AsmText.AddText(G.INDENT + "bgtz $v0, %s"%(instr.jmpTarget))
-        elif instr.opType.is_GT():
-            G.AsmText.AddText(G.INDENT + "bltz $v0, %s"%(instr.jmpTarget))
-        return True
-    return False
+    elif (instr.opType.is_STRLT() or
+          instr.opType.is_STRLE() or
+          instr.opType.is_STRGT() or
+          instr.opType.is_STRGE() or
+          instr.opType.is_STREQ() or
+          instr.opType.is_STRNE()):
+
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a0, reg1))
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a1, reg2))
+        G.AsmText.AddText(G.INDENT + "lw %s, OPCONTROL"%(REG.a2))
+        G.AsmText.AddText(G.INDENT + "jalr %s"%(REG.a2))
+        G.AsmText.AddText(G.INDENT + "lw %s, 16($sp)"%(REG.a0))
+
+        if instr.opType.is_STRLT():
+            G.AsmText.AddText(G.INDENT + "li %s, -1"%(REG.tmpUsageRegs[-1]))
+            G.AsmText.AddText(G.INDENT + "beq %s, %s, %s"%(REG.v0, REG.tmpUsageRegs[-1], instr.jmpTarget))
+        elif instr.opType.is_STRGT():
+            G.AsmText.AddText(G.INDENT + "li %s, 1"%(REG.tmpUsageRegs[-1]))
+            G.AsmText.AddText(G.INDENT + "beq %s, %s, %s"%(REG.v0, REG.tmpUsageRegs[-1], instr.jmpTarget))
+        elif instr.opType.is_STRLE():
+            G.AsmText.AddText(G.INDENT + "blez %s, %s"%(REG.v0, instr.jmpTarget))
+        elif instr.opType.is_STRGE():
+            G.AsmText.AddText(G.INDENT + "bgez %s, %s"%(REG.v0, instr.jmpTarget))
+        elif instr.opType.is_STREQ():
+            G.AsmText.AddText(G.INDENT + "beq %s, $0, %s"%(REG.v0, instr.jmpTarget))
+        elif instr.opType.is_STRNE():
+            G.AsmText.AddText(G.INDENT + "bne %s, $0, %s"%(REG.v0, instr.jmpTarget))
 
 def Translate_ASSIGN(instr):
     if (not instr.opType.is_NONE()) and (not instr.inp2.is_NONE()):
@@ -732,6 +738,24 @@ def Translate_TYPECHECK(instr):
 
         elif instr.opType.is_RSHIFT():
             G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
+
+        elif instr.opType.is_STRLT():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_STRING_RELOP")
+
+        elif instr.opType.is_STRGT():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_STRING_RELOP")
+
+        elif instr.opType.is_STRLE():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_STRING_RELOP")
+
+        elif instr.opType.is_STRGE():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_STRING_RELOP")
+
+        elif instr.opType.is_STREQ():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_STRING_RELOP")
+
+        elif instr.opType.is_STRNE():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_STRING_RELOP")
 
         else:
             raise Exception("%s : Instruction not recognized in Translate_TYPECHECK"%(instr))

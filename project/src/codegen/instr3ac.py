@@ -101,7 +101,7 @@ class OperationType(object):
     """ # Will add more later
 
     # Set up an enum
-    PLUS, MINUS, MULT, DIV, MOD, LT, GT, LEQ, GEQ, EQ, NE, BOR, BAND, BNOT, BXOR, LSHIFT, RSHIFT, REFERENCE, DEREFERENCE, HASH_INDEX_CHECK, ARRAY_INDEX_CHECK, TYPE_EQUAL, NONE = range(23)
+    PLUS, MINUS, MULT, DIV, MOD, LT, GT, LEQ, GEQ, EQ, NE, BOR, BAND, BNOT, BXOR, LSHIFT, RSHIFT, REFERENCE, DEREFERENCE, HASH_INDEX_CHECK, ARRAY_INDEX_CHECK, TYPE_EQUAL, STRLT, STRLE, STRGT, STRGE, STREQ, STRNE, DOT, REPEAT, NONE = range(31)
 
     typeMap = {
                 "+"     : PLUS,          "plus"     : PLUS,
@@ -122,6 +122,11 @@ class OperationType(object):
                 "<<"    : LSHIFT,        "lshift"   : LSHIFT,
                 ">>"    : RSHIFT,        "rshift"   : RSHIFT,
                 "ref"   : REFERENCE,     "$"        : DEREFERENCE,
+                "strlt" : STRLT,         "strle"    : STRLE,
+                "strgt" : STRGT,         "strge"    : STRGE,
+                "streq" : STREQ,         "strcmp"   : STREQ,
+                "strne" : STRNE,         "."        : DOT,
+                "x"     : REPEAT,
                 "hashindexcheck" : HASH_INDEX_CHECK, "arrayindexcheck" : ARRAY_INDEX_CHECK, "type-equal" : TYPE_EQUAL,
                 ""      : NONE
               }
@@ -154,6 +159,14 @@ class OperationType(object):
         if self.is_RSHIFT()      : return ">>"
         if self.is_REFERENCE()   : return "\\"
         if self.is_DEREFERENCE() : return "$"
+        if self.is_STRLT()       : return "strlt"
+        if self.is_STRLE()       : return "strle"
+        if self.is_STRGT()       : return "strgt"
+        if self.is_STRGE()       : return "strge"
+        if self.is_STREQ()       : return "streq"
+        if self.is_STRNE()       : return "strne"
+        if self.is_DOT()         : return "."
+        if self.is_REPEAT()      : return "x"
 
         if self.is_ARRAY_INDEX_CHECK() : return "arrayindexcheck"
         if self.is_HASH_INDEX_CHECK()  : return "hashindexcheck"
@@ -178,11 +191,27 @@ class OperationType(object):
     def is_RSHIFT(self)      : return self.opType == OperationType.RSHIFT
     def is_REFERENCE(self)   : return self.opType == OperationType.REFERENCE
     def is_DEREFERENCE(self) : return self.opType == OperationType.DEREFERENCE
+    def is_STRLT(self)       : return self.opType == OperationType.STRLT
+    def is_STRLE(self)       : return self.opType == OperationType.STRLE
+    def is_STRGT(self)       : return self.opType == OperationType.STRGT
+    def is_STRGE(self)       : return self.opType == OperationType.STRGE
+    def is_STREQ(self)       : return self.opType == OperationType.STREQ
+    def is_STRNE(self)       : return self.opType == OperationType.STRNE
+    def is_DOT(self)         : return self.opType == OperationType.DOT
+    def is_REPEAT(self)      : return self.opType == OperationType.REPEAT
     def is_NONE(self)        : return self.opType == OperationType.NONE
 
     def is_ARRAY_INDEX_CHECK(self) : return self.opType == OperationType.ARRAY_INDEX_CHECK
     def is_HASH_INDEX_CHECK(self)  : return self.opType == OperationType.HASH_INDEX_CHECK
     def is_TYPE_EQUAL(self)        : return self.opType == OperationType.TYPE_EQUAL 
+
+    def is_STRING_OP(self) :
+        return (self.is_STRLT() or
+                self.is_STRLE() or
+                self.is_STRGT() or
+                self.is_STRGE() or
+                self.is_STREQ() or
+                self.is_STRNE())
 
 class Entity(object):
     """ Used to represent the variables/numbers/strings used in the instruction """

@@ -24,18 +24,18 @@ void * typecheck_GENERIC_INT_STRING_3OP(void *src1, void *src2, void *(*op)(void
     OP2_TYPECAST = &dummyFunc;
     OPCONTROL = op;
 
-    if ((type1 != TYPE_INT) && (type2 != TYPE_INT)) {
-        PrintfNormal("Atleast one argument of PLUS has to be an INTEGER");
+    if (((type1 != TYPE_INT) && (type1 != TYPE_STRING)) && ((type2 != TYPE_INT) && (type2 != TYPE_STRING))) {
+        PrintfNormal("Atleast one argument of arithmetic operation has to be an INT/STRING");
         Exit();
     }
 
     if ((type1 != TYPE_INT) && (type1 != TYPE_STRING)) {
-        PrintfNormal("Cannot add %s to an INT", typeMaps[type1]);
+        PrintfNormal("Cannot perform arithmetic operation on %s with a INT/STRING", typeMaps[type1]);
         Exit();
     }
 
     if ((type2 != TYPE_INT) && (type2 != TYPE_STRING)) {
-        PrintfNormal("Cannot add %s to an INT", typeMaps[type2]);
+        PrintfNormal("Cannot perform arithmetic operation on %s with a INT/STRING", typeMaps[type2]);
         Exit();
     }
 
@@ -45,24 +45,57 @@ void * typecheck_GENERIC_INT_STRING_3OP(void *src1, void *src2, void *(*op)(void
     return (void *)TYPE_INT;
 }
 
+void * typecheck_GENERIC_STRING_3OP(void *src1, void *src2, void *(*op)(void *, void *)) {
+    int type1 = (int) src1;
+    int type2 = (int) src2;
+
+    OP1_TYPECAST = &dummyFunc;
+    OP2_TYPECAST = &dummyFunc;
+    OPCONTROL = op;
+
+    if (((type1 != TYPE_INT) && (type1 != TYPE_STRING)) && ((type2 != TYPE_INT) && (type2 != TYPE_STRING))) {
+        PrintfNormal("Atleast one argument of string operation has to be an INT/STRING");
+        Exit();
+    }
+
+    if ((type1 != TYPE_INT) && (type1 != TYPE_STRING)) {
+        PrintfNormal("Cannot perform string operation on %s with a INT/STRING", typeMaps[type1]);
+        Exit();
+    }
+
+    if ((type2 != TYPE_INT) && (type2 != TYPE_STRING)) {
+        PrintfNormal("Cannot perform string operation on %s with a INT/STRING", typeMaps[type2]);
+        Exit();
+    }
+
+    if (type1 == TYPE_INT) { OP1_TYPECAST = &convertINT_TO_STRING; }
+    if (type2 == TYPE_INT) { OP2_TYPECAST = &convertINT_TO_STRING; }
+
+    return (void *)TYPE_STRING;
+}
+
+void * typecheck_STRING_RELOP(void *src1, void *src2) {
+    return (void *)typecheck_GENERIC_STRING_3OP(src1, src2, &op_STRING_CMP);
+}
+
 void * typecheck_INT_PLUS(void *src1, void *src2) {
-	return (void *)typecheck_GENERIC_INT_STRING_3OP(src1, src2, &op_PLUS);
+    return (void *)typecheck_GENERIC_INT_STRING_3OP(src1, src2, &op_PLUS);
 }
 
 void * typecheck_INT_MINUS(void *src1, void *src2) {
-	return (void *)typecheck_GENERIC_INT_STRING_3OP(src1, src2, &op_MINUS);
+    return (void *)typecheck_GENERIC_INT_STRING_3OP(src1, src2, &op_MINUS);
 }
 
 void * typecheck_INT_MULT(void *src1, void *src2) {
-	return (void *)typecheck_GENERIC_INT_STRING_3OP(src1, src2, &op_MULT);
+    return (void *)typecheck_GENERIC_INT_STRING_3OP(src1, src2, &op_MULT);
 }
 
 void * typecheck_INT_DIV(void *src1, void *src2) {
-	return (void *)typecheck_GENERIC_INT_STRING_3OP(src1, src2, &op_DIV);
+    return (void *)typecheck_GENERIC_INT_STRING_3OP(src1, src2, &op_DIV);
 }
 
 void * typecheck_INT_MOD(void *src1, void *src2) {
-	return (void *)typecheck_GENERIC_INT_STRING_3OP(src1, src2, &op_MOD);
+    return (void *)typecheck_GENERIC_INT_STRING_3OP(src1, src2, &op_MOD);
 }
 
 void * typecheck_HASH_INDEX_CHECK(void *typeIndex) {

@@ -602,7 +602,7 @@ class Parser(object):
 
         p[0].place = IR.TempVar()
         p[0].typePlace = IR.TempTypeVar()
-        p[0].code = p[1].code | p[3].code | IR.GenCode("typecheck, %s, %s, %s"%(op[p[2]], p[1].typePlace, p[3].typePlace)) | IR.GenCode("typeassign, %s, %d"%(p[0].typePlace, TYPE_STRING)) | IR.GenCode("=, %s, %s, %s, %s"%(op[p[2]], p[0].place, p[1].place, p[3].place))
+        p[0].code = p[1].code | p[3].code | IR.GenCode("typecheckassign, %s, %s, %s, %s"%(op[p[2]], p[0].typePlace, p[1].typePlace, p[3].typePlace)) | IR.GenCode("=, %s, %s, %s, %s"%(op[p[2]], p[0].place, p[1].place, p[3].place))
 
     def p_string_boolean_op(self, p):
         ''' string-boolean-expression : string-expression STRLT string-expression
@@ -642,7 +642,7 @@ class Parser(object):
         p[0].typePlace = IR.TempTypeVar()
 
         p[0].code = p[1].code | p[3].code
-        p[0].code = p[0].code | IR.GenCode("typecheck, %s, %s, %s"%('str'+p[2], p[1].typePlace, p[3].typePlace))
+        p[0].code = p[0].code | IR.GenCode("typecheckassign, %s, %s, %s, %s"%('str'+p[2], p[0].typePlace, p[1].typePlace, p[3].typePlace))
         p[0].truelist = IR.MakeList(IR.NextInstr)
         p[0].code = p[0].code | IR.GenCode("ifgoto, %s, %s, %s, LABEL#REQUIRED"%('str'+p[2], p[1].place, p[3].place))
 
