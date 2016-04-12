@@ -31,28 +31,58 @@ convertSTRING_TO_INT:
 	lw	$2,24($fp)
 	sw	$2,0($fp)
 	sw	$0,4($fp)
+	sw	$0,8($fp)
+	lw	$2,0($fp)
+	lb	$3,0($2)
+	li	$2,45			# 0x2d
+	bne	$3,$2,$L3
+	li	$2,1			# 0x1
+	sw	$2,4($fp)
+	lw	$2,0($fp)
+	addu	$2,$2,1
+	sw	$2,0($fp)
+	j	$L4
 $L3:
 	lw	$2,0($fp)
+	lb	$3,0($2)
+	li	$2,43			# 0x2b
+	bne	$3,$2,$L4
+	sw	$0,4($fp)
+	lw	$2,0($fp)
+	addu	$2,$2,1
+	sw	$2,0($fp)
+$L4:
+	.set	noreorder
+	nop
+	.set	reorder
+$L6:
+	lw	$2,0($fp)
 	lb	$2,0($2)
-	bne	$2,$0,$L5
-	j	$L4
-$L5:
+	bne	$2,$0,$L8
+	j	$L7
+$L8:
 	lw	$2,0($fp)
 	lb	$2,0($2)
 	slt	$2,$2,58
-	beq	$2,$0,$L7
+	beq	$2,$0,$L10
 	lw	$2,0($fp)
 	lb	$2,0($2)
 	slt	$2,$2,48
-	bne	$2,$0,$L7
-	j	$L6
-$L7:
-	sw	$0,4($fp)
-	lw	$2,4($fp)
-	sw	$2,8($fp)
-	j	$L2
-$L6:
+	bne	$2,$0,$L10
+	j	$L9
+$L10:
 	lw	$3,4($fp)
+	li	$2,1			# 0x1
+	bne	$3,$2,$L11
+	lw	$2,8($fp)
+	subu	$2,$0,$2
+	sw	$2,8($fp)
+$L11:
+	lw	$2,8($fp)
+	sw	$2,12($fp)
+	j	$L2
+$L9:
+	lw	$3,8($fp)
 	move	$2,$3
 	sll	$2,$2,2
 	addu	$2,$2,$3
@@ -61,16 +91,23 @@ $L6:
 	lb	$2,0($2)
 	addu	$2,$3,$2
 	addu	$2,$2,-48
-	sw	$2,4($fp)
+	sw	$2,8($fp)
 	lw	$2,0($fp)
 	addu	$2,$2,1
 	sw	$2,0($fp)
-	j	$L3
-$L4:
-	lw	$2,4($fp)
-	sw	$2,8($fp)
-$L2:
+	j	$L6
+$L7:
+	lw	$3,4($fp)
+	li	$2,1			# 0x1
+	bne	$3,$2,$L12
 	lw	$2,8($fp)
+	subu	$2,$0,$2
+	sw	$2,8($fp)
+$L12:
+	lw	$2,8($fp)
+	sw	$2,12($fp)
+$L2:
+	lw	$2,12($fp)
 	move	$sp,$fp
 	lw	$fp,16($sp)
 	addu	$sp,$sp,24

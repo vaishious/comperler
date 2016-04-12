@@ -10,16 +10,31 @@ void *dummyFunc(void *arg) {
 
 void *convertSTRING_TO_INT(void *arg) {
     char *str = (char *)arg;
+	int negative = 0;
     int val = 0;
+	if (*str == '-') {
+		negative = 1;
+		str++;
+	}
+	else if (*str == '+') {
+		negative = 0;
+		str++;
+	}
+
     while (*str != 0) {
         if (*str > '9' || *str < '0') {
-            val = 0;
+			if (negative == 1) {
+				val = -val;
+			}
             return (void *)val;
         }
         val = 10*val + ((int)(*str - '0'));
         str++;
     }
 
+	if (negative == 1) {
+		val = -val;
+	}
     return (void *)val;
 }
 
