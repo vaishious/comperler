@@ -97,13 +97,13 @@ def Translate(instr):
         Translate_IFGOTO(instr)
 
     elif instr.instrType.is_ASSIGN():
-        if (instr.dest.is_ARRAY_OR_HASH() or 
-            instr.inp1.is_ARRAY_OR_HASH() or
-            instr.inp2.is_ARRAY_OR_HASH()):
+        #if (instr.dest.is_ARRAY_OR_HASH() or 
+            #instr.inp1.is_ARRAY_OR_HASH() or
+            #instr.inp2.is_ARRAY_OR_HASH()):
 
-            G.CurrRegAddrTable.DumpDirtyVars()
-            G.CurrRegAddrTable.Reset()
-            G.AllocMap = {}
+        G.CurrRegAddrTable.DumpDirtyVars()
+        G.CurrRegAddrTable.Reset()
+        G.AllocMap = {}
 
         Translate_ASSIGN(instr)
 
@@ -115,9 +115,13 @@ def Translate(instr):
         Translate_TYPECHECK(instr)
 
     elif instr.instrType.is_TYPEASSIGN():
-        G.CurrRegAddrTable.DumpDirtyVars()
-        G.CurrRegAddrTable.Reset()
-        G.AllocMap = {}
+        if (instr.dest.is_ARRAY_OR_HASH() or 
+            instr.inp1.is_ARRAY_OR_HASH() or
+            instr.inp2.is_ARRAY_OR_HASH()):
+
+            G.CurrRegAddrTable.DumpDirtyVars()
+            G.CurrRegAddrTable.Reset()
+            G.AllocMap = {}
 
         Translate_TYPEASSIGN(instr)
 
@@ -128,7 +132,7 @@ def Translate(instr):
 
         Translate_TYPECHECKASSIGN(instr)
 
-def SetupRegister(inp, regComp, tempReg=REG.t9, useImmediate=False):
+def SetupRegister(inp, regComp, tempReg=REG.t9, useImmediate=False, loadTypeVal=False):
     # Setup the input in a register, using regComp, if required
 
     reg = None
@@ -168,7 +172,11 @@ def SetupRegister(inp, regComp, tempReg=REG.t9, useImmediate=False):
             regInp = SetupRegister(inp.key, regComp)
             G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp), "Load index for the array access")
 
-        LIB.Translate_getArrayValue(inp, tempReg, regComp)
+        if loadTypeVal:
+            LIB.Translate_getArrayValueType(inp, tempReg, regComp)
+        else:
+            LIB.Translate_getArrayValue(inp, tempReg, regComp)
+
         reg = regComp
 
     elif inp.is_HASH_VARIABLE():
@@ -180,7 +188,11 @@ def SetupRegister(inp, regComp, tempReg=REG.t9, useImmediate=False):
             regInp = SetupRegister(inp.key, regComp)
             G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp), "Load key for the hash access")
 
-        LIB.Translate_getHashValue(inp, tempReg, regComp) 
+        if loadTypeVal:
+            LIB.Translate_getHashValueType(inp, tempReg, regComp) 
+        else:
+            LIB.Translate_getHashValue(inp, tempReg, regComp) 
+
         reg = regComp
 
     DEBUG.Assert(reg, "Line %d: Unable to setup register for %s."%(G.CurrInstruction.lineID, str(inp.value)))
@@ -290,8 +302,7 @@ def Translate_ASSIGN(instr):
             SetupDestRegHash(instr.dest, regComp, tempReg) # The value of key is stored in tempReg
             GenCode_3OPASSIGN(instr, regComp, reg1, reg2)
 
-            LIB.Translate_alloc(reg1) # Hack for now. Everything has been dumped anyway
-            G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(regComp, reg1), "Load value into allocated memory")
+            G.AsmText.AddText(G.INDENT + "move %s, %s"%(reg1, regComp), "Load hash value")
 
             LIB.Translate_addElement(instr.dest, tempReg, reg1) 
 
@@ -340,8 +351,7 @@ def Translate_ASSIGN(instr):
                 reg1 = SetupRegister(instr.inp1, REG.tmpUsageRegs[0])
                 G.AsmText.AddText(G.INDENT + "move %s, %s"%(regComp, reg1))
 
-            LIB.Translate_alloc(REG.tmpUsageRegs[0])
-            G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(regComp, REG.tmpUsageRegs[0]), "Load value into allocated memory")
+            G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.tmpUsageRegs[0], regComp), "Load hash value")
 
             LIB.Translate_addElement(instr.dest, tempReg, REG.tmpUsageRegs[0]) 
 
@@ -376,8 +386,7 @@ def Translate_ASSIGN(instr):
             SetupDestRegHash(instr.dest, regComp, tempReg) # The value of key is stored in tempReg
             GenCode_2OPASSIGN(instr, regComp, reg1)
 
-            LIB.Translate_alloc(REG.tmpUsageRegs[1])
-            G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(regComp, REG.tmpUsageRegs[1]), "Load value into allocated memory")
+            G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.tmpUsageRegs[1], regComp), "Load value into allocated memory")
 
             LIB.Translate_addElement(instr.dest, tempReg, REG.tmpUsageRegs[1])
 
@@ -385,8 +394,14 @@ def Translate_ASSIGN(instr):
 def GenCode_3OPASSIGN(instr, regDest, regInp1, regInp2):
     # Currently ignoring overflows everywhere
     if instr.opType.is_PLUS():
-        G.AsmText.AddText(G.INDENT + "addu %s, %s, %s"%(regDest, regInp1, regInp2),
-                                     "%s = %s + %s"%(instr.dest, instr.inp1, instr.inp2))
+        #G.AsmText.AddText(G.INDENT + "addu %s, %s, %s"%(regDest, regInp1, regInp2),
+                                     #"%s = %s + %s"%(instr.dest, instr.inp1, instr.inp2))
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a0, regInp1))
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a1, regInp2))
+        G.AsmText.AddText(G.INDENT + "lw %s, OPCONTROL"%(REG.a2))
+        G.AsmText.AddText(G.INDENT + "jalr %s"%(REG.a2))
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(regDest, REG.v0))
+        G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
 
     elif instr.opType.is_MINUS():
         G.AsmText.AddText(G.INDENT + "subu %s, %s, %s"%(regDest, regInp1, regInp2),
@@ -535,14 +550,17 @@ def SetupDestRegScalar(dest, tmpReg=REG.tmpUsageRegs[-1]):
     return SetupRegister(dest, tmpReg)
 
 
-def SetupDestRegArray(dest, regComp, tempReg=REG.tmpUsageRegs[-1]):
+def SetupDestRegArray(dest, regComp, tempReg=REG.tmpUsageRegs[-1], loadTypeVal=False):
     if dest.key.is_NUMBER():
         G.AsmText.AddText(tempReg.LoadImmediate(dest.key.value), "Load index for array access")
     else:
         regInp = SetupRegister(dest.key, regComp)
         G.AsmText.AddText(G.INDENT + "move %s, %s"%(tempReg, regInp), "Load index for array access")
 
-    LIB.Translate_getArrayIndexAddress(dest, tempReg, regComp)
+    if loadTypeVal:
+        LIB.Translate_getArrayIndexAddressType(dest, tempReg, regComp)
+    else:
+        LIB.Translate_getArrayIndexAddress(dest, tempReg, regComp)
 
 def SetupDestRegHash(dest, regComp, tempReg=REG.tmpUsageRegs[-1]):
     if dest.key.is_NUMBER():
@@ -553,15 +571,90 @@ def SetupDestRegHash(dest, regComp, tempReg=REG.tmpUsageRegs[-1]):
 
 
 def Translate_TYPECHECKASSIGN(instr):
-    reg1 = SetupRegister(instr.inp1, REG.tmpUsageRegs[0])
-    reg2 = SetupRegister(instr.inp2, REG.tmpUsageRegs[1])
-    G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a0, reg1))
-    G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a1, reg2))
-    G.AsmText.AddText(G.INDENT + "jal typecheck_PLUS")
+    tempReg = REG.tmpUsageRegs[-1]
+    regComp = REG.tmpUsageRegs[2]
+
+    reg1 = SetupRegister(instr.inp1, REG.tmpUsageRegs[0], loadTypeVal=True)
+    reg2 = SetupRegister(instr.inp2, REG.tmpUsageRegs[1], loadTypeVal=True)
+
+    if instr.dest.is_SCALAR_VARIABLE():
+        reg = SetupDestRegScalar(instr.dest, tempReg)
+        Translate_TYPECHECK(instr)
+        if reg == tempReg:
+            G.AsmText.AddText(G.INDENT + "sw %s, %s"%(REG.v0, ASM.GetVarAddr(instr.dest)))
+        else:
+            G.AsmText.AddText(G.INDENT + "move %s, %s"%(reg, REG.v0))
+
+    elif instr.dest.is_ARRAY_VARIABLE():
+        SetupDestRegArray(instr.dest, regComp, tempReg, loadTypeVal=True)
+        Translate_TYPECHECK(instr)
+        G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(REG.v0, regComp))
+
+    elif instr.dest.is_HASH_VARIABLE():
+        SetupDestRegHash(instr.dest, regComp, tempReg) # Key is stored in tempReg
+        Translate_TYPECHECK(instr)
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(regComp, REG.v0))
+        LIB.Translate_addElementType(instr.dest, tempReg, regComp)
 
 def Translate_TYPEASSIGN(instr):
-    reg1 = SetupRegister(instr.inp1, REG.tmpUsageRegs[0])
-    G.AsmText.AddText(G.INDENT + "sw %s, %s"%(reg1, ASM.GetVarAddr(instr.dest)), "Store it back")
+    tempReg = REG.tmpUsageRegs[-1]
+    regComp = REG.tmpUsageRegs[2]
+    if instr.opType.is_NONE():
+        reg1 = SetupRegister(instr.inp1, REG.tmpUsageRegs[0], loadTypeVal=True)
 
+    elif instr.opType.is_REFERENCE():
+        reg1 = REG.tmpUsageRegs[0]
+        if instr.inp1.is_SCALAR_VARIABLE():
+            G.AsmText.AddText(G.INDENT + "la %s, %s"%(reg1, ASM.GetVarAddr(instr.inp1)))
+        elif instr.inp1.is_ARRAY_VARIABLE():
+            SetupDestRegArray(instr.inp1, reg1, tempReg, loadTypeVal=True)
 
+    elif instr.opType.is_DEREFERENCE():
+        reg1 = SetupRegister(instr.inp1, REG.tmpUsageRegs[0], loadTypeVal=True)
+        G.AsmText.AddText(G.INDENT + "lw %s, 0(%s)"%(reg1, reg1))
+
+    if instr.dest.is_SCALAR_VARIABLE():
+        reg = SetupDestRegScalar(instr.dest, tempReg)
+        if reg == tempReg:
+            G.AsmText.AddText(G.INDENT + "sw %s, %s"%(reg1, ASM.GetVarAddr(instr.dest)), "Store it back")
+        else:
+            G.AsmText.AddText(G.INDENT + "move %s, %s"%(reg, reg1))
+
+    elif instr.dest.is_ARRAY_VARIABLE():
+        SetupDestRegArray(instr.dest, regComp, tempReg, loadTypeVal=True)
+        G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(reg1, regComp))
+
+    elif instr.dest.is_HASH_VARIABLE():
+        SetupDestRegHash(instr.dest, regComp, tempReg) # Key is stored in tempReg
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(regComp, reg1))
+        LIB.Translate_addElementType(instr.dest, tempReg, regComp)
+
+def Translate_TYPECHECK(instr):
+    tempReg = REG.tmpUsageRegs[-1]
+    regComp = REG.tmpUsageRegs[2]
+
+    reg1 = SetupRegister(instr.inp1, REG.tmpUsageRegs[0], loadTypeVal=True)
+    if instr.inp2.is_NONE():
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a0, reg1))
+        if instr.opType.is_HASH_INDEX_CHECK() : 
+            G.AsmText.AddText(G.INDENT + "jal typecheck_HASH_INDEX_CHECK")
+        elif instr.opType.is_ARRAY_INDEX_CHECK(): 
+            G.AsmText.AddText(G.INDENT + "jal typecheck_ARRAY_INDEX_CHECK")
+        else:
+            raise Exception("%s : Instruction not recognized in Translate_TYPECHECK"%(instr))
+            
+        G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
+
+    else:
+        reg2 = SetupRegister(instr.inp2, REG.tmpUsageRegs[1], loadTypeVal=True)
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a0, reg1))
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a1, reg2))
+        if instr.opType.is_PLUS():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_PLUS")
+        elif instr.opType.is_TYPE_EQUAL():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_TYPE_EQUAL")
+        else:
+            raise Exception("%s : Instruction not recognized in Translate_TYPECHECK"%(instr))
+
+        G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
 

@@ -44,10 +44,6 @@ class DataRegion(object):
         self.stringSet = {}
         self.stringCnt = 0
 
-        self.errorMessages = {
-                "TYPE_ERROR_PLUS" : "Sorry, both quantities have to be integers\n"
-                }
-
         for func, record in funcActRecords.items():
             if func == "main":
                 for var in record.varLocationMap:
@@ -101,10 +97,8 @@ class DataRegion(object):
             dataText += ".align 2\n"
             dataText += "%s : .word 0\n\n"%(var)
 
-        dataText += "\n# ERROR MESSAGES\n"
-        for (label, string) in self.errorMessages.items():
-            dataText += ".align 2\n"
-            dataText += "%s : .asciiz \"%s\"\n"%(label, string)
+        dataText += "\n# Library Static Data\n"
+        dataText += LIB.LinkLibData()
 
         filePtr.write(dataText + "\n")
 
@@ -127,6 +121,10 @@ class TextRegion(object):
             self.text += '{:<30} # {}'.format(text, sideComment)
         else:
             self.text += text
+
+        if "jal " in text:
+            G.LibraryFunctionsUsed.add(text.split(" ")[-1])
+
         self.text += "\n"
 
     def AddComment(self, comment):
@@ -152,6 +150,11 @@ class TextRegion(object):
             loadSegment += G.INDENT + "sw $fp, %d($sp)\n"%(stackSpaceRequired-4)
             loadSegment += G.INDENT + "sw $ra, %d($sp)\n"%(stackSpaceRequired-8)
             loadSegment += G.INDENT + "move $fp, $sp\n"
+
+            if func == "main":
+                loadSegment += G.INDENT + "la $t9, %s\n"%("dummyFunc")
+                loadSegment += G.INDENT + "sw $t9, %s\n"%("OP1_TYPECAST")
+                loadSegment += G.INDENT + "sw $t9, %s\n"%("OP2_TYPECAST")
 
             self.text = self.text.replace("%s:\n"%(func), loadSegment)
 

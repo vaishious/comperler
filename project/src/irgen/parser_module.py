@@ -202,9 +202,13 @@ class Parser(object):
 
         p[0].place = p[3].place
         p[0].typePlace = p[3].typePlace
+        listIndex = 1
         for (index, ir) in enumerate(listCode):
             ir.code = ir.code.replace('#tempVarArrayName', p[0].place)
-            ir.code = ir.code.replace('#IndexRequired', str(index+1))
+            ir.code = ir.code.replace('#IndexRequired', str(listIndex))
+
+            if not "typeassign" in ir.code:
+                listIndex += 1
 
         p[0].code = p[2].code | p[3].code | IR.GenCode("typeassign, %s[0], %s"%(p[0].place, p[2].typePlace)) | IR.GenCode("=, %s[0], %s"%(p[0].place, p[2].place)) | p[4].code
 
@@ -238,14 +242,14 @@ class Parser(object):
 
             p[0].place = IR.TempVarHash()
             p[0].typePlace = IR.TempTypeVar()
-            p[0].code = p[1].code | p[3].code | IR.GenCode("declare, hash, %s"%(p[0].place)) | IR.GenCode("typeassign, %s, %d"%(p[0].typePlace, TYPE_HASH)) | IR.GenCode("=, %s{%s}, %s"%(p[0].place, p[1].place, p[3].place))
+            p[0].code = p[1].code | p[3].code | IR.GenCode("declare, hash, %s"%(p[0].place)) | IR.GenCode("typeassign, %s, %d"%(p[0].typePlace, TYPE_HASH)) | IR.GenCode("typecheck, hashindexcheck, %s"%(p[1].typePlace)) | IR.GenCode("typeassign, %s{%s}, %s"%(p[0].place, p[1].place, p[3].typePlace)) | IR.GenCode("=, %s{%s}, %s"%(p[0].place, p[1].place, p[3].place))
         else:
             if p[3].isConstantNumeric == True:
                 p[3].place = "\"" + p[3].place + "\""
 
             p[0].place = p[1].place 
             p[0].typePlace = p[1].typePlace
-            p[0].code = p[1].code | p[3].code | p[5].code | IR.GenCode("typeassign, %s{%s}, %s"%(p[1].place, p[3].place, p[5].typePlace)) | IR.GenCode("=, %s{%s}, %s"%(p[1].place, p[3].place, p[5].place))
+            p[0].code = p[1].code | p[3].code | p[5].code | IR.GenCode("typecheck, hashindexcheck, %s"%(p[3].typePlace)) | IR.GenCode("typeassign, %s{%s}, %s"%(p[1].place, p[3].place, p[5].typePlace)) | IR.GenCode("=, %s{%s}, %s"%(p[1].place, p[3].place, p[5].place))
 
     def p_arith_bool_string_expression(self, p):
         ''' arith-bool-string-expression : arith-boolean-expression
@@ -1181,7 +1185,7 @@ class Parser(object):
         for i in xrange(depthDeref):
             p[0].place = IR.TempVar()
             p[0].typePlace = IR.TempTypeVar()
-            p[0].code = p[0].code | IR.GenCode("type, $, %s, %s"%(p[0].typePlace, targetType)) | IR.GenCode("=, $, %s, %s"%(p[0].place, targetVar))
+            p[0].code = p[0].code | IR.GenCode("typeassign, $, %s, %s"%(p[0].typePlace, targetType)) | IR.GenCode("=, $, %s, %s"%(p[0].place, targetVar))
             targetVar = p[0].place
             targetType = p[0].typePlace
 
@@ -1219,6 +1223,12 @@ class Parser(object):
             if (p[0].nextlist != []):
                 IR.BackPatch(p[0].nextlist, IR.NextInstr)
                 p[0].code = p[0].code | IR.GenCode("nop")
+
+            if p[1] == '{':
+                p[0].code = p[0].code | IR.GenCode("typecheck, hashindexcheck, %s"%(p[2].typePlace)) | IR.GenCode("typecheck, type-equal, %s, %d"%(p[-2].typePlace, TYPE_HASH))
+            else:
+                p[0].code = p[0].code | IR.GenCode("typecheck, arrayindexcheck, %s"%(p[2].typePlace)) | IR.GenCode("typecheck, type-equal, %s, %d"%(p[-2].typePlace, TYPE_ARRAY))
+
         else:
             IR.BackPatch(p[2].nextlist, p[-2].instr)
 
@@ -1228,6 +1238,10 @@ class Parser(object):
             p[0].key = p[2].place
             p[0].accessType = p[1]
             p[0].code = p[2].code | p[-1].code
+            if p[1] == '{':
+                p[0].code = p[0].code | IR.GenCode("typecheck, hashindexcheck, %s"%(p[2].typePlace)) | IR.GenCode("typecheck, type-equal, %s, %d"%(p[-1].typePlace, TYPE_HASH))
+            else:
+                p[0].code = p[0].code | IR.GenCode("typecheck, arrayindexcheck, %s"%(p[2].typePlace)) | IR.GenCode("typecheck, type-equal, %s, %d"%(p[-1].typePlace, TYPE_ARRAY))
 
     def p_arrow(self, p):
         ''' arrow : ARROW '''
@@ -1240,7 +1254,7 @@ class Parser(object):
 
         p[0].place = IR.TempVar()
         p[0].typePlace = IR.TempTypeVar()
-        p[0].code = p[-2].code | IR.GenCode("type, $, %s, %s"%(p[0].typePlace, p[-2].typePlace)) | IR.GenCode("=, $, %s, %s"%(p[0].place, p[-2].place))
+        p[0].code = p[-2].code | IR.GenCode("typeassign, $, %s, %s"%(p[0].typePlace, p[-2].typePlace)) | IR.GenCode("=, $, %s, %s"%(p[0].place, p[-2].place))
         p[0].isArrowOp = True
  
     def p_access_error(self, p):
@@ -1288,7 +1302,7 @@ class Parser(object):
 
         p[0].place = IR.TempVar()
         p[0].typePlace = IR.TempTypeVar()
-        p[0].code = IR.GenCode("type, ref, %s, %s"%(p[0].typePlace, p[0].symEntry.typePlace)) | IR.GenCode("=, ref, %s, %s"%(p[0].place, p[0].symEntry.place))
+        p[0].code = IR.GenCode("typeassign, ref, %s, %s"%(p[0].typePlace, p[0].symEntry.typePlace)) | IR.GenCode("=, ref, %s, %s"%(p[0].place, p[0].symEntry.place))
 
     def p_variable(self, p):
         ''' variable : var-lhs MARK-check-declaration
@@ -1492,7 +1506,7 @@ class Parser(object):
         p[0] = IR.Attributes()
         p[0].place = IR.TempVar()
         p[0].typePlace = IR.TempTypeVar()
-        p[0].code = IR.GenCode("type, %s, %s"%(p[0].typePlace, p[-1].typePlace)) | IR.GenCode("=, %s, %s"%(p[0].place, p[-1].place))
+        p[0].code = IR.GenCode("typeassign, %s, %s"%(p[0].typePlace, p[-1].typePlace)) | IR.GenCode("=, %s, %s"%(p[0].place, p[-1].place))
 
     def p_ternary_operator(self, p):
         ''' ternary-op : boolean-expression TERNARY_CONDOP MARK-backpatch usable-expression MARK-ternary-assignment1 MARK-backpatch-nextlist COLON MARK-backpatch usable-expression 
@@ -1510,7 +1524,7 @@ class Parser(object):
 
             p[0].nextlist = IR.Merge(p[6].nextlist, p[9].nextlist)
 
-            p[0].code = p[1].code | p[4].code | p[5].code | p[6].code | p[9].code | IR.GenCode("type, %s, %s"%(p[5].typePlace, p[9].typePlace)) | IR.GenCode("=, %s, %s"%(p[5].place, p[9].place))
+            p[0].code = p[1].code | p[4].code | p[5].code | p[6].code | p[9].code | IR.GenCode("typeassign, %s, %s"%(p[5].typePlace, p[9].typePlace)) | IR.GenCode("=, %s, %s"%(p[5].place, p[9].place))
 
     # Build the parser
     # error_seen decides if we should print the .html file or not at the end

@@ -8,10 +8,18 @@
  */
 
 #define NULL 0
+#define TYPE_UNKNOWN 0
+#define TYPE_STRING 1
+#define TYPE_INT 2
+#define TYPE_ARRAY 3
+#define TYPE_HASH 4
+
+extern void *(*OP1_TYPECAST)(void *);
 
 typedef struct Element {
     char *key;	// Should be NULL terminated
     void *valRef;
+    int type;
     struct Element *next;
 } Element;
 
@@ -48,8 +56,35 @@ Hash *initHash()
     return hashPtr;
 }
 
-int addElement(Hash *hashPtr, char *key, void *valRef)
+int addElementType(Hash *hashPtr, void *inpKey, void *valType)
 {
+    char *key = (char *)OP1_TYPECAST(inpKey);
+    Element *elemPtr;
+
+    if((elemPtr = findMatch(hashPtr, key))) {
+        elemPtr->key = key;
+        elemPtr->type = valType;
+        return 0;
+    }
+
+    elemPtr = (Element *)alloc(sizeof(Element));
+    elemPtr->key = key;
+    elemPtr->type = valType;
+    elemPtr->next = 0;
+    if(hashPtr->length == 0)
+            hashPtr->first = hashPtr->last = elemPtr;
+    else {
+            hashPtr->last->next = elemPtr;
+            hashPtr->last = elemPtr;
+    }
+    hashPtr->length++;
+    return 0;
+}
+
+int addElement(Hash *hashPtr, void *inpKey, void *valRef)
+{
+    char *key = (char *)OP1_TYPECAST(inpKey);
+
     Element *elemPtr;
     if((elemPtr = findMatch(hashPtr, key))) {
         elemPtr->key = key;
@@ -71,12 +106,32 @@ int addElement(Hash *hashPtr, char *key, void *valRef)
     return 0;
 }
 
-void *getHashValue(Hash *hashPtr, char *key, char *message)
+void *getHashValue(Hash *hashPtr, void *inpKey)
 {
+    char *key = (char *)OP1_TYPECAST(inpKey);
     Element *elemPtr;
     if((elemPtr = findMatch(hashPtr, key)))
             return elemPtr->valRef;
 
-    // Raise an exception
-    ExitWithMessage(message, key);
+    // Add an element yourself
+    addElement(hashPtr, inpKey, (void *)0); 
+    addElementType(hashPtr, inpKey, (void *)TYPE_INT);
+
+    if((elemPtr = findMatch(hashPtr, key)))
+            return elemPtr->valRef;
+}
+
+void *getHashValueType(Hash *hashPtr, void *inpKey)
+{
+    char *key = (char *)OP1_TYPECAST(inpKey);
+    Element *elemPtr;
+    if((elemPtr = findMatch(hashPtr, key)))
+            return elemPtr->type;
+
+    // Add an element yourself
+    addElement(hashPtr, inpKey, (void *)0); 
+    addElementType(hashPtr, inpKey, (void *)TYPE_INT);
+
+    if((elemPtr = findMatch(hashPtr, key)))
+            return elemPtr->type;
 }

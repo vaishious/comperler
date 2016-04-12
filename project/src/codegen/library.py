@@ -44,6 +44,38 @@ def LinkFunction(funcName):
 
     raise Exception("Did not find function : " + funcName)
 
+def LinkLibData():
+    codeData = ""
+    insideData = False
+    for fileName in G.LIBSRC:
+        with open(os.path.dirname(__file__) + "/" + fileName, 'r') as f:
+            for line in f:
+                if (".text" in line):
+                    insideData = False
+                    continue
+
+                if (".rdata" in line) or (".sdata" in line) or (".data" in line):
+                    insideData = True
+                    continue
+
+                if insideData:
+                    finalLine = line
+                    if ".ascii" in finalLine:
+                        finalLine = finalLine.replace(".ascii", ".asciiz")
+                        finalLine = finalLine.replace("\\000", "")
+
+                    codeData += finalLine
+
+    return codeData
+
+def AddEssentialLibraries():
+    for fileName in G.EssentialLibraries:
+        with open(os.path.dirname(__file__) + "/" + fileName, 'r') as f:
+            for line in f:
+                if ".ent" in line:
+                    G.LibraryFunctionsUsed.add(line.split("\t")[-1][:-1])
+
+
 def Translate_Printf(parameter):
     """ Custom version of Printf can be found in iolib.c in the lib/ folder """
 
@@ -137,6 +169,23 @@ def Translate_getArrayValue(targetVar, idxRegister, targetReg):
     G.LibraryFunctionsUsed.add("lengthOfArray")
     G.LibraryFunctionsUsed.add("ExitWithMessage")
 
+def Translate_getArrayValueType(targetVar, idxRegister, targetReg):
+    """ Array implementation can be found in arraylib.c in the lib/ folder """
+
+    DEBUG.Assert(targetVar.is_ARRAY_VARIABLE(), "Argument of getValue should be an array pointer")
+
+    G.AsmText.AddText(targetVar.CopyToRegister(REG.argRegs[0])[:-1])
+    G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[1], idxRegister))
+
+    G.AsmText.AddText(G.INDENT + "jal accessIndexType", "Searching for value in array")
+    G.AsmText.AddText(G.INDENT + "lw %s, 0(%s)"%(targetReg, REG.v0), "Store result back into a designated register")
+    G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
+
+    # Add library for linking
+    G.LibraryFunctionsUsed.add("accessIndexType")
+    G.LibraryFunctionsUsed.add("lengthOfArray")
+    G.LibraryFunctionsUsed.add("ExitWithMessage")
+
 def Translate_getArrayIndexAddress(targetVar, idxRegister, targetReg):
     """ Array implementation can be found in arraylib.c in the lib/ folder """
 
@@ -154,25 +203,57 @@ def Translate_getArrayIndexAddress(targetVar, idxRegister, targetReg):
     G.LibraryFunctionsUsed.add("lengthOfArray")
     G.LibraryFunctionsUsed.add("ExitWithMessage")
 
+def Translate_getArrayIndexAddressType(targetVar, idxRegister, targetReg):
+    """ Array implementation can be found in arraylib.c in the lib/ folder """
+
+    DEBUG.Assert(targetVar.is_ARRAY_VARIABLE(), "Argument of getValue should be an array pointer")
+
+    G.AsmText.AddText(targetVar.CopyToRegister(REG.argRegs[0])[:-1])
+    G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[1], idxRegister))
+
+    G.AsmText.AddText(G.INDENT + "jal accessIndexType", "Searching for address in array")
+    G.AsmText.AddText(G.INDENT + "move %s, %s"%(targetReg, REG.v0), "Store result back into a designated register")
+    G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
+
+    # Add library for linking
+    G.LibraryFunctionsUsed.add("accessIndexType")
+    G.LibraryFunctionsUsed.add("lengthOfArray")
+    G.LibraryFunctionsUsed.add("ExitWithMessage")
+
 def Translate_getHashValue(targetVar, idxRegister, targetReg):
     """ Hash implementation can be found in hashlib.c in the lib/ folder """
 
     DEBUG.Assert(targetVar.is_HASH_VARIABLE(), "Argument of getValue should be a hash pointer")
-    G.AsmData.AllocateString(G.HashKeyError)
 
     G.AsmText.AddText(targetVar.CopyToRegister(REG.argRegs[0])[:-1])
 
     G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[1], idxRegister), "Load key")
 
-    G.AsmText.AddText(G.HashKeyError.CopyAddressToRegister(REG.argRegs[3])[:-1])
-
     G.AsmText.AddText(G.INDENT + "jal getHashValue", "Searching for value in hash")
-    G.AsmText.AddText(G.INDENT + "lw %s, 0(%s)"%(targetReg, REG.v0), "Store result back into a designated register")
+    G.AsmText.AddText(G.INDENT + "move %s, %s"%(targetReg, REG.v0), "Store result back into a designated register")
     G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
 
     # Add library for linking
     G.LibraryFunctionsUsed.add("getHashValue")
     G.LibraryFunctionsUsed.add("ExitWithMessage")
+
+def Translate_getHashValueType(targetVar, idxRegister, targetReg):
+    """ Hash implementation can be found in hashlib.c in the lib/ folder """
+
+    DEBUG.Assert(targetVar.is_HASH_VARIABLE(), "Argument of getValue should be a hash pointer")
+
+    G.AsmText.AddText(targetVar.CopyToRegister(REG.argRegs[0])[:-1])
+
+    G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[1], idxRegister), "Load key")
+
+    G.AsmText.AddText(G.INDENT + "jal getHashValueType", "Searching for value in hash")
+    G.AsmText.AddText(G.INDENT + "move %s, %s"%(targetReg, REG.v0), "Store result back into a designated register")
+    G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
+
+    # Add library for linking
+    G.LibraryFunctionsUsed.add("getHashValueType")
+    G.LibraryFunctionsUsed.add("ExitWithMessage")
+
 
 def Translate_addElement(targetVar, idxRegister, valReg):
     """ Hash implementation can be found in hashlib.c in the lib/ folder """
@@ -183,7 +264,7 @@ def Translate_addElement(targetVar, idxRegister, valReg):
 
     G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[1], idxRegister), "Load key")
 
-    G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[3], valReg), "Load value")
+    G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[2], valReg), "Load value")
 
     G.AsmText.AddText(" ")
     G.AsmText.AddText(G.INDENT + "jal addElement", "Add element to the hash")
@@ -191,6 +272,26 @@ def Translate_addElement(targetVar, idxRegister, valReg):
 
     # Add library for linking
     G.LibraryFunctionsUsed.add("addElement")
+    G.LibraryFunctionsUsed.add("findMatch")
+    G.LibraryFunctionsUsed.add("strCmp")
+
+def Translate_addElementType(targetVar, idxRegister, valReg):
+    """ Hash implementation can be found in hashlib.c in the lib/ folder """
+
+    DEBUG.Assert(targetVar.is_HASH_VARIABLE(), "Argument of addElement should be a hash pointer")
+
+    G.AsmText.AddText(targetVar.CopyToRegister(REG.argRegs[0])[:-1])
+
+    G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[1], idxRegister), "Load key")
+
+    G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.argRegs[2], valReg), "Load value")
+
+    G.AsmText.AddText(" ")
+    G.AsmText.AddText(G.INDENT + "jal addElementType", "Add element to the hash")
+    G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
+
+    # Add library for linking
+    G.LibraryFunctionsUsed.add("addElementType")
     G.LibraryFunctionsUsed.add("findMatch")
     G.LibraryFunctionsUsed.add("strCmp")
 

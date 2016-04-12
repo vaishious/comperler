@@ -49,7 +49,7 @@ class InstrType(object):
                 "declare"    : DECLARE,          "decl"       : DECLARE,      "DECLARE"         : DECLARE,
                 "alloc"      : ALLOC,            "malloc"     : ALLOC,        "ALLOC"           : ALLOC,
                 "exit"       : EXIT,             "quit"       : EXIT,         "EXIT"            : EXIT,         "done" : EXIT,
-                "typecheck"  : TYPECHECKASSIGN,  "typeassign" : TYPEASSIGN,   "typecheckassign" : TYPECHECKASSIGN, 
+                "typecheck"  : TYPECHECK,        "typeassign" : TYPEASSIGN,   "typecheckassign" : TYPECHECKASSIGN, 
                 "nop"        : NOP,              ""           : NOP,          "NOP"             : NOP
               }
 
@@ -101,7 +101,7 @@ class OperationType(object):
     """ # Will add more later
 
     # Set up an enum
-    PLUS, MINUS, MULT, DIV, MOD, LT, GT, LEQ, GEQ, EQ, NE, BOR, BAND, BNOT, BXOR, LSHIFT, RSHIFT, REFERENCE, DEREFERENCE, NONE = range(20)
+    PLUS, MINUS, MULT, DIV, MOD, LT, GT, LEQ, GEQ, EQ, NE, BOR, BAND, BNOT, BXOR, LSHIFT, RSHIFT, REFERENCE, DEREFERENCE, HASH_INDEX_CHECK, ARRAY_INDEX_CHECK, TYPE_EQUAL, NONE = range(23)
 
     typeMap = {
                 "+"     : PLUS,          "plus"     : PLUS,
@@ -121,7 +121,8 @@ class OperationType(object):
                 "^"     : BXOR,          "bxor"     : BXOR,
                 "<<"    : LSHIFT,        "lshift"   : LSHIFT,
                 ">>"    : RSHIFT,        "rshift"   : RSHIFT,
-                "ref"   : REFERENCE,     "$"        : DEREFERENCE,  
+                "ref"   : REFERENCE,     "$"        : DEREFERENCE,
+                "hashindexcheck" : HASH_INDEX_CHECK, "arrayindexcheck" : ARRAY_INDEX_CHECK, "type-equal" : TYPE_EQUAL,
                 ""      : NONE
               }
 
@@ -154,6 +155,10 @@ class OperationType(object):
         if self.is_REFERENCE()   : return "\\"
         if self.is_DEREFERENCE() : return "$"
 
+        if self.is_ARRAY_INDEX_CHECK() : return "arrayindexcheck"
+        if self.is_HASH_INDEX_CHECK()  : return "hashindexcheck"
+        if self.is_TYPE_EQUAL()        : return "type-equal"
+
     def is_PLUS(self)        : return self.opType == OperationType.PLUS
     def is_MINUS(self)       : return self.opType == OperationType.MINUS
     def is_MULT(self)        : return self.opType == OperationType.MULT
@@ -175,6 +180,9 @@ class OperationType(object):
     def is_DEREFERENCE(self) : return self.opType == OperationType.DEREFERENCE
     def is_NONE(self)        : return self.opType == OperationType.NONE
 
+    def is_ARRAY_INDEX_CHECK(self) : return self.opType == OperationType.ARRAY_INDEX_CHECK
+    def is_HASH_INDEX_CHECK(self)  : return self.opType == OperationType.HASH_INDEX_CHECK
+    def is_TYPE_EQUAL(self)        : return self.opType == OperationType.TYPE_EQUAL 
 
 class Entity(object):
     """ Used to represent the variables/numbers/strings used in the instruction """
@@ -568,10 +576,20 @@ class Instr3AC(object):
 
         elif self.instrType.is_TYPEASSIGN():
             # Line Number, typeassign, dest, inp1
-            DEBUG.Assert(len(inpTuple) == 4, "Expected a 4-tuple for typeassign")
+            # Line Number, typeassign, dest, ref, inp1
+            # Line Number, typeassign, dest, $, inp1
+            DEBUG.Assert(len(inpTuple) >= 4, "Expected a 4/5-tuple for typeassign")
+            DEBUG.Assert(len(inpTuple) <= 5, "Expected a 4/5-tuple for typeassign")
 
-            self.dest = Entity(str(inpTuple[2]))
-            self.inp1 = Entity(str(inpTuple[3]))
+            if len(inpTuple) == 4:
+                self.dest = Entity(str(inpTuple[2]))
+                self.inp1 = Entity(str(inpTuple[3]))
+            else:
+                self.dest = Entity(str(inpTuple[2]))
+                self.opType = OperationType(str(inpTuple[3]))
+                self.inp1 = Entity(str(inpTuple[4]))
+
+                DEBUG.Assert(self.opType.is_DEREFERENCE() or self.opType.is_REFERENCE(), "Only reference and dereference option allowed in typeassign")
 
             DEBUG.Assert(self.dest.is_VARIABLE(), "LHS of a TYPEASSIGN has to be a variable")
 
@@ -590,8 +608,8 @@ class Instr3AC(object):
         elif self.instrType.is_TYPECHECKASSIGN():
             # Line Number, typecheckassign, op, dest, inp1, inp2
             # Line Number, typecheckassign, op, dest, inp1
-            DEBUG.Assert(len(inpTuple) >= 5, "Expected a 5/6-tuple for typecheck")
-            DEBUG.Assert(len(inpTuple) <= 6, "Expected a 5/6-tuple for typecheck")
+            DEBUG.Assert(len(inpTuple) >= 5, "Expected a 5/6-tuple for typecheckassign")
+            DEBUG.Assert(len(inpTuple) <= 6, "Expected a 5/6-tuple for typecheckassign")
 
             self.opType = OperationType(str(inpTuple[2]))
             self.dest = Entity(str(inpTuple[3]))
@@ -723,7 +741,10 @@ class Instr3AC(object):
                 return "typecheck %s %s %s"%(self.inp1, self.opType, self.inp2)
 
         if self.instrType.is_TYPEASSIGN():
-            return "%s typeassign %s"%(self.dest, self.inp1)
+            if self.opType.is_NONE():
+                return "%s typeassign %s"%(self.dest, self.inp1)
+            else:
+                return "%s typeassign %s%s"%(self.dest, self.opType, self.inp1)
 
         if self.instrType.is_TYPECHECKASSIGN():
             if self.inp2.is_NONE():

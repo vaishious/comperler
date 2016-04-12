@@ -13,6 +13,7 @@ import instr3ac as INSTRUCTION
 import basic_blocks as BB
 import mips_assembly as ASM
 import global_objects as G
+import library as LIB
 
 import shlex
 import re
@@ -49,7 +50,7 @@ class CodeGenerator(object):
         # Build Global Objects
         G.AsmText = ASM.TextRegion(fileName)
         G.AsmData = ASM.DataRegion(funcActRecords, symTabManager)
-        G.HashKeyError = INSTRUCTION.Entity("\"KEY ERROR: Match not found for : \"", stringAllocate=False)
+        LIB.AddEssentialLibraries()
 
         # Create an instance of the instruction class for each line
         for line in text:

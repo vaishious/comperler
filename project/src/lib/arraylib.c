@@ -47,10 +47,17 @@ int *accessIndex(Array_t *arrayPtr, int index)
             //Copy from old memory to new memory
         for (it=0; it < arrayPtr->length; it++) {
             newAddr[2*it] = arrayPtr->addr[2*it];
+            newAddr[2*it + 1] = arrayPtr->addr[2*it + 1];
         }
 
         arrayPtr->length = 2*(index+1);
         arrayPtr->addr = (int *)newAddr;
+
+        if (arrayPtr->length >= 2) {
+            PrintChar('@');
+            PrintInt(arrayPtr->addr[2]);
+            PrintChar('\n');
+        }
     }
 
     return (int *)(arrayPtr->addr + 2*index);
@@ -66,10 +73,12 @@ int *accessIndexType(Array_t *arrayPtr, int index)
             //Copy from old memory to new memory
         for (it=0; it < arrayPtr->length; it++) {
             newAddr[2*it] = arrayPtr->addr[2*it];
+            newAddr[2*it + 1] = arrayPtr->addr[2*it + 1];
         }
 
         arrayPtr->length = 2*(index+1);
         arrayPtr->addr = (int *)newAddr;
+
     }
 
     return (int *)(arrayPtr->addr + (2*index + 1));

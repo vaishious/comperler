@@ -104,6 +104,19 @@ $L11:
 	lw	$2,0($2)
 	sw	$2,0($5)
 	lw	$2,20($fp)
+	sll	$3,$2,3
+	lw	$2,16($fp)
+	addu	$2,$3,$2
+	addu	$5,$2,4
+	lw	$4,32($fp)
+	lw	$2,20($fp)
+	sll	$3,$2,3
+	lw	$2,4($4)
+	addu	$2,$3,$2
+	addu	$2,$2,4
+	lw	$2,0($2)
+	sw	$2,0($5)
+	lw	$2,20($fp)
 	addu	$2,$2,1
 	sw	$2,20($fp)
 	j	$L8
@@ -116,6 +129,19 @@ $L9:
 	lw	$3,32($fp)
 	lw	$2,16($fp)
 	sw	$2,4($3)
+	lw	$2,32($fp)
+	lw	$2,0($2)
+	slt	$2,$2,2
+	bne	$2,$0,$L7
+	li	$4,64			# 0x40
+	jal	PrintChar
+	lw	$2,32($fp)
+	lw	$2,4($2)
+	addu	$2,$2,8
+	lw	$4,0($2)
+	jal	PrintInt
+	li	$4,10			# 0xa
+	jal	PrintChar
 $L7:
 	lw	$4,32($fp)
 	lw	$2,36($fp)
@@ -145,7 +171,7 @@ accessIndexType:
 	lw	$3,36($fp)
 	lw	$2,0($2)
 	slt	$2,$3,$2
-	bne	$2,$0,$L13
+	bne	$2,$0,$L14
 	lw	$2,36($fp)
 	sll	$2,$2,4
 	addu	$2,$2,16
@@ -153,14 +179,14 @@ accessIndexType:
 	jal	alloc
 	sw	$2,16($fp)
 	sw	$0,20($fp)
-$L14:
+$L15:
 	lw	$2,32($fp)
 	lw	$3,20($fp)
 	lw	$2,0($2)
 	slt	$2,$3,$2
-	bne	$2,$0,$L17
-	j	$L15
-$L17:
+	bne	$2,$0,$L18
+	j	$L16
+$L18:
 	lw	$2,20($fp)
 	sll	$3,$2,3
 	lw	$2,16($fp)
@@ -173,10 +199,23 @@ $L17:
 	lw	$2,0($2)
 	sw	$2,0($5)
 	lw	$2,20($fp)
+	sll	$3,$2,3
+	lw	$2,16($fp)
+	addu	$2,$3,$2
+	addu	$5,$2,4
+	lw	$4,32($fp)
+	lw	$2,20($fp)
+	sll	$3,$2,3
+	lw	$2,4($4)
+	addu	$2,$3,$2
+	addu	$2,$2,4
+	lw	$2,0($2)
+	sw	$2,0($5)
+	lw	$2,20($fp)
 	addu	$2,$2,1
 	sw	$2,20($fp)
-	j	$L14
-$L15:
+	j	$L15
+$L16:
 	lw	$3,32($fp)
 	lw	$2,36($fp)
 	sll	$2,$2,1
@@ -185,7 +224,7 @@ $L15:
 	lw	$3,32($fp)
 	lw	$2,16($fp)
 	sw	$2,4($3)
-$L13:
+$L14:
 	lw	$4,32($fp)
 	lw	$2,36($fp)
 	sll	$3,$2,3

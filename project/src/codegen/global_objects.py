@@ -34,8 +34,10 @@ AllocMap = {}
 StackSpaceMap = {}
 
 # Library functions
-LibraryFunctionsUsed = set(['typecheck_PLUS', 'PrintString'])
-LIBSRC = ['../lib/hashlib.s', '../lib/iolib.s', '../lib/libstd.s', '../lib/libstring.s', '../lib/arraylib.s', '../lib/typechecking.s']
+LIBSRC = ['../lib/hashlib.s', '../lib/iolib.s', '../lib/libstd.s', '../lib/libstring.s', '../lib/arraylib.s', '../lib/typechecking.s', '../lib/dynlib.s']
 
-# Exception messages for ExitWithMessage
-HashKeyError = None
+# Debugging library functions
+
+#LibraryFunctionsUsed = set(['typecheck_PLUS', 'typecheck_HASH_INDEX_CHECK', 'typecheck_TYPE_EQUAL', 'PrintString', 'PrintfNormal', 'PrintChar', 'PrintInt', 'dummyFunc'])
+LibraryFunctionsUsed = set(['dummyFunc', 'PrintfNormal'])
+EssentialLibraries = ['../lib/dynlib.s', '../lib/typechecking.s']
