@@ -1,4 +1,5 @@
 #define NULL 0
+#include "arraylib.c"
 
 extern void *(*OP1_TYPECAST)(void *);
 extern void *(*OP2_TYPECAST)(void *);
@@ -178,4 +179,24 @@ void * op_STRING_REPEAT(void *inpString1, void *repeatNum) {
 	}
 	s2[n*len1] = '\0';
     return (void *)s2;
+}
+
+void * op_ARRAY_CONCAT(void *inpArray1, void *inpArray2) {
+
+    Array_t * a1 = (Array_t *)OP1_TYPECAST(inpArray1);
+    Array_t * a2 = (Array_t *)OP2_TYPECAST(inpArray2);
+
+    int len1 = lengthOfArray(a1), len2 = lengthOfArray(a2);
+
+	Array_t * a3 = initArray();
+	int i;
+
+	for (i=0; i<len1; i++) {
+		*accessIndex(a3, i) = *accessIndex(a1, i);
+	}
+
+	for (i=0; i<len2; i++) {
+		*accessIndex(a3, len1+i) = *accessIndex(a2, i);
+	}
+    return (void *)a3;
 }

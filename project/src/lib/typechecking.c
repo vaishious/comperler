@@ -46,6 +46,16 @@ void * typecheck_GENERIC_INT_STRING_3OP(void *src1, void *src2, void *(*op)(void
 }
 
 void * typecheck_INT_PLUS(void *src1, void *src2) {
+
+    int type1 = (int) src1;
+    int type2 = (int) src2;
+	if ((type1 == TYPE_ARRAY) && (type2 == TYPE_ARRAY)) {
+		OP1_TYPECAST = &dummyFunc;
+		OP2_TYPECAST = &dummyFunc;
+		OPCONTROL = &op_ARRAY_CONCAT;
+		return (void *) TYPE_ARRAY;
+	}
+
     return (void *)typecheck_GENERIC_INT_STRING_3OP(src1, src2, &op_PLUS);
 }
 
