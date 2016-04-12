@@ -1,6 +1,6 @@
 ## Features
 
-* String operations - DOT and REPEAT
+* Debug Array concat error. Also, extra information being printed.
 
 * Unary Operations
 
