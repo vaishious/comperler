@@ -147,3 +147,156 @@ op_PLUS:
 	addu	$sp,$sp,32
 	j	$31
 	.end	op_PLUS
+	.align	2
+	.globl	op_MINUS
+	.ent	op_MINUS
+op_MINUS:
+	.frame	$fp,32,$31		# vars= 8, regs= 2/0, args= 16, extra= 0
+	.mask	0xc0000000,-4
+	.fmask	0x00000000,0
+	subu	$sp,$sp,32
+	sw	$31,28($sp)
+	sw	$fp,24($sp)
+	move	$fp,$sp
+	sw	$4,32($fp)
+	sw	$5,36($fp)
+	lw	$2,OP1_TYPECAST
+	lw	$4,32($fp)
+	jal	$31,$2
+	sw	$2,32($fp)
+	lw	$2,OP2_TYPECAST
+	lw	$4,36($fp)
+	jal	$31,$2
+	sw	$2,36($fp)
+	lw	$2,32($fp)
+	sw	$2,16($fp)
+	lw	$2,36($fp)
+	sw	$2,20($fp)
+	lw	$3,16($fp)
+	lw	$2,20($fp)
+	subu	$2,$3,$2
+	move	$sp,$fp
+	lw	$31,28($sp)
+	lw	$fp,24($sp)
+	addu	$sp,$sp,32
+	j	$31
+	.end	op_MINUS
+	.align	2
+	.globl	op_MULT
+	.ent	op_MULT
+op_MULT:
+	.frame	$fp,32,$31		# vars= 8, regs= 2/0, args= 16, extra= 0
+	.mask	0xc0000000,-4
+	.fmask	0x00000000,0
+	subu	$sp,$sp,32
+	sw	$31,28($sp)
+	sw	$fp,24($sp)
+	move	$fp,$sp
+	sw	$4,32($fp)
+	sw	$5,36($fp)
+	lw	$2,OP1_TYPECAST
+	lw	$4,32($fp)
+	jal	$31,$2
+	sw	$2,32($fp)
+	lw	$2,OP2_TYPECAST
+	lw	$4,36($fp)
+	jal	$31,$2
+	sw	$2,36($fp)
+	lw	$2,32($fp)
+	sw	$2,16($fp)
+	lw	$2,36($fp)
+	sw	$2,20($fp)
+	lw	$3,16($fp)
+	lw	$2,20($fp)
+	mult	$3,$2
+	mflo	$2
+	move	$sp,$fp
+	lw	$31,28($sp)
+	lw	$fp,24($sp)
+	addu	$sp,$sp,32
+	j	$31
+	.end	op_MULT
+	.align	2
+	.globl	op_DIV
+	.ent	op_DIV
+op_DIV:
+	.frame	$fp,32,$31		# vars= 8, regs= 2/0, args= 16, extra= 0
+	.mask	0xc0000000,-4
+	.fmask	0x00000000,0
+	subu	$sp,$sp,32
+	sw	$31,28($sp)
+	sw	$fp,24($sp)
+	move	$fp,$sp
+	sw	$4,32($fp)
+	sw	$5,36($fp)
+	lw	$2,OP1_TYPECAST
+	lw	$4,32($fp)
+	jal	$31,$2
+	sw	$2,32($fp)
+	lw	$2,OP2_TYPECAST
+	lw	$4,36($fp)
+	jal	$31,$2
+	sw	$2,36($fp)
+	lw	$2,32($fp)
+	sw	$2,16($fp)
+	lw	$2,36($fp)
+	sw	$2,20($fp)
+	lw	$3,16($fp)
+	lw	$2,20($fp)
+	div	$0,$3,$2
+	mflo	$3
+	.set	noreorder
+	bne	$2,$0,1f
+	nop
+	break	7
+1:
+	.set	reorder
+	move	$2,$3
+	move	$sp,$fp
+	lw	$31,28($sp)
+	lw	$fp,24($sp)
+	addu	$sp,$sp,32
+	j	$31
+	.end	op_DIV
+	.align	2
+	.globl	op_MOD
+	.ent	op_MOD
+op_MOD:
+	.frame	$fp,32,$31		# vars= 8, regs= 2/0, args= 16, extra= 0
+	.mask	0xc0000000,-4
+	.fmask	0x00000000,0
+	subu	$sp,$sp,32
+	sw	$31,28($sp)
+	sw	$fp,24($sp)
+	move	$fp,$sp
+	sw	$4,32($fp)
+	sw	$5,36($fp)
+	lw	$2,OP1_TYPECAST
+	lw	$4,32($fp)
+	jal	$31,$2
+	sw	$2,32($fp)
+	lw	$2,OP2_TYPECAST
+	lw	$4,36($fp)
+	jal	$31,$2
+	sw	$2,36($fp)
+	lw	$2,32($fp)
+	sw	$2,16($fp)
+	lw	$2,36($fp)
+	sw	$2,20($fp)
+	lw	$3,16($fp)
+	lw	$2,20($fp)
+	div	$0,$3,$2
+	mfhi	$3
+	.set	noreorder
+	bne	$2,$0,1f
+	nop
+	break	7
+1:
+	.set	reorder
+	move	$2,$3
+	move	$sp,$fp
+	lw	$31,28($sp)
+	lw	$fp,24($sp)
+	addu	$sp,$sp,32
+	j	$31
+	.end	op_MOD

@@ -404,23 +404,52 @@ def GenCode_3OPASSIGN(instr, regDest, regInp1, regInp2):
         G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
 
     elif instr.opType.is_MINUS():
-        G.AsmText.AddText(G.INDENT + "subu %s, %s, %s"%(regDest, regInp1, regInp2),
-                                     "%s = %s - %s"%(instr.dest, instr.inp1, instr.inp2))
+        #G.AsmText.AddText(G.INDENT + "subu %s, %s, %s"%(regDest, regInp1, regInp2),
+                                     #"%s = %s - %s"%(instr.dest, instr.inp1, instr.inp2))
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a0, regInp1))
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a1, regInp2))
+        G.AsmText.AddText(G.INDENT + "lw %s, OPCONTROL"%(REG.a2))
+        G.AsmText.AddText(G.INDENT + "jalr %s"%(REG.a2))
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(regDest, REG.v0))
+        G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
 
     elif instr.opType.is_MULT():
-        G.AsmText.AddText(G.INDENT + "multu %s, %s"%(regInp1, regInp2))
-        G.AsmText.AddText(G.INDENT + "mflo %s"%(regDest),
-                                     "%s = %s * %s"%(instr.dest, instr.inp1, instr.inp2))
+        #G.AsmText.AddText(G.INDENT + "multu %s, %s"%(regInp1, regInp2))
+        #G.AsmText.AddText(G.INDENT + "mflo %s"%(regDest),
+                                     #"%s = %s * %s"%(instr.dest, instr.inp1, instr.inp2))
+
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a0, regInp1))
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a1, regInp2))
+        G.AsmText.AddText(G.INDENT + "lw %s, OPCONTROL"%(REG.a2))
+        G.AsmText.AddText(G.INDENT + "jalr %s"%(REG.a2))
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(regDest, REG.v0))
+        G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
 
     elif instr.opType.is_DIV():
-        G.AsmText.AddText(G.INDENT + "div %s, %s"%(regInp1, regInp2))
-        G.AsmText.AddText(G.INDENT + "mflo %s"%(regDest),
-                                     "%s = %s / %s"%(instr.dest, instr.inp1, instr.inp2))
+        #G.AsmText.AddText(G.INDENT + "div %s, %s"%(regInp1, regInp2))
+        #G.AsmText.AddText(G.INDENT + "mflo %s"%(regDest),
+                                     #"%s = %s / %s"%(instr.dest, instr.inp1, instr.inp2))
+
+
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a0, regInp1))
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a1, regInp2))
+        G.AsmText.AddText(G.INDENT + "lw %s, OPCONTROL"%(REG.a2))
+        G.AsmText.AddText(G.INDENT + "jalr %s"%(REG.a2))
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(regDest, REG.v0))
+        G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
 
     elif instr.opType.is_MOD():
-        G.AsmText.AddText(G.INDENT + "div %s, %s"%(regInp1, regInp2))
-        G.AsmText.AddText(G.INDENT + "mfhi %s"%(regDest),
-                                     "%s = %s mod %s"%(instr.dest, instr.inp1, instr.inp2))
+        #G.AsmText.AddText(G.INDENT + "div %s, %s"%(regInp1, regInp2))
+        #G.AsmText.AddText(G.INDENT + "mfhi %s"%(regDest),
+                                     #"%s = %s mod %s"%(instr.dest, instr.inp1, instr.inp2))
+
+
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a0, regInp1))
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a1, regInp2))
+        G.AsmText.AddText(G.INDENT + "lw %s, OPCONTROL"%(REG.a2))
+        G.AsmText.AddText(G.INDENT + "jalr %s"%(REG.a2))
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(regDest, REG.v0))
+        G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
 
     elif instr.opType.is_LT():
         G.AsmText.AddText(G.INDENT + "slt %s, %s, %s"%(regDest, regInp1, regInp2),
@@ -650,22 +679,26 @@ def Translate_TYPECHECK(instr):
         G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a0, reg1))
         G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a1, reg2))
         if instr.opType.is_PLUS():
-            G.AsmText.AddText(G.INDENT + "jal typecheck_PLUS")
+            G.AsmText.AddText(G.INDENT + "jal typecheck_INT_PLUS")
 
         elif instr.opType.is_TYPE_EQUAL():
             G.AsmText.AddText(G.INDENT + "jal typecheck_TYPE_EQUAL")
 
         elif instr.opType.is_MINUS():
-            G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
+            G.AsmText.AddText(G.INDENT + "jal typecheck_INT_MINUS")
+            #G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
 
         elif instr.opType.is_MULT():
-            G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
+            G.AsmText.AddText(G.INDENT + "jal typecheck_INT_MULT")
+            #G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
 
         elif instr.opType.is_DIV():
-            G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
+            G.AsmText.AddText(G.INDENT + "jal typecheck_INT_DIV")
+            #G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
 
         elif instr.opType.is_MOD():
-            G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
+            G.AsmText.AddText(G.INDENT + "jal typecheck_INT_MOD")
+            #G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
 
         elif instr.opType.is_LT():
             G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")

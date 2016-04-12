@@ -15,14 +15,14 @@ void * Exit() {
         ");
 }
 
-void * typecheck_PLUS(void *src1, void *src2) {
+void * typecheck_GENERIC_INT_STRING_3OP(void *src1, void *src2, void *(*op)(void *, void *)) {
 
     int type1 = (int) src1;
     int type2 = (int) src2;
 
     OP1_TYPECAST = &dummyFunc;
     OP2_TYPECAST = &dummyFunc;
-    OPCONTROL = &op_PLUS;
+    OPCONTROL = op;
 
     if ((type1 != TYPE_INT) && (type2 != TYPE_INT)) {
         PrintfNormal("Atleast one argument of PLUS has to be an INTEGER");
@@ -43,6 +43,26 @@ void * typecheck_PLUS(void *src1, void *src2) {
     if (type2 == TYPE_STRING) { OP2_TYPECAST = &convertSTRING_TO_INT; }
 
     return (void *)TYPE_INT;
+}
+
+void * typecheck_INT_PLUS(void *src1, void *src2) {
+	return (void *)typecheck_GENERIC_INT_STRING_3OP(src1, src2, &op_PLUS);
+}
+
+void * typecheck_INT_MINUS(void *src1, void *src2) {
+	return (void *)typecheck_GENERIC_INT_STRING_3OP(src1, src2, &op_MINUS);
+}
+
+void * typecheck_INT_MULT(void *src1, void *src2) {
+	return (void *)typecheck_GENERIC_INT_STRING_3OP(src1, src2, &op_MULT);
+}
+
+void * typecheck_INT_DIV(void *src1, void *src2) {
+	return (void *)typecheck_GENERIC_INT_STRING_3OP(src1, src2, &op_DIV);
+}
+
+void * typecheck_INT_MOD(void *src1, void *src2) {
+	return (void *)typecheck_GENERIC_INT_STRING_3OP(src1, src2, &op_MOD);
 }
 
 void * typecheck_HASH_INDEX_CHECK(void *typeIndex) {

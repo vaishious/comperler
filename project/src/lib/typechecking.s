@@ -31,28 +31,58 @@ convertSTRING_TO_INT:
 	lw	$2,24($fp)
 	sw	$2,0($fp)
 	sw	$0,4($fp)
+	sw	$0,8($fp)
+	lw	$2,0($fp)
+	lb	$3,0($2)
+	li	$2,45			# 0x2d
+	bne	$3,$2,$L3
+	li	$2,1			# 0x1
+	sw	$2,4($fp)
+	lw	$2,0($fp)
+	addu	$2,$2,1
+	sw	$2,0($fp)
+	j	$L4
 $L3:
 	lw	$2,0($fp)
+	lb	$3,0($2)
+	li	$2,43			# 0x2b
+	bne	$3,$2,$L4
+	sw	$0,4($fp)
+	lw	$2,0($fp)
+	addu	$2,$2,1
+	sw	$2,0($fp)
+$L4:
+	.set	noreorder
+	nop
+	.set	reorder
+$L6:
+	lw	$2,0($fp)
 	lb	$2,0($2)
-	bne	$2,$0,$L5
-	j	$L4
-$L5:
+	bne	$2,$0,$L8
+	j	$L7
+$L8:
 	lw	$2,0($fp)
 	lb	$2,0($2)
 	slt	$2,$2,58
-	beq	$2,$0,$L7
+	beq	$2,$0,$L10
 	lw	$2,0($fp)
 	lb	$2,0($2)
 	slt	$2,$2,48
-	bne	$2,$0,$L7
-	j	$L6
-$L7:
-	sw	$0,4($fp)
-	lw	$2,4($fp)
-	sw	$2,8($fp)
-	j	$L2
-$L6:
+	bne	$2,$0,$L10
+	j	$L9
+$L10:
 	lw	$3,4($fp)
+	li	$2,1			# 0x1
+	bne	$3,$2,$L11
+	lw	$2,8($fp)
+	subu	$2,$0,$2
+	sw	$2,8($fp)
+$L11:
+	lw	$2,8($fp)
+	sw	$2,12($fp)
+	j	$L2
+$L9:
+	lw	$3,8($fp)
 	move	$2,$3
 	sll	$2,$2,2
 	addu	$2,$2,$3
@@ -61,16 +91,23 @@ $L6:
 	lb	$2,0($2)
 	addu	$2,$3,$2
 	addu	$2,$2,-48
-	sw	$2,4($fp)
+	sw	$2,8($fp)
 	lw	$2,0($fp)
 	addu	$2,$2,1
 	sw	$2,0($fp)
-	j	$L3
-$L4:
-	lw	$2,4($fp)
-	sw	$2,8($fp)
-$L2:
+	j	$L6
+$L7:
+	lw	$3,4($fp)
+	li	$2,1			# 0x1
+	bne	$3,$2,$L12
 	lw	$2,8($fp)
+	subu	$2,$0,$2
+	sw	$2,8($fp)
+$L12:
+	lw	$2,8($fp)
+	sw	$2,12($fp)
+$L2:
+	lw	$2,12($fp)
 	move	$sp,$fp
 	lw	$fp,16($sp)
 	addu	$sp,$sp,24
@@ -110,6 +147,159 @@ op_PLUS:
 	addu	$sp,$sp,32
 	j	$31
 	.end	op_PLUS
+	.align	2
+	.globl	op_MINUS
+	.ent	op_MINUS
+op_MINUS:
+	.frame	$fp,32,$31		# vars= 8, regs= 2/0, args= 16, extra= 0
+	.mask	0xc0000000,-4
+	.fmask	0x00000000,0
+	subu	$sp,$sp,32
+	sw	$31,28($sp)
+	sw	$fp,24($sp)
+	move	$fp,$sp
+	sw	$4,32($fp)
+	sw	$5,36($fp)
+	lw	$2,OP1_TYPECAST
+	lw	$4,32($fp)
+	jal	$31,$2
+	sw	$2,32($fp)
+	lw	$2,OP2_TYPECAST
+	lw	$4,36($fp)
+	jal	$31,$2
+	sw	$2,36($fp)
+	lw	$2,32($fp)
+	sw	$2,16($fp)
+	lw	$2,36($fp)
+	sw	$2,20($fp)
+	lw	$3,16($fp)
+	lw	$2,20($fp)
+	subu	$2,$3,$2
+	move	$sp,$fp
+	lw	$31,28($sp)
+	lw	$fp,24($sp)
+	addu	$sp,$sp,32
+	j	$31
+	.end	op_MINUS
+	.align	2
+	.globl	op_MULT
+	.ent	op_MULT
+op_MULT:
+	.frame	$fp,32,$31		# vars= 8, regs= 2/0, args= 16, extra= 0
+	.mask	0xc0000000,-4
+	.fmask	0x00000000,0
+	subu	$sp,$sp,32
+	sw	$31,28($sp)
+	sw	$fp,24($sp)
+	move	$fp,$sp
+	sw	$4,32($fp)
+	sw	$5,36($fp)
+	lw	$2,OP1_TYPECAST
+	lw	$4,32($fp)
+	jal	$31,$2
+	sw	$2,32($fp)
+	lw	$2,OP2_TYPECAST
+	lw	$4,36($fp)
+	jal	$31,$2
+	sw	$2,36($fp)
+	lw	$2,32($fp)
+	sw	$2,16($fp)
+	lw	$2,36($fp)
+	sw	$2,20($fp)
+	lw	$3,16($fp)
+	lw	$2,20($fp)
+	mult	$3,$2
+	mflo	$2
+	move	$sp,$fp
+	lw	$31,28($sp)
+	lw	$fp,24($sp)
+	addu	$sp,$sp,32
+	j	$31
+	.end	op_MULT
+	.align	2
+	.globl	op_DIV
+	.ent	op_DIV
+op_DIV:
+	.frame	$fp,32,$31		# vars= 8, regs= 2/0, args= 16, extra= 0
+	.mask	0xc0000000,-4
+	.fmask	0x00000000,0
+	subu	$sp,$sp,32
+	sw	$31,28($sp)
+	sw	$fp,24($sp)
+	move	$fp,$sp
+	sw	$4,32($fp)
+	sw	$5,36($fp)
+	lw	$2,OP1_TYPECAST
+	lw	$4,32($fp)
+	jal	$31,$2
+	sw	$2,32($fp)
+	lw	$2,OP2_TYPECAST
+	lw	$4,36($fp)
+	jal	$31,$2
+	sw	$2,36($fp)
+	lw	$2,32($fp)
+	sw	$2,16($fp)
+	lw	$2,36($fp)
+	sw	$2,20($fp)
+	lw	$3,16($fp)
+	lw	$2,20($fp)
+	div	$0,$3,$2
+	mflo	$3
+	.set	noreorder
+	bne	$2,$0,1f
+	nop
+	break	7
+1:
+	.set	reorder
+	move	$2,$3
+	move	$sp,$fp
+	lw	$31,28($sp)
+	lw	$fp,24($sp)
+	addu	$sp,$sp,32
+	j	$31
+	.end	op_DIV
+	.align	2
+	.globl	op_MOD
+	.ent	op_MOD
+op_MOD:
+	.frame	$fp,32,$31		# vars= 8, regs= 2/0, args= 16, extra= 0
+	.mask	0xc0000000,-4
+	.fmask	0x00000000,0
+	subu	$sp,$sp,32
+	sw	$31,28($sp)
+	sw	$fp,24($sp)
+	move	$fp,$sp
+	sw	$4,32($fp)
+	sw	$5,36($fp)
+	lw	$2,OP1_TYPECAST
+	lw	$4,32($fp)
+	jal	$31,$2
+	sw	$2,32($fp)
+	lw	$2,OP2_TYPECAST
+	lw	$4,36($fp)
+	jal	$31,$2
+	sw	$2,36($fp)
+	lw	$2,32($fp)
+	sw	$2,16($fp)
+	lw	$2,36($fp)
+	sw	$2,20($fp)
+	lw	$3,16($fp)
+	lw	$2,20($fp)
+	div	$0,$3,$2
+	mfhi	$3
+	.set	noreorder
+	bne	$2,$0,1f
+	nop
+	break	7
+1:
+	.set	reorder
+	move	$2,$3
+	move	$sp,$fp
+	lw	$31,28($sp)
+	lw	$fp,24($sp)
+	addu	$sp,$sp,32
+	j	$31
+	.end	op_MOD
 	.globl	typeMaps
 	.sdata
 	.align	2
@@ -166,9 +356,9 @@ $LC6:
 	.ascii	"Cannot add %s to an INT\000"
 	.text
 	.align	2
-	.globl	typecheck_PLUS
-	.ent	typecheck_PLUS
-typecheck_PLUS:
+	.globl	typecheck_GENERIC_INT_STRING_3OP
+	.ent	typecheck_GENERIC_INT_STRING_3OP
+typecheck_GENERIC_INT_STRING_3OP:
 	.frame	$fp,32,$31		# vars= 8, regs= 2/0, args= 16, extra= 0
 	.mask	0xc0000000,-4
 	.fmask	0x00000000,0
@@ -178,6 +368,7 @@ typecheck_PLUS:
 	move	$fp,$sp
 	sw	$4,32($fp)
 	sw	$5,36($fp)
+	sw	$6,40($fp)
 	lw	$2,32($fp)
 	sw	$2,16($fp)
 	lw	$2,36($fp)
@@ -186,24 +377,24 @@ typecheck_PLUS:
 	sw	$2,OP1_TYPECAST
 	la	$2,dummyFunc
 	sw	$2,OP2_TYPECAST
-	la	$2,op_PLUS
+	lw	$2,40($fp)
 	sw	$2,OPCONTROL
 	lw	$3,16($fp)
 	li	$2,2			# 0x2
-	beq	$3,$2,$L11
+	beq	$3,$2,$L20
 	lw	$3,20($fp)
 	li	$2,2			# 0x2
-	beq	$3,$2,$L11
+	beq	$3,$2,$L20
 	la	$4,$LC5
 	jal	PrintfNormal
 	jal	Exit
-$L11:
+$L20:
 	lw	$3,16($fp)
 	li	$2,2			# 0x2
-	beq	$3,$2,$L12
+	beq	$3,$2,$L21
 	lw	$3,16($fp)
 	li	$2,1			# 0x1
-	beq	$3,$2,$L12
+	beq	$3,$2,$L21
 	lw	$2,16($fp)
 	sll	$3,$2,2
 	la	$2,typeMaps
@@ -212,13 +403,13 @@ $L11:
 	lw	$5,0($2)
 	jal	PrintfNormal
 	jal	Exit
-$L12:
+$L21:
 	lw	$3,20($fp)
 	li	$2,2			# 0x2
-	beq	$3,$2,$L13
+	beq	$3,$2,$L22
 	lw	$3,20($fp)
 	li	$2,1			# 0x1
-	beq	$3,$2,$L13
+	beq	$3,$2,$L22
 	lw	$2,20($fp)
 	sll	$3,$2,2
 	la	$2,typeMaps
@@ -227,26 +418,141 @@ $L12:
 	lw	$5,0($2)
 	jal	PrintfNormal
 	jal	Exit
-$L13:
+$L22:
 	lw	$3,16($fp)
 	li	$2,1			# 0x1
-	bne	$3,$2,$L14
+	bne	$3,$2,$L23
 	la	$2,convertSTRING_TO_INT
 	sw	$2,OP1_TYPECAST
-$L14:
+$L23:
 	lw	$3,20($fp)
 	li	$2,1			# 0x1
-	bne	$3,$2,$L15
+	bne	$3,$2,$L24
 	la	$2,convertSTRING_TO_INT
 	sw	$2,OP2_TYPECAST
-$L15:
+$L24:
 	li	$2,2			# 0x2
 	move	$sp,$fp
 	lw	$31,28($sp)
 	lw	$fp,24($sp)
 	addu	$sp,$sp,32
 	j	$31
-	.end	typecheck_PLUS
+	.end	typecheck_GENERIC_INT_STRING_3OP
+	.align	2
+	.globl	typecheck_INT_PLUS
+	.ent	typecheck_INT_PLUS
+typecheck_INT_PLUS:
+	.frame	$fp,24,$31		# vars= 0, regs= 2/0, args= 16, extra= 0
+	.mask	0xc0000000,-4
+	.fmask	0x00000000,0
+	subu	$sp,$sp,24
+	sw	$31,20($sp)
+	sw	$fp,16($sp)
+	move	$fp,$sp
+	sw	$4,24($fp)
+	sw	$5,28($fp)
+	lw	$4,24($fp)
+	lw	$5,28($fp)
+	la	$6,op_PLUS
+	jal	typecheck_GENERIC_INT_STRING_3OP
+	move	$sp,$fp
+	lw	$31,20($sp)
+	lw	$fp,16($sp)
+	addu	$sp,$sp,24
+	j	$31
+	.end	typecheck_INT_PLUS
+	.align	2
+	.globl	typecheck_INT_MINUS
+	.ent	typecheck_INT_MINUS
+typecheck_INT_MINUS:
+	.frame	$fp,24,$31		# vars= 0, regs= 2/0, args= 16, extra= 0
+	.mask	0xc0000000,-4
+	.fmask	0x00000000,0
+	subu	$sp,$sp,24
+	sw	$31,20($sp)
+	sw	$fp,16($sp)
+	move	$fp,$sp
+	sw	$4,24($fp)
+	sw	$5,28($fp)
+	lw	$4,24($fp)
+	lw	$5,28($fp)
+	la	$6,op_MINUS
+	jal	typecheck_GENERIC_INT_STRING_3OP
+	move	$sp,$fp
+	lw	$31,20($sp)
+	lw	$fp,16($sp)
+	addu	$sp,$sp,24
+	j	$31
+	.end	typecheck_INT_MINUS
+	.align	2
+	.globl	typecheck_INT_MULT
+	.ent	typecheck_INT_MULT
+typecheck_INT_MULT:
+	.frame	$fp,24,$31		# vars= 0, regs= 2/0, args= 16, extra= 0
+	.mask	0xc0000000,-4
+	.fmask	0x00000000,0
+	subu	$sp,$sp,24
+	sw	$31,20($sp)
+	sw	$fp,16($sp)
+	move	$fp,$sp
+	sw	$4,24($fp)
+	sw	$5,28($fp)
+	lw	$4,24($fp)
+	lw	$5,28($fp)
+	la	$6,op_MULT
+	jal	typecheck_GENERIC_INT_STRING_3OP
+	move	$sp,$fp
+	lw	$31,20($sp)
+	lw	$fp,16($sp)
+	addu	$sp,$sp,24
+	j	$31
+	.end	typecheck_INT_MULT
+	.align	2
+	.globl	typecheck_INT_DIV
+	.ent	typecheck_INT_DIV
+typecheck_INT_DIV:
+	.frame	$fp,24,$31		# vars= 0, regs= 2/0, args= 16, extra= 0
+	.mask	0xc0000000,-4
+	.fmask	0x00000000,0
+	subu	$sp,$sp,24
+	sw	$31,20($sp)
+	sw	$fp,16($sp)
+	move	$fp,$sp
+	sw	$4,24($fp)
+	sw	$5,28($fp)
+	lw	$4,24($fp)
+	lw	$5,28($fp)
+	la	$6,op_DIV
+	jal	typecheck_GENERIC_INT_STRING_3OP
+	move	$sp,$fp
+	lw	$31,20($sp)
+	lw	$fp,16($sp)
+	addu	$sp,$sp,24
+	j	$31
+	.end	typecheck_INT_DIV
+	.align	2
+	.globl	typecheck_INT_MOD
+	.ent	typecheck_INT_MOD
+typecheck_INT_MOD:
+	.frame	$fp,24,$31		# vars= 0, regs= 2/0, args= 16, extra= 0
+	.mask	0xc0000000,-4
+	.fmask	0x00000000,0
+	subu	$sp,$sp,24
+	sw	$31,20($sp)
+	sw	$fp,16($sp)
+	move	$fp,$sp
+	sw	$4,24($fp)
+	sw	$5,28($fp)
+	lw	$4,24($fp)
+	lw	$5,28($fp)
+	la	$6,op_MOD
+	jal	typecheck_GENERIC_INT_STRING_3OP
+	move	$sp,$fp
+	lw	$31,20($sp)
+	lw	$fp,16($sp)
+	addu	$sp,$sp,24
+	j	$31
+	.end	typecheck_INT_MOD
 	.rdata
 	.align	2
 $LC7:
@@ -268,7 +574,7 @@ typecheck_HASH_INDEX_CHECK:
 	sw	$2,16($fp)
 	lw	$3,16($fp)
 	li	$2,1			# 0x1
-	beq	$3,$2,$L17
+	beq	$3,$2,$L31
 	lw	$2,16($fp)
 	sll	$3,$2,2
 	la	$2,typeMaps
@@ -277,7 +583,7 @@ typecheck_HASH_INDEX_CHECK:
 	lw	$5,0($2)
 	jal	PrintfNormal
 	jal	Exit
-$L17:
+$L31:
 	move	$sp,$fp
 	lw	$31,28($sp)
 	lw	$fp,24($sp)
@@ -305,7 +611,7 @@ typecheck_ARRAY_INDEX_CHECK:
 	sw	$2,16($fp)
 	lw	$3,16($fp)
 	li	$2,2			# 0x2
-	beq	$3,$2,$L19
+	beq	$3,$2,$L33
 	lw	$2,16($fp)
 	sll	$3,$2,2
 	la	$2,typeMaps
@@ -314,7 +620,7 @@ typecheck_ARRAY_INDEX_CHECK:
 	lw	$5,0($2)
 	jal	PrintfNormal
 	jal	Exit
-$L19:
+$L33:
 	move	$sp,$fp
 	lw	$31,28($sp)
 	lw	$fp,24($sp)
@@ -345,7 +651,7 @@ typecheck_TYPE_EQUAL:
 	sw	$2,20($fp)
 	lw	$3,16($fp)
 	lw	$2,20($fp)
-	beq	$3,$2,$L21
+	beq	$3,$2,$L35
 	lw	$2,16($fp)
 	sll	$3,$2,2
 	la	$2,typeMaps
@@ -359,7 +665,7 @@ typecheck_TYPE_EQUAL:
 	lw	$6,0($2)
 	jal	PrintfNormal
 	jal	Exit
-$L21:
+$L35:
 	move	$sp,$fp
 	lw	$31,28($sp)
 	lw	$fp,24($sp)
@@ -391,12 +697,12 @@ typecheck_GENERIC_INT_3OP:
 	sw	$2,20($fp)
 	lw	$3,16($fp)
 	li	$2,2			# 0x2
-	bne	$3,$2,$L24
+	bne	$3,$2,$L38
 	lw	$3,20($fp)
 	li	$2,2			# 0x2
-	bne	$3,$2,$L24
-	j	$L23
-$L24:
+	bne	$3,$2,$L38
+	j	$L37
+$L38:
 	lw	$2,16($fp)
 	sll	$3,$2,2
 	la	$2,typeMaps
@@ -410,7 +716,7 @@ $L24:
 	lw	$6,0($2)
 	jal	PrintfNormal
 	jal	Exit
-$L23:
+$L37:
 	move	$sp,$fp
 	lw	$31,28($sp)
 	lw	$fp,24($sp)

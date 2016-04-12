@@ -48,3 +48,46 @@ void * op_PLUS (void *inp1, void *inp2) {
 
     return (void *)(first + second);
 }
+
+void * op_MINUS (void *inp1, void *inp2) {
+
+    inp1 = OP1_TYPECAST(inp1);
+    inp2 = OP2_TYPECAST(inp2);
+
+    int first = (int)inp1;
+    int second = (int)inp2;
+
+    return (void *)(first - second);
+}
+
+void * op_MULT (void *inp1, void *inp2) {
+
+    inp1 = OP1_TYPECAST(inp1); inp2 = OP2_TYPECAST(inp2); 
+    int first = (int)inp1;
+    int second = (int)inp2;
+
+    return (void *)(first * second);
+}
+
+void * op_DIV (void *inp1, void *inp2) {
+
+    inp1 = OP1_TYPECAST(inp1);
+    inp2 = OP2_TYPECAST(inp2);
+
+    int first = (int)inp1;
+    int second = (int)inp2;
+
+    return (void *)(first / second);
+}
+
+void * op_MOD (void *inp1, void *inp2) {
+
+    inp1 = OP1_TYPECAST(inp1);
+    inp2 = OP2_TYPECAST(inp2);
+
+    int first = (int)inp1;
+    int second = (int)inp2;
+
+    return (void *)(first % second);
+}
+
