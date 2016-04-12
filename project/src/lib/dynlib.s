@@ -505,3 +505,229 @@ $L25:
 	addu	$sp,$sp,40
 	j	$31
 	.end	op_STRING_CMP
+	.align	2
+	.globl	op_STRING_DOT
+	.ent	op_STRING_DOT
+op_STRING_DOT:
+	.frame	$fp,48,$31		# vars= 24, regs= 2/0, args= 16, extra= 0
+	.mask	0xc0000000,-4
+	.fmask	0x00000000,0
+	subu	$sp,$sp,48
+	sw	$31,44($sp)
+	sw	$fp,40($sp)
+	move	$fp,$sp
+	sw	$4,48($fp)
+	sw	$5,52($fp)
+	lw	$2,OP1_TYPECAST
+	lw	$4,48($fp)
+	jal	$31,$2
+	sw	$2,16($fp)
+	lw	$2,OP2_TYPECAST
+	lw	$4,52($fp)
+	jal	$31,$2
+	sw	$2,20($fp)
+	sw	$0,24($fp)
+	sw	$0,28($fp)
+	sw	$0,24($fp)
+$L34:
+	lw	$3,16($fp)
+	lw	$2,24($fp)
+	addu	$2,$3,$2
+	lb	$2,0($2)
+	bne	$2,$0,$L36
+	j	$L35
+$L36:
+	lw	$2,24($fp)
+	addu	$2,$2,1
+	sw	$2,24($fp)
+	j	$L34
+$L35:
+	sw	$0,28($fp)
+$L38:
+	lw	$3,20($fp)
+	lw	$2,28($fp)
+	addu	$2,$3,$2
+	lb	$2,0($2)
+	bne	$2,$0,$L40
+	j	$L39
+$L40:
+	lw	$2,28($fp)
+	addu	$2,$2,1
+	sw	$2,28($fp)
+	j	$L38
+$L39:
+	lw	$3,24($fp)
+	lw	$2,28($fp)
+	addu	$2,$3,$2
+	addu	$2,$2,1
+	move	$4,$2
+	jal	alloc
+	sw	$2,32($fp)
+	sw	$0,36($fp)
+$L42:
+	lw	$2,36($fp)
+	lw	$3,24($fp)
+	slt	$2,$2,$3
+	bne	$2,$0,$L45
+	j	$L43
+$L45:
+	lw	$3,32($fp)
+	lw	$2,36($fp)
+	addu	$4,$3,$2
+	lw	$3,16($fp)
+	lw	$2,36($fp)
+	addu	$2,$3,$2
+	lbu	$2,0($2)
+	sb	$2,0($4)
+	lw	$2,36($fp)
+	addu	$2,$2,1
+	sw	$2,36($fp)
+	j	$L42
+$L43:
+	sw	$0,36($fp)
+$L46:
+	lw	$2,36($fp)
+	lw	$3,28($fp)
+	slt	$2,$2,$3
+	bne	$2,$0,$L49
+	j	$L47
+$L49:
+	lw	$3,24($fp)
+	lw	$2,36($fp)
+	addu	$3,$3,$2
+	lw	$2,32($fp)
+	addu	$4,$3,$2
+	lw	$3,20($fp)
+	lw	$2,36($fp)
+	addu	$2,$3,$2
+	lbu	$2,0($2)
+	sb	$2,0($4)
+	lw	$2,36($fp)
+	addu	$2,$2,1
+	sw	$2,36($fp)
+	j	$L46
+$L47:
+	lw	$3,24($fp)
+	lw	$2,28($fp)
+	addu	$3,$3,$2
+	lw	$2,32($fp)
+	addu	$2,$3,$2
+	sb	$0,0($2)
+	lw	$2,32($fp)
+	move	$sp,$fp
+	lw	$31,44($sp)
+	lw	$fp,40($sp)
+	addu	$sp,$sp,48
+	j	$31
+	.end	op_STRING_DOT
+	.align	2
+	.globl	op_STRING_REPEAT
+	.ent	op_STRING_REPEAT
+op_STRING_REPEAT:
+	.frame	$fp,56,$31		# vars= 32, regs= 2/0, args= 16, extra= 0
+	.mask	0xc0000000,-4
+	.fmask	0x00000000,0
+	subu	$sp,$sp,56
+	sw	$31,52($sp)
+	sw	$fp,48($sp)
+	move	$fp,$sp
+	sw	$4,56($fp)
+	sw	$5,60($fp)
+	lw	$2,OP1_TYPECAST
+	lw	$4,56($fp)
+	jal	$31,$2
+	sw	$2,16($fp)
+	lw	$2,OP2_TYPECAST
+	lw	$4,60($fp)
+	jal	$31,$2
+	sw	$2,20($fp)
+	lw	$2,20($fp)
+	bgtz	$2,$L51
+	li	$4,1			# 0x1
+	jal	alloc
+	sw	$2,24($fp)
+	lw	$2,24($fp)
+	sb	$0,0($2)
+	lw	$2,24($fp)
+	sw	$2,40($fp)
+	j	$L50
+$L51:
+	sw	$0,24($fp)
+	sw	$0,24($fp)
+$L52:
+	lw	$3,16($fp)
+	lw	$2,24($fp)
+	addu	$2,$3,$2
+	lb	$2,0($2)
+	bne	$2,$0,$L54
+	j	$L53
+$L54:
+	lw	$2,24($fp)
+	addu	$2,$2,1
+	sw	$2,24($fp)
+	j	$L52
+$L53:
+	lw	$3,24($fp)
+	lw	$2,20($fp)
+	mult	$3,$2
+	mflo	$2
+	addu	$2,$2,1
+	move	$4,$2
+	jal	alloc
+	sw	$2,28($fp)
+	sw	$0,32($fp)
+$L56:
+	lw	$2,32($fp)
+	lw	$3,20($fp)
+	slt	$2,$2,$3
+	bne	$2,$0,$L59
+	j	$L57
+$L59:
+	sw	$0,36($fp)
+$L60:
+	lw	$2,36($fp)
+	lw	$3,24($fp)
+	slt	$2,$2,$3
+	bne	$2,$0,$L63
+	j	$L58
+$L63:
+	lw	$3,32($fp)
+	lw	$2,24($fp)
+	mult	$3,$2
+	mflo	$3
+	lw	$2,36($fp)
+	addu	$3,$3,$2
+	lw	$2,28($fp)
+	addu	$4,$3,$2
+	lw	$3,16($fp)
+	lw	$2,36($fp)
+	addu	$2,$3,$2
+	lbu	$2,0($2)
+	sb	$2,0($4)
+	lw	$2,36($fp)
+	addu	$2,$2,1
+	sw	$2,36($fp)
+	j	$L60
+$L58:
+	lw	$2,32($fp)
+	addu	$2,$2,1
+	sw	$2,32($fp)
+	j	$L56
+$L57:
+	lw	$3,20($fp)
+	lw	$2,24($fp)
+	mult	$3,$2
+	mflo	$3
+	lw	$2,28($fp)
+	addu	$2,$3,$2
+	sb	$0,0($2)
+	lw	$2,28($fp)
+	sw	$2,40($fp)
+$L50:
+	lw	$2,40($fp)
+	move	$sp,$fp
+	lw	$31,52($sp)
+	lw	$fp,48($sp)
+	addu	$sp,$sp,56
+	j	$31
+	.end	op_STRING_REPEAT

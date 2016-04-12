@@ -125,8 +125,8 @@ class OperationType(object):
                 "strlt" : STRLT,         "strle"    : STRLE,
                 "strgt" : STRGT,         "strge"    : STRGE,
                 "streq" : STREQ,         "strcmp"   : STREQ,
-                "strne" : STRNE,         "."        : DOT,
-                "x"     : REPEAT,
+                "strne" : STRNE,         "strcat"   : DOT,
+                "strmul": REPEAT,
                 "hashindexcheck" : HASH_INDEX_CHECK, "arrayindexcheck" : ARRAY_INDEX_CHECK, "type-equal" : TYPE_EQUAL,
                 ""      : NONE
               }

@@ -133,3 +133,49 @@ void * op_STRING_CMP(void *inpString1, void *inpString2) {
     }
     return (void *) 0; // Will only reach here if both have same length and same characters at all points
 }
+
+void * op_STRING_DOT(void *inpString1, void *inpString2) {
+
+    char * s1 = (char *)OP1_TYPECAST(inpString1);
+    char * s2 = (char *)OP2_TYPECAST(inpString2);
+
+    int len1 = 0, len2 = 0;
+    for(len1=0; s1[len1]; len1++) ;
+    for(len2=0; s2[len2]; len2++) ;
+
+	char * s3 = (char *)alloc(sizeof(char)*(len1 + len2 + 1));
+	int i;
+	for (i=0; i<len1; i++) {
+		s3[i] = s1[i];
+	}
+	for (i=0; i<len2; i++) {
+		s3[len1 + i] = s2[i];
+	}
+	s3[len1 + len2] = '\0';
+    return (void *)s3;
+}
+
+void * op_STRING_REPEAT(void *inpString1, void *repeatNum) {
+
+    char * s1 = (char *)OP1_TYPECAST(inpString1);
+    int n 	  = (int)   OP2_TYPECAST(repeatNum);
+
+	if (n <= 0) {
+		char * s2 = (char *)alloc(sizeof(char));
+		s2[0] = '\0';
+		return (void *)s2;
+	}
+
+    int len1 = 0;
+    for(len1=0; s1[len1]; len1++) ;
+
+	char * s2 = (char *)alloc(sizeof(char)*((len1*n) + 1));
+	int i,j;
+	for (i=0; i<n; i++) {
+		for (j=0; j<len1; j++) {
+			s2[i*len1 + j] = s1[j];
+		}
+	}
+	s2[n*len1] = '\0';
+    return (void *)s2;
+}

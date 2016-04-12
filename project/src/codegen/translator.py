@@ -501,6 +501,22 @@ def GenCode_3OPASSIGN(instr, regDest, regInp1, regInp2):
         G.AsmText.AddText(G.INDENT + "srlv %s, %s, %s"%(regDest, regInp1, regInp2),
                                      "%s = %s >> %s"%(instr.dest, instr.inp1, instr.inp2))
 
+    elif instr.opType.is_DOT():
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a0, regInp1))
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a1, regInp2))
+        G.AsmText.AddText(G.INDENT + "lw %s, OPCONTROL"%(REG.a2))
+        G.AsmText.AddText(G.INDENT + "jalr %s"%(REG.a2))
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(regDest, REG.v0))
+        G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
+
+    elif instr.opType.is_REPEAT():
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a0, regInp1))
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a1, regInp2))
+        G.AsmText.AddText(G.INDENT + "lw %s, OPCONTROL"%(REG.a2))
+        G.AsmText.AddText(G.INDENT + "jalr %s"%(REG.a2))
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(regDest, REG.v0))
+        G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
+
     else:
         raise Exception("%s : Instruction not recognized in 3OPAssign"%(instr))
 
@@ -692,19 +708,15 @@ def Translate_TYPECHECK(instr):
 
         elif instr.opType.is_MINUS():
             G.AsmText.AddText(G.INDENT + "jal typecheck_INT_MINUS")
-            #G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
 
         elif instr.opType.is_MULT():
             G.AsmText.AddText(G.INDENT + "jal typecheck_INT_MULT")
-            #G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
 
         elif instr.opType.is_DIV():
             G.AsmText.AddText(G.INDENT + "jal typecheck_INT_DIV")
-            #G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
 
         elif instr.opType.is_MOD():
             G.AsmText.AddText(G.INDENT + "jal typecheck_INT_MOD")
-            #G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
 
         elif instr.opType.is_LT():
             G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
@@ -756,6 +768,12 @@ def Translate_TYPECHECK(instr):
 
         elif instr.opType.is_STRNE():
             G.AsmText.AddText(G.INDENT + "jal typecheck_STRING_RELOP")
+
+        elif instr.opType.is_DOT():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_STRING_DOT")
+
+        elif instr.opType.is_REPEAT():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_STRING_REPEAT")
 
         else:
             raise Exception("%s : Instruction not recognized in Translate_TYPECHECK"%(instr))
