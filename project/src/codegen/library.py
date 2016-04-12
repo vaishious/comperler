@@ -22,11 +22,21 @@ import os
 def LinkFunction(funcName):
     codeFunc = ""
     insideFunc = False
+    insideSet = False
     labels = []
     for fileName in G.LIBSRC:
         with open(os.path.dirname(__file__) + "/" + fileName, 'r') as f:
             for line in f:
-                if insideFunc:
+
+                if (".set" in line) and ("noreorder" in line):
+                    insideSet = True
+                    continue
+
+                if (".set" in line) and ("reorder" in line):
+                    insideSet = False
+                    continue
+
+                if insideFunc and (not insideSet):
                     codeFunc += line
                     if (".end" in line) and (funcName in line):
 

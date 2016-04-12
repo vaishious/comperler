@@ -86,9 +86,9 @@ class Lexer(object): # Inheriting from object provides extra functionality
     # Tokens which are passed to functions
     wrong_identifier = r'[0-9]+[a-zA-Z_][a-zA-Z0-9_]*'
     identifier       = r'[a-zA-Z_][a-zA-Z0-9_]*'
-    variable         = r'[$@%][ ]*' + identifier
-    dereference      = r'[$@%][$ ]*' + identifier
-    reference        = r'[\\][ ]*' + variable 
+    variable         = r'[$@%]' + identifier
+    dereference      = r'[$@%][$]*' + identifier
+    reference        = r'[\\]' + variable 
     octal            = r'0[0-7]+'
     hexadecimal      = r'0[xX][0-9a-fA-F]+'
     binary           = r'0[bB][01]+'
