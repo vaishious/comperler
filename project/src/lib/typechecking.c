@@ -51,10 +51,7 @@ void * typecheck_HASH_INDEX_CHECK(void *typeIndex) {
 
     if ((type != TYPE_STRING)) {
         PrintfNormal("Hash index needs to be a STRING, not %s\n", typeMaps[type]);
-        asm("
-                li $v0, 10
-                syscall
-            ");
+        Exit();
     }
 }
 
@@ -64,10 +61,7 @@ void * typecheck_ARRAY_INDEX_CHECK(void *typeIndex) {
 
     if ((type != TYPE_INT)) {
         PrintfNormal("Array index needs to be an INT, not %s\n", typeMaps[type]);
-        asm("
-                li $v0, 10
-                syscall
-            ");
+        Exit();
     }
 }
 
@@ -78,10 +72,17 @@ void * typecheck_TYPE_EQUAL(void *inpType1, void *inpType2) {
 
     if (type1 != type2) {
         PrintfNormal("Need types %s and %s to be equal\n", typeMaps[type1], typeMaps[type2]);
-        asm("
-                li $v0, 10
-                syscall
-            ");
+        Exit();
     }
 }
 
+void * typecheck_GENERIC_INT_3OP(void * inpType1, void *inpType2) {
+
+    int type1 = (int) inpType1;
+    int type2 = (int) inpType2;
+
+    if ((type1 != TYPE_INT) || (type2 != TYPE_INT)) {
+        PrintfNormal("Cannot perform the required arithmetic operation between types %s and %s\n", typeMaps[type1], typeMaps[type2]);
+        Exit();
+    }
+}

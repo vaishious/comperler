@@ -60,7 +60,7 @@ def LinkLibData():
 
                 if insideData:
                     finalLine = line
-                    if ".ascii" in finalLine:
+                    if ".ascii" in finalLine and "\\000" in finalLine:
                         finalLine = finalLine.replace(".ascii", ".asciiz")
                         finalLine = finalLine.replace("\\000", "")
 

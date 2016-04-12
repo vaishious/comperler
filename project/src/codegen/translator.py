@@ -651,8 +651,55 @@ def Translate_TYPECHECK(instr):
         G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a1, reg2))
         if instr.opType.is_PLUS():
             G.AsmText.AddText(G.INDENT + "jal typecheck_PLUS")
+
         elif instr.opType.is_TYPE_EQUAL():
             G.AsmText.AddText(G.INDENT + "jal typecheck_TYPE_EQUAL")
+
+        elif instr.opType.is_MINUS():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
+
+        elif instr.opType.is_MULT():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
+
+        elif instr.opType.is_DIV():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
+
+        elif instr.opType.is_MOD():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
+
+        elif instr.opType.is_LT():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
+
+        elif instr.opType.is_GT():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
+
+        elif instr.opType.is_GEQ():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
+
+        elif instr.opType.is_LEQ():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
+
+        elif instr.opType.is_EQ():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
+
+        elif instr.opType.is_NE():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
+
+        elif instr.opType.is_BOR():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
+
+        elif instr.opType.is_BAND():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
+
+        elif instr.opType.is_BXOR():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
+
+        elif instr.opType.is_LSHIFT():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
+
+        elif instr.opType.is_RSHIFT():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_GENERIC_INT_3OP")
+
         else:
             raise Exception("%s : Instruction not recognized in Translate_TYPECHECK"%(instr))
 
