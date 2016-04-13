@@ -370,6 +370,36 @@ class Parser(object):
                             | arith-boolean-expression RSHIFT arith-boolean-expression
                             | arith-boolean-expression XOR arith-boolean-expression
 
+                            | arith-boolean-expression PLUS string-expression
+                            | arith-boolean-expression MINUS string-expression
+                            | arith-boolean-expression TIMES string-expression
+                            | arith-boolean-expression DIVIDE string-expression
+                            | arith-boolean-expression MODULUS string-expression
+
+                            | string-expression PLUS arith-boolean-expression
+                            | string-expression MINUS arith-boolean-expression
+                            | string-expression TIMES arith-boolean-expression
+                            | string-expression DIVIDE arith-boolean-expression
+                            | string-expression MODULUS arith-boolean-expression
+
+                            | string-expression PLUS var
+                            | string-expression MINUS var
+                            | string-expression TIMES var
+                            | string-expression DIVIDE var
+                            | string-expression MODULUS var
+
+                            | var PLUS string-expression
+                            | var MINUS string-expression
+                            | var TIMES string-expression
+                            | var DIVIDE string-expression
+                            | var MODULUS string-expression
+
+                            | string-expression PLUS string-expression
+                            | string-expression MINUS string-expression
+                            | string-expression TIMES string-expression
+                            | string-expression DIVIDE string-expression
+                            | string-expression MODULUS string-expression
+
                             | var PLUS var 
                             | var MINUS var 
                             | var TIMES var 
@@ -587,17 +617,27 @@ class Parser(object):
         p[0].isBooleanExpression = True
 
     def p_string_op(self, p):
-        ''' string-op : string-expression PLUS arith-boolean-expression
-                      | string-expression PLUS var
-                      | var PLUS string-expression
-                      | string-expression DOT string-expression
+        ''' string-op : string-expression DOT string-expression
                       | string-expression DOT var
                       | var DOT string-expression
                       | var DOT var
-                      | string-expression REPEAT arith-boolean-expression
+
+                      | arith-boolean-expression DOT var
+                      | var DOT arith-boolean-expression
+                      | arith-boolean-expression DOT string-expression
+                      | string-expression DOT arith-boolean-expression 
+                      | arith-boolean-expression DOT arith-boolean-expression 
+
+                      | string-expression REPEAT string-expression
                       | string-expression REPEAT var 
-                      | var REPEAT arith-boolean-expression
+                      | var REPEAT string-expression
                       | var REPEAT var 
+
+                      | arith-boolean-expression REPEAT var
+                      | var REPEAT arith-boolean-expression
+                      | arith-boolean-expression REPEAT string-expression
+                      | string-expression REPEAT arith-boolean-expression 
+                      | arith-boolean-expression REPEAT arith-boolean-expression 
         '''
 
         p[0] = IR.Attributes()
