@@ -74,8 +74,12 @@ class Parser(object):
 
     def p_error(self, p):
         if not self.error_seen:
-            print("Syntax error in input.")
-            self.error_seen = True
+            if p is not None:
+                print("Parser encountered a syntax error in input at Line %d.\n"%(p.lineno))
+                self.error_seen = True
+            else:
+                print("Unexpected end of input.\n")
+                self.error_seen = True
 
     ##################################
     
