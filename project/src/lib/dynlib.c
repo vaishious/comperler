@@ -188,15 +188,18 @@ void * op_ARRAY_CONCAT(void *inpArray1, void *inpArray2) {
 
     int len1 = lengthOfArray(a1), len2 = lengthOfArray(a2);
 
-	Array_t * a3 = initArray();
-	int i;
+    Array_t * a3 = initArray();
+    int i;
 
-	for (i=0; i<len1; i++) {
-		*accessIndex(a3, i) = *accessIndex(a1, i);
-	}
+    for (i=0; i < len1; i++) {
+            *accessIndex(a3, i) = *accessIndex(a1, i);
+            *accessIndexType(a3, i) = *accessIndexType(a1, i);
+    }
 
-	for (i=0; i<len2; i++) {
-		*accessIndex(a3, len1+i) = *accessIndex(a2, i);
-	}
+    for (i=0; i<len2; i++) {
+            *accessIndex(a3, len1 + i) = *accessIndex(a2, i);
+            *accessIndexType(a3, len1 + i) = *accessIndexType(a2, i);
+    }
+
     return (void *)a3;
 }

@@ -9,6 +9,11 @@
 
 /*#include "arraylib.c"*/
 
+#define TYPE_UNKNOWN 0
+#define TYPE_STRING 1
+#define TYPE_INT 2
+#define TYPE_ARRAY 3
+#define TYPE_HASH 4
 
 typedef struct structArray {
     int length;
@@ -123,6 +128,28 @@ void PrintfNormal(char *formatSpecifier, ...) {
     }
 }
 
+void PrintArray(Array_t *array) {
+    int len = lengthOfArray(array);
+    int i;
+
+    for (i = 0; i < len; i++) {
+        int type = *((int *) accessIndexType(array, i));
+        void *val = (void *) *((int *) accessIndex(array, i));
+
+        if (type == TYPE_INT)
+            PrintInt((int) val);
+        else if (type == TYPE_STRING)
+            PrintString((char *) val);
+        else if (type == TYPE_ARRAY)
+            PrintArray((Array_t *) val);
+
+        if (i != (len - 1)) {
+            PrintChar(',');
+            PrintChar(' ');
+        }
+    }
+}
+
 void Printf(Array_t *parameters) {
 
     char *formatSpecifier = (*((char **) accessIndex(parameters, 0)));
@@ -132,6 +159,7 @@ void Printf(Array_t *parameters) {
 
     char argChar;
     char *argStr;
+    Array_t *argArray;
 
     while((*formatSpecifier) != '\0') {
         if ((*formatSpecifier) == '%') {
@@ -150,6 +178,11 @@ void Printf(Array_t *parameters) {
             } else if ((*formatSpecifier) == 'c') {
                 argChar = *((char *) accessIndex(parameters, argIndex));
                 PrintChar(argChar);
+                argIndex++;
+
+            } else if ((*formatSpecifier) == 'a') { 
+                argArray = (Array_t *) *((int *) accessIndex(parameters, argIndex));
+                PrintArray(argArray);
                 argIndex++;
 
             } else {

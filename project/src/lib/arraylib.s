@@ -12,7 +12,7 @@ initArray:
 	sw	$fp,28($sp)
 	sw	$16,24($sp)
 	move	$fp,$sp
-	li	$4,8			# 0x8
+	li	$4,12			# 0xc
 	jal	alloc
 	sw	$2,16($fp)
 	lw	$16,16($fp)
@@ -25,6 +25,9 @@ initArray:
 	li	$2,1			# 0x1
 	sw	$2,0($3)
 $L2:
+	lw	$3,16($fp)
+	li	$2,-1			# 0xffffffffffffffff
+	sw	$2,8($3)
 	lw	$2,16($fp)
 	move	$sp,$fp
 	lw	$31,32($sp)
@@ -47,7 +50,8 @@ lengthOfArray:
 	lw	$2,16($fp)
 	beq	$2,$0,$L4
 	lw	$2,16($fp)
-	lw	$2,0($2)
+	lw	$2,8($2)
+	addu	$2,$2,1
 	sw	$2,0($fp)
 	j	$L3
 $L4:
@@ -129,20 +133,16 @@ $L9:
 	lw	$3,32($fp)
 	lw	$2,16($fp)
 	sw	$2,4($3)
-	lw	$2,32($fp)
-	lw	$2,0($2)
-	slt	$2,$2,2
-	bne	$2,$0,$L7
-	li	$4,64			# 0x40
-	jal	PrintChar
-	lw	$2,32($fp)
-	lw	$2,4($2)
-	addu	$2,$2,8
-	lw	$4,0($2)
-	jal	PrintInt
-	li	$4,10			# 0xa
-	jal	PrintChar
 $L7:
+	lw	$2,32($fp)
+	lw	$3,36($fp)
+	lw	$2,8($2)
+	slt	$2,$2,$3
+	beq	$2,$0,$L12
+	lw	$3,32($fp)
+	lw	$2,36($fp)
+	sw	$2,8($3)
+$L12:
 	lw	$4,32($fp)
 	lw	$2,36($fp)
 	sll	$3,$2,3
@@ -225,6 +225,15 @@ $L16:
 	lw	$2,16($fp)
 	sw	$2,4($3)
 $L14:
+	lw	$2,32($fp)
+	lw	$3,36($fp)
+	lw	$2,8($2)
+	slt	$2,$2,$3
+	beq	$2,$0,$L19
+	lw	$3,32($fp)
+	lw	$2,36($fp)
+	sw	$2,8($3)
+$L19:
 	lw	$4,32($fp)
 	lw	$2,36($fp)
 	sll	$3,$2,3

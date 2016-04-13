@@ -12,7 +12,7 @@ initArray:
 	sw	$fp,28($sp)
 	sw	$16,24($sp)
 	move	$fp,$sp
-	li	$4,8			# 0x8
+	li	$4,12			# 0xc
 	jal	alloc
 	sw	$2,16($fp)
 	lw	$16,16($fp)
@@ -25,6 +25,9 @@ initArray:
 	li	$2,1			# 0x1
 	sw	$2,0($3)
 $L2:
+	lw	$3,16($fp)
+	li	$2,-1			# 0xffffffffffffffff
+	sw	$2,8($3)
 	lw	$2,16($fp)
 	move	$sp,$fp
 	lw	$31,32($sp)
@@ -47,7 +50,8 @@ lengthOfArray:
 	lw	$2,16($fp)
 	beq	$2,$0,$L4
 	lw	$2,16($fp)
-	lw	$2,0($2)
+	lw	$2,8($2)
+	addu	$2,$2,1
 	sw	$2,0($fp)
 	j	$L3
 $L4:
@@ -129,20 +133,16 @@ $L9:
 	lw	$3,32($fp)
 	lw	$2,16($fp)
 	sw	$2,4($3)
-	lw	$2,32($fp)
-	lw	$2,0($2)
-	slt	$2,$2,2
-	bne	$2,$0,$L7
-	li	$4,64			# 0x40
-	jal	PrintChar
-	lw	$2,32($fp)
-	lw	$2,4($2)
-	addu	$2,$2,8
-	lw	$4,0($2)
-	jal	PrintInt
-	li	$4,10			# 0xa
-	jal	PrintChar
 $L7:
+	lw	$2,32($fp)
+	lw	$3,36($fp)
+	lw	$2,8($2)
+	slt	$2,$2,$3
+	beq	$2,$0,$L12
+	lw	$3,32($fp)
+	lw	$2,36($fp)
+	sw	$2,8($3)
+$L12:
 	lw	$4,32($fp)
 	lw	$2,36($fp)
 	sll	$3,$2,3
@@ -225,6 +225,15 @@ $L16:
 	lw	$2,16($fp)
 	sw	$2,4($3)
 $L14:
+	lw	$2,32($fp)
+	lw	$3,36($fp)
+	lw	$2,8($2)
+	slt	$2,$2,$3
+	beq	$2,$0,$L19
+	lw	$3,32($fp)
+	lw	$2,36($fp)
+	sw	$2,8($3)
+$L19:
 	lw	$4,32($fp)
 	lw	$2,36($fp)
 	sll	$3,$2,3
@@ -272,53 +281,53 @@ convertSTRING_TO_INT:
 	lw	$2,0($fp)
 	lb	$3,0($2)
 	li	$2,45			# 0x2d
-	bne	$3,$2,$L21
+	bne	$3,$2,$L22
 	li	$2,1			# 0x1
 	sw	$2,4($fp)
 	lw	$2,0($fp)
 	addu	$2,$2,1
 	sw	$2,0($fp)
-	j	$L22
-$L21:
+	j	$L23
+$L22:
 	lw	$2,0($fp)
 	lb	$3,0($2)
 	li	$2,43			# 0x2b
-	bne	$3,$2,$L22
+	bne	$3,$2,$L23
 	sw	$0,4($fp)
 	lw	$2,0($fp)
 	addu	$2,$2,1
 	sw	$2,0($fp)
-$L22:
+$L23:
 	.set	noreorder
 	nop
 	.set	reorder
-$L24:
+$L25:
 	lw	$2,0($fp)
 	lb	$2,0($2)
-	bne	$2,$0,$L26
-	j	$L25
-$L26:
+	bne	$2,$0,$L27
+	j	$L26
+$L27:
 	lw	$2,0($fp)
 	lb	$2,0($2)
 	slt	$2,$2,58
-	beq	$2,$0,$L28
+	beq	$2,$0,$L29
 	lw	$2,0($fp)
 	lb	$2,0($2)
 	slt	$2,$2,48
-	bne	$2,$0,$L28
-	j	$L27
-$L28:
+	bne	$2,$0,$L29
+	j	$L28
+$L29:
 	lw	$3,4($fp)
 	li	$2,1			# 0x1
-	bne	$3,$2,$L29
+	bne	$3,$2,$L30
 	lw	$2,8($fp)
 	subu	$2,$0,$2
 	sw	$2,8($fp)
-$L29:
+$L30:
 	lw	$2,8($fp)
 	sw	$2,12($fp)
-	j	$L20
-$L27:
+	j	$L21
+$L28:
 	lw	$3,8($fp)
 	move	$2,$3
 	sll	$2,$2,2
@@ -332,18 +341,18 @@ $L27:
 	lw	$2,0($fp)
 	addu	$2,$2,1
 	sw	$2,0($fp)
-	j	$L24
-$L25:
+	j	$L25
+$L26:
 	lw	$3,4($fp)
 	li	$2,1			# 0x1
-	bne	$3,$2,$L30
+	bne	$3,$2,$L31
 	lw	$2,8($fp)
 	subu	$2,$0,$2
 	sw	$2,8($fp)
-$L30:
+$L31:
 	lw	$2,8($fp)
 	sw	$2,12($fp)
-$L20:
+$L21:
 	lw	$2,12($fp)
 	move	$sp,$fp
 	lw	$fp,16($sp)
@@ -375,11 +384,11 @@ convertINT_TO_STRING:
 	sra	$2,$4,31
 	subu	$2,$3,$2
 	sw	$2,20($fp)
-$L32:
+$L33:
 	lw	$2,20($fp)
-	bgtz	$2,$L34
-	j	$L33
-$L34:
+	bgtz	$2,$L35
+	j	$L34
+$L35:
 	lw	$2,16($fp)
 	addu	$2,$2,1
 	sw	$2,16($fp)
@@ -392,8 +401,8 @@ $L34:
 	sra	$2,$4,31
 	subu	$2,$3,$2
 	sw	$2,20($fp)
-	j	$L32
-$L33:
+	j	$L33
+$L34:
 	lw	$2,16($fp)
 	addu	$2,$2,1
 	move	$4,$2
@@ -434,11 +443,11 @@ $L33:
 	lw	$2,28($fp)
 	addu	$2,$2,-1
 	sw	$2,28($fp)
-$L35:
+$L36:
 	lw	$2,20($fp)
-	bgtz	$2,$L37
-	j	$L36
-$L37:
+	bgtz	$2,$L38
+	j	$L37
+$L38:
 	lw	$3,24($fp)
 	lw	$2,28($fp)
 	addu	$5,$3,$2
@@ -469,8 +478,8 @@ $L37:
 	lw	$2,28($fp)
 	addu	$2,$2,-1
 	sw	$2,28($fp)
-	j	$L35
-$L36:
+	j	$L36
+$L37:
 	lw	$2,24($fp)
 	move	$sp,$fp
 	lw	$31,36($sp)
@@ -687,32 +696,18 @@ op_STRING_CMP:
 	jal	$31,$2
 	sw	$2,20($fp)
 	sw	$0,24($fp)
-$L44:
+$L45:
 	lw	$3,16($fp)
 	lw	$2,24($fp)
 	addu	$2,$3,$2
 	lb	$2,0($2)
-	bne	$2,$0,$L47
+	bne	$2,$0,$L48
 	lw	$3,20($fp)
 	lw	$2,24($fp)
 	addu	$2,$3,$2
 	lb	$2,0($2)
-	bne	$2,$0,$L47
-	j	$L45
-$L47:
-	lw	$3,16($fp)
-	lw	$2,24($fp)
-	addu	$4,$3,$2
-	lw	$3,20($fp)
-	lw	$2,24($fp)
-	addu	$2,$3,$2
-	lb	$3,0($4)
-	lb	$2,0($2)
-	slt	$2,$2,$3
-	beq	$2,$0,$L48
-	li	$2,1			# 0x1
-	sw	$2,28($fp)
-	j	$L43
+	bne	$2,$0,$L48
+	j	$L46
 $L48:
 	lw	$3,16($fp)
 	lw	$2,24($fp)
@@ -722,19 +717,33 @@ $L48:
 	addu	$2,$3,$2
 	lb	$3,0($4)
 	lb	$2,0($2)
+	slt	$2,$2,$3
+	beq	$2,$0,$L49
+	li	$2,1			# 0x1
+	sw	$2,28($fp)
+	j	$L44
+$L49:
+	lw	$3,16($fp)
+	lw	$2,24($fp)
+	addu	$4,$3,$2
+	lw	$3,20($fp)
+	lw	$2,24($fp)
+	addu	$2,$3,$2
+	lb	$3,0($4)
+	lb	$2,0($2)
 	slt	$2,$3,$2
-	beq	$2,$0,$L46
+	beq	$2,$0,$L47
 	li	$2,-1			# 0xffffffffffffffff
 	sw	$2,28($fp)
-	j	$L43
-$L46:
+	j	$L44
+$L47:
 	lw	$2,24($fp)
 	addu	$2,$2,1
 	sw	$2,24($fp)
-	j	$L44
-$L45:
+	j	$L45
+$L46:
 	sw	$0,28($fp)
-$L43:
+$L44:
 	lw	$2,28($fp)
 	move	$sp,$fp
 	lw	$31,36($sp)
@@ -766,33 +775,33 @@ op_STRING_DOT:
 	sw	$0,24($fp)
 	sw	$0,28($fp)
 	sw	$0,24($fp)
-$L52:
+$L53:
 	lw	$3,16($fp)
 	lw	$2,24($fp)
 	addu	$2,$3,$2
 	lb	$2,0($2)
-	bne	$2,$0,$L54
-	j	$L53
-$L54:
+	bne	$2,$0,$L55
+	j	$L54
+$L55:
 	lw	$2,24($fp)
 	addu	$2,$2,1
 	sw	$2,24($fp)
-	j	$L52
-$L53:
+	j	$L53
+$L54:
 	sw	$0,28($fp)
-$L56:
+$L57:
 	lw	$3,20($fp)
 	lw	$2,28($fp)
 	addu	$2,$3,$2
 	lb	$2,0($2)
-	bne	$2,$0,$L58
-	j	$L57
-$L58:
+	bne	$2,$0,$L59
+	j	$L58
+$L59:
 	lw	$2,28($fp)
 	addu	$2,$2,1
 	sw	$2,28($fp)
-	j	$L56
-$L57:
+	j	$L57
+$L58:
 	lw	$3,24($fp)
 	lw	$2,28($fp)
 	addu	$2,$3,$2
@@ -801,13 +810,13 @@ $L57:
 	jal	alloc
 	sw	$2,32($fp)
 	sw	$0,36($fp)
-$L60:
+$L61:
 	lw	$2,36($fp)
 	lw	$3,24($fp)
 	slt	$2,$2,$3
-	bne	$2,$0,$L63
-	j	$L61
-$L63:
+	bne	$2,$0,$L64
+	j	$L62
+$L64:
 	lw	$3,32($fp)
 	lw	$2,36($fp)
 	addu	$4,$3,$2
@@ -819,16 +828,16 @@ $L63:
 	lw	$2,36($fp)
 	addu	$2,$2,1
 	sw	$2,36($fp)
-	j	$L60
-$L61:
+	j	$L61
+$L62:
 	sw	$0,36($fp)
-$L64:
+$L65:
 	lw	$2,36($fp)
 	lw	$3,28($fp)
 	slt	$2,$2,$3
-	bne	$2,$0,$L67
-	j	$L65
-$L67:
+	bne	$2,$0,$L68
+	j	$L66
+$L68:
 	lw	$3,24($fp)
 	lw	$2,36($fp)
 	addu	$3,$3,$2
@@ -842,8 +851,8 @@ $L67:
 	lw	$2,36($fp)
 	addu	$2,$2,1
 	sw	$2,36($fp)
-	j	$L64
-$L65:
+	j	$L65
+$L66:
 	lw	$3,24($fp)
 	lw	$2,28($fp)
 	addu	$3,$3,$2
@@ -879,7 +888,7 @@ op_STRING_REPEAT:
 	jal	$31,$2
 	sw	$2,20($fp)
 	lw	$2,20($fp)
-	bgtz	$2,$L69
+	bgtz	$2,$L70
 	li	$4,1			# 0x1
 	jal	alloc
 	sw	$2,24($fp)
@@ -887,23 +896,23 @@ op_STRING_REPEAT:
 	sb	$0,0($2)
 	lw	$2,24($fp)
 	sw	$2,40($fp)
-	j	$L68
-$L69:
-	sw	$0,24($fp)
-	sw	$0,24($fp)
+	j	$L69
 $L70:
+	sw	$0,24($fp)
+	sw	$0,24($fp)
+$L71:
 	lw	$3,16($fp)
 	lw	$2,24($fp)
 	addu	$2,$3,$2
 	lb	$2,0($2)
-	bne	$2,$0,$L72
-	j	$L71
-$L72:
+	bne	$2,$0,$L73
+	j	$L72
+$L73:
 	lw	$2,24($fp)
 	addu	$2,$2,1
 	sw	$2,24($fp)
-	j	$L70
-$L71:
+	j	$L71
+$L72:
 	lw	$3,24($fp)
 	lw	$2,20($fp)
 	mult	$3,$2
@@ -913,21 +922,21 @@ $L71:
 	jal	alloc
 	sw	$2,28($fp)
 	sw	$0,32($fp)
-$L74:
+$L75:
 	lw	$2,32($fp)
 	lw	$3,20($fp)
 	slt	$2,$2,$3
-	bne	$2,$0,$L77
-	j	$L75
-$L77:
-	sw	$0,36($fp)
+	bne	$2,$0,$L78
+	j	$L76
 $L78:
+	sw	$0,36($fp)
+$L79:
 	lw	$2,36($fp)
 	lw	$3,24($fp)
 	slt	$2,$2,$3
-	bne	$2,$0,$L81
-	j	$L76
-$L81:
+	bne	$2,$0,$L82
+	j	$L77
+$L82:
 	lw	$3,32($fp)
 	lw	$2,24($fp)
 	mult	$3,$2
@@ -944,13 +953,13 @@ $L81:
 	lw	$2,36($fp)
 	addu	$2,$2,1
 	sw	$2,36($fp)
-	j	$L78
-$L76:
+	j	$L79
+$L77:
 	lw	$2,32($fp)
 	addu	$2,$2,1
 	sw	$2,32($fp)
-	j	$L74
-$L75:
+	j	$L75
+$L76:
 	lw	$3,20($fp)
 	lw	$2,24($fp)
 	mult	$3,$2
@@ -960,7 +969,7 @@ $L75:
 	sb	$0,0($2)
 	lw	$2,28($fp)
 	sw	$2,40($fp)
-$L68:
+$L69:
 	lw	$2,40($fp)
 	move	$sp,$fp
 	lw	$31,52($sp)
@@ -999,13 +1008,13 @@ op_ARRAY_CONCAT:
 	jal	initArray
 	sw	$2,32($fp)
 	sw	$0,36($fp)
-$L83:
+$L84:
 	lw	$2,36($fp)
 	lw	$3,24($fp)
 	slt	$2,$2,$3
-	bne	$2,$0,$L86
-	j	$L84
-$L86:
+	bne	$2,$0,$L87
+	j	$L85
+$L87:
 	lw	$4,32($fp)
 	lw	$5,36($fp)
 	jal	accessIndex
@@ -1015,19 +1024,28 @@ $L86:
 	jal	accessIndex
 	lw	$2,0($2)
 	sw	$2,0($16)
+	lw	$4,32($fp)
+	lw	$5,36($fp)
+	jal	accessIndexType
+	move	$16,$2
+	lw	$4,16($fp)
+	lw	$5,36($fp)
+	jal	accessIndexType
+	lw	$2,0($2)
+	sw	$2,0($16)
 	lw	$2,36($fp)
 	addu	$2,$2,1
 	sw	$2,36($fp)
-	j	$L83
-$L84:
+	j	$L84
+$L85:
 	sw	$0,36($fp)
-$L87:
+$L88:
 	lw	$2,36($fp)
 	lw	$3,28($fp)
 	slt	$2,$2,$3
-	bne	$2,$0,$L90
-	j	$L88
-$L90:
+	bne	$2,$0,$L91
+	j	$L89
+$L91:
 	lw	$3,24($fp)
 	lw	$2,36($fp)
 	addu	$2,$3,$2
@@ -1040,11 +1058,23 @@ $L90:
 	jal	accessIndex
 	lw	$2,0($2)
 	sw	$2,0($16)
+	lw	$3,24($fp)
+	lw	$2,36($fp)
+	addu	$2,$3,$2
+	lw	$4,32($fp)
+	move	$5,$2
+	jal	accessIndexType
+	move	$16,$2
+	lw	$4,20($fp)
+	lw	$5,36($fp)
+	jal	accessIndexType
+	lw	$2,0($2)
+	sw	$2,0($16)
 	lw	$2,36($fp)
 	addu	$2,$2,1
 	sw	$2,36($fp)
-	j	$L87
-$L88:
+	j	$L88
+$L89:
 	lw	$2,32($fp)
 	move	$sp,$fp
 	lw	$31,48($sp)
@@ -1136,26 +1166,26 @@ typecheck_GENERIC_INT_STRING_3OP:
 	sw	$2,OPCONTROL
 	lw	$3,16($fp)
 	li	$2,2			# 0x2
-	beq	$3,$2,$L93
+	beq	$3,$2,$L94
 	lw	$3,16($fp)
 	li	$2,1			# 0x1
-	beq	$3,$2,$L93
+	beq	$3,$2,$L94
 	lw	$3,20($fp)
 	li	$2,2			# 0x2
-	beq	$3,$2,$L93
+	beq	$3,$2,$L94
 	lw	$3,20($fp)
 	li	$2,1			# 0x1
-	beq	$3,$2,$L93
+	beq	$3,$2,$L94
 	la	$4,$LC5
 	jal	PrintfNormal
 	jal	Exit
-$L93:
+$L94:
 	lw	$3,16($fp)
 	li	$2,2			# 0x2
-	beq	$3,$2,$L94
+	beq	$3,$2,$L95
 	lw	$3,16($fp)
 	li	$2,1			# 0x1
-	beq	$3,$2,$L94
+	beq	$3,$2,$L95
 	lw	$2,16($fp)
 	sll	$3,$2,2
 	la	$2,typeMaps
@@ -1164,13 +1194,13 @@ $L93:
 	lw	$5,0($2)
 	jal	PrintfNormal
 	jal	Exit
-$L94:
+$L95:
 	lw	$3,20($fp)
 	li	$2,2			# 0x2
-	beq	$3,$2,$L95
+	beq	$3,$2,$L96
 	lw	$3,20($fp)
 	li	$2,1			# 0x1
-	beq	$3,$2,$L95
+	beq	$3,$2,$L96
 	lw	$2,20($fp)
 	sll	$3,$2,2
 	la	$2,typeMaps
@@ -1179,19 +1209,19 @@ $L94:
 	lw	$5,0($2)
 	jal	PrintfNormal
 	jal	Exit
-$L95:
-	lw	$3,16($fp)
-	li	$2,1			# 0x1
-	bne	$3,$2,$L96
-	la	$2,convertSTRING_TO_INT
-	sw	$2,OP1_TYPECAST
 $L96:
-	lw	$3,20($fp)
+	lw	$3,16($fp)
 	li	$2,1			# 0x1
 	bne	$3,$2,$L97
 	la	$2,convertSTRING_TO_INT
-	sw	$2,OP2_TYPECAST
+	sw	$2,OP1_TYPECAST
 $L97:
+	lw	$3,20($fp)
+	li	$2,1			# 0x1
+	bne	$3,$2,$L98
+	la	$2,convertSTRING_TO_INT
+	sw	$2,OP2_TYPECAST
+$L98:
 	li	$2,2			# 0x2
 	move	$sp,$fp
 	lw	$31,28($sp)
@@ -1218,10 +1248,10 @@ typecheck_INT_PLUS:
 	sw	$2,20($fp)
 	lw	$3,16($fp)
 	li	$2,3			# 0x3
-	bne	$3,$2,$L99
+	bne	$3,$2,$L100
 	lw	$3,20($fp)
 	li	$2,3			# 0x3
-	bne	$3,$2,$L99
+	bne	$3,$2,$L100
 	la	$2,dummyFunc
 	sw	$2,OP1_TYPECAST
 	la	$2,dummyFunc
@@ -1230,14 +1260,14 @@ typecheck_INT_PLUS:
 	sw	$2,OPCONTROL
 	li	$2,3			# 0x3
 	sw	$2,24($fp)
-	j	$L98
-$L99:
+	j	$L99
+$L100:
 	lw	$4,40($fp)
 	lw	$5,44($fp)
 	la	$6,op_PLUS
 	jal	typecheck_GENERIC_INT_STRING_3OP
 	sw	$2,24($fp)
-$L98:
+$L99:
 	lw	$2,24($fp)
 	move	$sp,$fp
 	lw	$31,36($sp)
@@ -1372,26 +1402,26 @@ typecheck_GENERIC_STRING_3OP:
 	sw	$2,OPCONTROL
 	lw	$3,16($fp)
 	li	$2,2			# 0x2
-	beq	$3,$2,$L105
+	beq	$3,$2,$L106
 	lw	$3,16($fp)
 	li	$2,1			# 0x1
-	beq	$3,$2,$L105
+	beq	$3,$2,$L106
 	lw	$3,20($fp)
 	li	$2,2			# 0x2
-	beq	$3,$2,$L105
+	beq	$3,$2,$L106
 	lw	$3,20($fp)
 	li	$2,1			# 0x1
-	beq	$3,$2,$L105
+	beq	$3,$2,$L106
 	la	$4,$LC7
 	jal	PrintfNormal
 	jal	Exit
-$L105:
+$L106:
 	lw	$3,16($fp)
 	li	$2,2			# 0x2
-	beq	$3,$2,$L106
+	beq	$3,$2,$L107
 	lw	$3,16($fp)
 	li	$2,1			# 0x1
-	beq	$3,$2,$L106
+	beq	$3,$2,$L107
 	lw	$2,16($fp)
 	sll	$3,$2,2
 	la	$2,typeMaps
@@ -1400,13 +1430,13 @@ $L105:
 	lw	$5,0($2)
 	jal	PrintfNormal
 	jal	Exit
-$L106:
+$L107:
 	lw	$3,20($fp)
 	li	$2,2			# 0x2
-	beq	$3,$2,$L107
+	beq	$3,$2,$L108
 	lw	$3,20($fp)
 	li	$2,1			# 0x1
-	beq	$3,$2,$L107
+	beq	$3,$2,$L108
 	lw	$2,20($fp)
 	sll	$3,$2,2
 	la	$2,typeMaps
@@ -1415,19 +1445,19 @@ $L106:
 	lw	$5,0($2)
 	jal	PrintfNormal
 	jal	Exit
-$L107:
-	lw	$3,16($fp)
-	li	$2,2			# 0x2
-	bne	$3,$2,$L108
-	la	$2,convertINT_TO_STRING
-	sw	$2,OP1_TYPECAST
 $L108:
-	lw	$3,20($fp)
+	lw	$3,16($fp)
 	li	$2,2			# 0x2
 	bne	$3,$2,$L109
 	la	$2,convertINT_TO_STRING
-	sw	$2,OP2_TYPECAST
+	sw	$2,OP1_TYPECAST
 $L109:
+	lw	$3,20($fp)
+	li	$2,2			# 0x2
+	bne	$3,$2,$L110
+	la	$2,convertINT_TO_STRING
+	sw	$2,OP2_TYPECAST
+$L110:
 	li	$2,1			# 0x1
 	move	$sp,$fp
 	lw	$31,28($sp)
@@ -1506,26 +1536,26 @@ typecheck_STRING_REPEAT:
 	sw	$2,OPCONTROL
 	lw	$3,16($fp)
 	li	$2,2			# 0x2
-	beq	$3,$2,$L113
+	beq	$3,$2,$L114
 	lw	$3,16($fp)
 	li	$2,1			# 0x1
-	beq	$3,$2,$L113
+	beq	$3,$2,$L114
 	lw	$3,20($fp)
 	li	$2,2			# 0x2
-	beq	$3,$2,$L113
+	beq	$3,$2,$L114
 	lw	$3,20($fp)
 	li	$2,1			# 0x1
-	beq	$3,$2,$L113
+	beq	$3,$2,$L114
 	la	$4,$LC7
 	jal	PrintfNormal
 	jal	Exit
-$L113:
+$L114:
 	lw	$3,16($fp)
 	li	$2,2			# 0x2
-	beq	$3,$2,$L114
+	beq	$3,$2,$L115
 	lw	$3,16($fp)
 	li	$2,1			# 0x1
-	beq	$3,$2,$L114
+	beq	$3,$2,$L115
 	lw	$2,16($fp)
 	sll	$3,$2,2
 	la	$2,typeMaps
@@ -1534,13 +1564,13 @@ $L113:
 	lw	$5,0($2)
 	jal	PrintfNormal
 	jal	Exit
-$L114:
+$L115:
 	lw	$3,20($fp)
 	li	$2,2			# 0x2
-	beq	$3,$2,$L115
+	beq	$3,$2,$L116
 	lw	$3,20($fp)
 	li	$2,1			# 0x1
-	beq	$3,$2,$L115
+	beq	$3,$2,$L116
 	lw	$2,20($fp)
 	sll	$3,$2,2
 	la	$2,typeMaps
@@ -1549,19 +1579,19 @@ $L114:
 	lw	$5,0($2)
 	jal	PrintfNormal
 	jal	Exit
-$L115:
+$L116:
 	lw	$3,16($fp)
 	li	$2,2			# 0x2
-	bne	$3,$2,$L116
+	bne	$3,$2,$L117
 	la	$2,convertINT_TO_STRING
 	sw	$2,OP1_TYPECAST
-$L116:
+$L117:
 	lw	$3,20($fp)
 	li	$2,1			# 0x1
-	bne	$3,$2,$L117
+	bne	$3,$2,$L118
 	la	$2,convertSTRING_TO_INT
 	sw	$2,OP2_TYPECAST
-$L117:
+$L118:
 	li	$2,1			# 0x1
 	move	$sp,$fp
 	lw	$31,28($sp)
@@ -1590,7 +1620,7 @@ typecheck_HASH_INDEX_CHECK:
 	sw	$2,16($fp)
 	lw	$3,16($fp)
 	li	$2,1			# 0x1
-	beq	$3,$2,$L119
+	beq	$3,$2,$L120
 	lw	$2,16($fp)
 	sll	$3,$2,2
 	la	$2,typeMaps
@@ -1599,7 +1629,7 @@ typecheck_HASH_INDEX_CHECK:
 	lw	$5,0($2)
 	jal	PrintfNormal
 	jal	Exit
-$L119:
+$L120:
 	move	$sp,$fp
 	lw	$31,28($sp)
 	lw	$fp,24($sp)
@@ -1627,7 +1657,7 @@ typecheck_ARRAY_INDEX_CHECK:
 	sw	$2,16($fp)
 	lw	$3,16($fp)
 	li	$2,2			# 0x2
-	beq	$3,$2,$L121
+	beq	$3,$2,$L122
 	lw	$2,16($fp)
 	sll	$3,$2,2
 	la	$2,typeMaps
@@ -1636,7 +1666,7 @@ typecheck_ARRAY_INDEX_CHECK:
 	lw	$5,0($2)
 	jal	PrintfNormal
 	jal	Exit
-$L121:
+$L122:
 	move	$sp,$fp
 	lw	$31,28($sp)
 	lw	$fp,24($sp)
@@ -1667,7 +1697,7 @@ typecheck_TYPE_EQUAL:
 	sw	$2,20($fp)
 	lw	$3,16($fp)
 	lw	$2,20($fp)
-	beq	$3,$2,$L123
+	beq	$3,$2,$L124
 	lw	$2,16($fp)
 	sll	$3,$2,2
 	la	$2,typeMaps
@@ -1681,7 +1711,7 @@ typecheck_TYPE_EQUAL:
 	lw	$6,0($2)
 	jal	PrintfNormal
 	jal	Exit
-$L123:
+$L124:
 	move	$sp,$fp
 	lw	$31,28($sp)
 	lw	$fp,24($sp)
@@ -1713,12 +1743,12 @@ typecheck_GENERIC_INT_3OP:
 	sw	$2,20($fp)
 	lw	$3,16($fp)
 	li	$2,2			# 0x2
-	bne	$3,$2,$L126
+	bne	$3,$2,$L127
 	lw	$3,20($fp)
 	li	$2,2			# 0x2
-	bne	$3,$2,$L126
-	j	$L125
-$L126:
+	bne	$3,$2,$L127
+	j	$L126
+$L127:
 	lw	$2,16($fp)
 	sll	$3,$2,2
 	la	$2,typeMaps
@@ -1732,7 +1762,7 @@ $L126:
 	lw	$6,0($2)
 	jal	PrintfNormal
 	jal	Exit
-$L125:
+$L126:
 	move	$sp,$fp
 	lw	$31,28($sp)
 	lw	$fp,24($sp)

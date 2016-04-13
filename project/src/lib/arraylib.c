@@ -12,6 +12,7 @@
 typedef struct structArray {
     int length;
     int *addr;
+    int maxAccess; // Used for length calculation
 } Array_t;
 
 Array_t *initArray()
@@ -24,6 +25,8 @@ Array_t *initArray()
     if (arrayPtr != NULL) {
             arrayPtr->length = 1;
     }
+    
+    arrayPtr->maxAccess = -1;
 
     return arrayPtr;
 }
@@ -31,7 +34,7 @@ Array_t *initArray()
 int lengthOfArray(Array_t *arrayPtr)
 {
     if (arrayPtr != NULL) {
-        return arrayPtr->length;
+        return arrayPtr->maxAccess + 1;
     } else {
         return 0;
     }
@@ -52,13 +55,10 @@ int *accessIndex(Array_t *arrayPtr, int index)
 
         arrayPtr->length = 2*(index+1);
         arrayPtr->addr = (int *)newAddr;
-
-        if (arrayPtr->length >= 2) {
-            PrintChar('@');
-            PrintInt(arrayPtr->addr[2]);
-            PrintChar('\n');
-        }
     }
+
+    if (index > arrayPtr->maxAccess)
+        arrayPtr->maxAccess = index;
 
     return (int *)(arrayPtr->addr + 2*index);
 }
@@ -80,6 +80,9 @@ int *accessIndexType(Array_t *arrayPtr, int index)
         arrayPtr->addr = (int *)newAddr;
 
     }
+
+    if (index > arrayPtr->maxAccess)
+        arrayPtr->maxAccess = index;
 
     return (int *)(arrayPtr->addr + (2*index + 1));
 }

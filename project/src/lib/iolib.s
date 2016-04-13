@@ -239,6 +239,79 @@ $L7:
 	j	$31
 	.end	PrintfNormal
 	.align	2
+	.globl	PrintArray
+	.ent	PrintArray
+PrintArray:
+	.frame	$fp,40,$31		# vars= 16, regs= 2/0, args= 16, extra= 0
+	.mask	0xc0000000,-4
+	.fmask	0x00000000,0
+	subu	$sp,$sp,40
+	sw	$31,36($sp)
+	sw	$fp,32($sp)
+	move	$fp,$sp
+	sw	$4,40($fp)
+	lw	$4,40($fp)
+	jal	lengthOfArray
+	sw	$2,16($fp)
+	sw	$0,20($fp)
+$L20:
+	lw	$2,20($fp)
+	lw	$3,16($fp)
+	slt	$2,$2,$3
+	bne	$2,$0,$L23
+	j	$L19
+$L23:
+	lw	$4,40($fp)
+	lw	$5,20($fp)
+	jal	accessIndexType
+	lw	$2,0($2)
+	sw	$2,24($fp)
+	lw	$4,40($fp)
+	lw	$5,20($fp)
+	jal	accessIndex
+	lw	$2,0($2)
+	sw	$2,28($fp)
+	lw	$3,24($fp)
+	li	$2,2			# 0x2
+	bne	$3,$2,$L24
+	lw	$4,28($fp)
+	jal	PrintInt
+	j	$L25
+$L24:
+	lw	$3,24($fp)
+	li	$2,1			# 0x1
+	bne	$3,$2,$L26
+	lw	$4,28($fp)
+	jal	PrintString
+	j	$L25
+$L26:
+	lw	$3,24($fp)
+	li	$2,3			# 0x3
+	bne	$3,$2,$L25
+	lw	$4,28($fp)
+	jal	PrintArray
+$L25:
+	lw	$2,16($fp)
+	addu	$3,$2,-1
+	lw	$2,20($fp)
+	beq	$2,$3,$L22
+	li	$4,44			# 0x2c
+	jal	PrintChar
+	li	$4,32			# 0x20
+	jal	PrintChar
+$L22:
+	lw	$2,20($fp)
+	addu	$2,$2,1
+	sw	$2,20($fp)
+	j	$L20
+$L19:
+	move	$sp,$fp
+	lw	$31,36($sp)
+	lw	$fp,32($sp)
+	addu	$sp,$sp,40
+	j	$31
+	.end	PrintArray
+	.align	2
 	.globl	Printf
 	.ent	Printf
 Printf:
@@ -257,23 +330,23 @@ Printf:
 	sw	$2,16($fp)
 	li	$2,1			# 0x1
 	sw	$2,20($fp)
-$L20:
+$L31:
 	lw	$2,16($fp)
 	lb	$2,0($2)
-	bne	$2,$0,$L22
-	j	$L19
-$L22:
+	bne	$2,$0,$L33
+	j	$L30
+$L33:
 	lw	$2,16($fp)
 	lb	$3,0($2)
 	li	$2,37			# 0x25
-	bne	$3,$2,$L23
+	bne	$3,$2,$L34
 	lw	$2,16($fp)
 	addu	$2,$2,1
 	sw	$2,16($fp)
 	lw	$2,16($fp)
 	lb	$3,0($2)
 	li	$2,100			# 0x64
-	bne	$3,$2,$L24
+	bne	$3,$2,$L35
 	lw	$4,48($fp)
 	lw	$5,20($fp)
 	jal	accessIndex
@@ -284,12 +357,12 @@ $L22:
 	lw	$2,20($fp)
 	addu	$2,$2,1
 	sw	$2,20($fp)
-	j	$L30
-$L24:
+	j	$L43
+$L35:
 	lw	$2,16($fp)
 	lb	$3,0($2)
 	li	$2,115			# 0x73
-	bne	$3,$2,$L26
+	bne	$3,$2,$L37
 	lw	$4,48($fp)
 	lw	$5,20($fp)
 	jal	accessIndex
@@ -300,12 +373,12 @@ $L24:
 	lw	$2,20($fp)
 	addu	$2,$2,1
 	sw	$2,20($fp)
-	j	$L30
-$L26:
+	j	$L43
+$L37:
 	lw	$2,16($fp)
 	lb	$3,0($2)
 	li	$2,99			# 0x63
-	bne	$3,$2,$L19
+	bne	$3,$2,$L39
 	lw	$4,48($fp)
 	lw	$5,20($fp)
 	jal	accessIndex
@@ -317,18 +390,34 @@ $L26:
 	lw	$2,20($fp)
 	addu	$2,$2,1
 	sw	$2,20($fp)
-	j	$L30
-$L23:
+	j	$L43
+$L39:
+	lw	$2,16($fp)
+	lb	$3,0($2)
+	li	$2,97			# 0x61
+	bne	$3,$2,$L30
+	lw	$4,48($fp)
+	lw	$5,20($fp)
+	jal	accessIndex
+	lw	$2,0($2)
+	sw	$2,36($fp)
+	lw	$4,36($fp)
+	jal	PrintArray
+	lw	$2,20($fp)
+	addu	$2,$2,1
+	sw	$2,20($fp)
+	j	$L43
+$L34:
 	lw	$2,16($fp)
 	lb	$2,0($2)
 	move	$4,$2
 	jal	PrintChar
-$L30:
+$L43:
 	lw	$2,16($fp)
 	addu	$2,$2,1
 	sw	$2,16($fp)
-	j	$L20
-$L19:
+	j	$L31
+$L30:
 	move	$sp,$fp
 	lw	$31,44($sp)
 	lw	$fp,40($sp)
@@ -353,23 +442,23 @@ Scanf:
 	sw	$4,40($fp)
 	addu	$2,$fp,44
 	sw	$2,16($fp)
-$L32:
+$L45:
 	lw	$2,40($fp)
 	lb	$2,0($2)
-	bne	$2,$0,$L34
-	j	$L31
-$L34:
+	bne	$2,$0,$L47
+	j	$L44
+$L47:
 	lw	$2,40($fp)
 	lb	$3,0($2)
 	li	$2,37			# 0x25
-	bne	$3,$2,$L35
+	bne	$3,$2,$L48
 	lw	$2,40($fp)
 	addu	$2,$2,1
 	sw	$2,40($fp)
 	lw	$2,40($fp)
 	lb	$3,0($2)
 	li	$2,100			# 0x64
-	bne	$3,$2,$L36
+	bne	$3,$2,$L49
 	lw	$2,16($fp)
 	lw	$2,0($2)
 	sw	$2,20($fp)
@@ -380,12 +469,12 @@ $L34:
 	lw	$2,16($fp)
 	addu	$2,$2,4
 	sw	$2,16($fp)
-	j	$L35
-$L36:
+	j	$L48
+$L49:
 	lw	$2,40($fp)
 	lb	$3,0($2)
 	li	$2,99			# 0x63
-	bne	$3,$2,$L38
+	bne	$3,$2,$L51
 	lw	$2,16($fp)
 	lw	$2,0($2)
 	sw	$2,24($fp)
@@ -396,12 +485,12 @@ $L36:
 	lw	$2,16($fp)
 	addu	$2,$2,4
 	sw	$2,16($fp)
-	j	$L35
-$L38:
+	j	$L48
+$L51:
 	lw	$2,40($fp)
 	lb	$3,0($2)
 	li	$2,115			# 0x73
-	bne	$3,$2,$L31
+	bne	$3,$2,$L44
 	lw	$2,16($fp)
 	lw	$2,0($2)
 	sw	$2,28($fp)
@@ -411,12 +500,12 @@ $L38:
 	lw	$2,16($fp)
 	addu	$2,$2,4
 	sw	$2,16($fp)
-$L35:
+$L48:
 	lw	$2,40($fp)
 	addu	$2,$2,1
 	sw	$2,40($fp)
-	j	$L32
-$L31:
+	j	$L45
+$L44:
 	move	$sp,$fp
 	lw	$31,36($sp)
 	lw	$fp,32($sp)
