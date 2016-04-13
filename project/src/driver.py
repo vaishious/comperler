@@ -11,18 +11,21 @@ def Compile(fileName):
     myParser = PARSER.Parser()
     myParser.set_tokens(myLexer.tokens)
     myParser.build()
+    errorFile = open('./error.out','w')
 
     try:
         with open(fileName, 'r') as filePtr:
             irFileName = os.path.splitext(os.path.basename(fileName))[0] + '.ir'
             symTabManager, funcActRecords = myParser.parse(filePtr.read(), irFileName)
-    except:
+    except Exception as e:
         print "Encountered an error in IR Generation."
+        errorFile.write(str(e));
 
     try:
         with open(irFileName, 'r') as filePtr:
             codeGen = CodeGenerator(filePtr.read(), irFileName, symTabManager, funcActRecords)
             codeGen.GenBasicBlocks()
             codeGen.BuildCode()
-    except:
+    except Exception as e:
         print "Encountered an error in Code Generation."
+        errorFile.write(str(e));
