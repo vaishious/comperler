@@ -294,7 +294,13 @@ def Translate_ASSIGN(instr):
         # dest = inp1 OP inp2
 
         reg1 = SetupRegister(instr.inp1,REG.tmpUsageRegs[0])
-        if (instr.opType.is_DIV() or instr.opType.is_MULT() or instr.opType.is_MOD() or instr.opType.is_PLUS() or instr.opType.is_MINUS()):
+        if (instr.opType.is_DIV() or 
+            instr.opType.is_MULT() or 
+            instr.opType.is_MOD() or 
+            instr.opType.is_PLUS() or 
+            instr.opType.is_MINUS() or
+            instr.opType.is_DOT() or
+            instr.opType.is_REPEAT()):
             reg2 = SetupRegister(instr.inp2,REG.tmpUsageRegs[1])
         else:
             reg2 = SetupRegister(instr.inp2,REG.tmpUsageRegs[1], useImmediate=True)

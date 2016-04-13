@@ -168,6 +168,7 @@ void * typecheck_STRING_REPEAT(void *src1, void *src2) {
 void * typecheck_HASH_INDEX_CHECK(void *typeIndex) {
 
     int type = (int) typeIndex;
+    OP1_TYPECAST = &dummyFunc;
 
     if ((type != TYPE_STRING) && (type != TYPE_INT)) {
         PrintfNormal("Line <%d> Hash index needs to be a STRING or an INT, not %s\n", LINENUM, typeMaps[type]);

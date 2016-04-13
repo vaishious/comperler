@@ -1774,6 +1774,8 @@ typecheck_HASH_INDEX_CHECK:
 	sw	$4,32($fp)
 	lw	$2,32($fp)
 	sw	$2,16($fp)
+	la	$2,dummyFunc
+	sw	$2,OP1_TYPECAST
 	lw	$3,16($fp)
 	li	$2,1			# 0x1
 	beq	$3,$2,$L127
