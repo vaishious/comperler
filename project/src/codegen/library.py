@@ -104,6 +104,7 @@ def Translate_Printf(parameter):
     G.LibraryFunctionsUsed.add("PrintHash")
     G.LibraryFunctionsUsed.add("accessIndex")
     G.LibraryFunctionsUsed.add("lengthOfArray")
+    G.LibraryFunctionsUsed.add("strCmp")
 
 def Translate_Scanf(parameters):
     """ Custom version of Scanf can be found in iolib.c in the lib/ folder """
