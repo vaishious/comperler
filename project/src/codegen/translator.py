@@ -40,6 +40,14 @@ def Translate(instr):
         G.CurrRegAddrTable.DumpDirtyVars()
         G.AsmText.AddText(G.INDENT + "j %s"%(instr.jmpTarget))
 
+    elif instr.instrType.is_TYPECALL():
+        if instr.dest.is_ARRAY_OR_HASH():
+            G.CurrRegAddrTable.DumpDirtyVars()
+            G.CurrRegAddrTable.Reset()
+            G.AllocMap = {}
+
+        GenCode_TypeCallAssignment(instr)
+
     elif instr.instrType.is_CALL():
         G.CurrRegAddrTable.DumpDirtyVars()
         if instr.inp1.is_VARIABLE():
@@ -68,6 +76,11 @@ def Translate(instr):
         if instr.ContainsHashAccess():
             G.CurrRegAddrTable.DumpDirtyVars()
         GenCode_Alloc(instr)
+
+    elif instr.instrType.is_TYPERETURN():
+        reg = SetupRegister(instr.inp1, REG.v1)
+        if reg != REG.v1:
+            G.AsmText.AddText(G.INDENT + "move %s, %s\n"%(REG.v1, reg), "Storing type of return value in $v1")
 
     elif instr.instrType.is_RETURN():
         if not instr.inp1.is_NONE():
@@ -277,7 +290,7 @@ def Translate_ASSIGN(instr):
         # dest = inp1 OP inp2
 
         reg1 = SetupRegister(instr.inp1,REG.tmpUsageRegs[0])
-        if (instr.opType.is_DIV() or instr.opType.is_MULT() or instr.opType.is_MOD()):
+        if (instr.opType.is_DIV() or instr.opType.is_MULT() or instr.opType.is_MOD() or instr.opType.is_PLUS() or instr.opType.is_MINUS()):
             reg2 = SetupRegister(instr.inp2,REG.tmpUsageRegs[1])
         else:
             reg2 = SetupRegister(instr.inp2,REG.tmpUsageRegs[1], useImmediate=True)
@@ -562,12 +575,35 @@ def GenCode_CallAssignment(instr):
         regComp = REG.tmpUsageRegs[2]
 
         SetupDestRegHash(instr.dest, regComp, tempReg) # The value of key is stored in tempReg
-        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.tmpUsageRegs[1], REG.v0), "Store return value of function call so it is not overwritten by alloc")
 
-        LIB.Translate_alloc(REG.tmpUsageRegs[0])
-        G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(REG.tmpUsageRegs[1], REG.tmpUsageRegs[0]), "Load value into allocated memory")
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.tmpUsageRegs[0], REG.tmpUsageRegs[1]), "Load value into allocated memory")
 
         LIB.Translate_addElement(instr.dest, tempReg, REG.tmpUsageRegs[0]) 
+
+def GenCode_TypeCallAssignment(instr):
+
+    if instr.dest.is_SCALAR_VARIABLE():
+        reg1 = SetupDestRegScalar(instr.dest)
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(reg1, REG.v1), "Store function return type")
+
+    elif instr.dest.is_ARRAY_VARIABLE():
+        tempReg = REG.tmpUsageRegs[-1]
+        regComp = REG.tmpUsageRegs[2]
+
+        SetupDestRegArray(instr.dest, regComp, tempReg, loadTypeVal=True)
+
+        # Store back the value
+        G.AsmText.AddText(G.INDENT + "sw %s, 0(%s)"%(REG.v1, regComp), "Store function return type directly into the memory address")
+
+    elif instr.dest.is_HASH_VARIABLE():
+        tempReg = REG.tmpUsageRegs[-1]
+        regComp = REG.tmpUsageRegs[2]
+
+        SetupDestRegHash(instr.dest, regComp, tempReg) # The value of key is stored in tempReg
+
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.tmpUsageRegs[0], REG.v1), "Load return type into hash value")
+
+        LIB.Translate_addElementType(instr.dest, tempReg, REG.tmpUsageRegs[0]) 
 
 def GenCode_Alloc(instr):
 

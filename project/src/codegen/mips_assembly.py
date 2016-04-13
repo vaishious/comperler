@@ -22,10 +22,16 @@ def GetVarAddr(variable):
     if type(variable) == INSTRUCTION.Entity:
         if (variable.value == "ARRAY___"):
             return "16($fp)"
+        if (variable.value == "TYPE__ARRAY___"):
+            return "20($fp)"
+
         return G.AsmData.varSet[variable.value]
     else:
         if (variable == "ARRAY___"):
             return "16($fp)"
+        if (variable == "TYPE__ARRAY___"):
+            return "20($fp)"
+
         return G.AsmData.varSet[variable]
 
 def GetStrAddr(variable):
@@ -123,7 +129,9 @@ class TextRegion(object):
             self.text += text
 
         if "jal " in text:
-            G.LibraryFunctionsUsed.add(text.split(" ")[-1])
+            func = text.split(" ")[-1]
+            if not (func in G.StackSpaceMap):
+                G.LibraryFunctionsUsed.add(text.split(" ")[-1])
 
         self.text += "\n"
 
@@ -147,6 +155,8 @@ class TextRegion(object):
             loadSegment += G.INDENT + ".frame $fp,%d,$31\n"%(stackSpaceRequired) 
             loadSegment += G.INDENT + "subu $sp, $sp, %d\n"%(stackSpaceRequired) 
             loadSegment += G.INDENT + "sw $a0, %d($sp)\n"%(16)
+            loadSegment += G.INDENT + "li $a1, %d\n"%(3)
+            loadSegment += G.INDENT + "sw $a1, %d($sp)\n"%(20)
             loadSegment += G.INDENT + "sw $fp, %d($sp)\n"%(stackSpaceRequired-4)
             loadSegment += G.INDENT + "sw $ra, %d($sp)\n"%(stackSpaceRequired-8)
             loadSegment += G.INDENT + "move $fp, $sp\n"

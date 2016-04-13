@@ -1343,12 +1343,14 @@ class Parser(object):
         p[0] = p[1]
 
     def p_var_function_call(self, p):
-        ''' var : variable
-                | function-call
-        '''
+        ''' var : variable '''
 
         p[0] = p[1]
 
+    def p_var_function_call1(self, p):
+        ''' var : function-call '''
+
+        p[0] = p[1]
 
     def p_normal_assignment(self, p):
         ''' normal-assignment : var-lhs MARK-check-declaration assign-sep usable-expression %prec EQUALS '''
@@ -1475,9 +1477,9 @@ class Parser(object):
             p[0].typePlace = IR.TempTypeVar()
 
             if len(p) == 3:
-                p[0].code = p[2].code | IR.GenCode("call, %s, %s, %s"%(p[0].place, p[1], p[2].place))
+                p[0].code = p[2].code | IR.GenCode("call, %s, %s, %s"%(p[0].place, p[1], p[2].place)) | IR.GenCode("typecall, %s"%(p[0].typePlace))
             else:
-                p[0].code = IR.GenCode("call, %s, %s"%(p[0].place, p[1]))
+                p[0].code = IR.GenCode("call, %s, %s"%(p[0].place, p[1])) | IR.GenCode("typecall, %s"%(p[0].typePlace))
 
     def p_function_call_error(self, p):
         ''' function-call : ID LPAREN error RPAREN
@@ -1509,16 +1511,20 @@ class Parser(object):
         if not IR.FuncReturnMap[p[2]]:
             IR.BackPatch(p[4].nextlist, IR.NextInstr)
             p[0].code = p[0].code | IR.GenCode("return")
+        else:
+            IR.BackPatch(p[4].nextlist, IR.NextInstr)
+            p[0].code = p[0].code | IR.GenCode("nop")
+
+        IR.FuncReturnMap[IR.CurFuncID] = True
+        IR.CurFuncID = 'main'
+        IR.CurActivationRecord = IR.FuncMap[IR.CurFuncID]
 
     def p_function_return(self, p):
         ''' function-ret : RETURN usable-expression '''
 
         p[0] = IR.Attributes()
-        p[0].code = p[2].code | IR.GenCode("return, %s"%(p[2].place))
+        p[0].code = p[2].code | IR.GenCode("typereturn, %s"%(p[2].typePlace)) | IR.GenCode("return, %s"%(p[2].place))
 
-        IR.FuncReturnMap[IR.CurFuncID] = True
-        IR.CurFuncID = 'main'
-        IR.CurActivationRecord = IR.FuncMap[IR.CurFuncID]
 
     def p_function_return_empty(self, p):
         ''' function-ret : RETURN empty '''

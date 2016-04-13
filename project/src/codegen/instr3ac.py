@@ -32,7 +32,7 @@ class InstrType(object):
 
 
     # Enum for holding these values
-    ASSIGN, TYPECHECK, TYPEASSIGN, TYPECHECKASSIGN, IFGOTO, STRIFGOTO, GOTO, CALL, RETURN, PRINT, KEYS, VALUES, READ, LABEL, DECLARE, EXIT, NOP, ALLOC = range(18)
+    ASSIGN, TYPECHECK, TYPEASSIGN, TYPECHECKASSIGN, IFGOTO, STRIFGOTO, GOTO, CALL, TYPECALL, RETURN, TYPERETURN, PRINT, KEYS, VALUES, READ, LABEL, DECLARE, EXIT, NOP, ALLOC = range(20)
 
     typeMap = { 
                 "="          : ASSIGN,           "assign"     : ASSIGN,       "ASSIGN"          : ASSIGN,
@@ -50,6 +50,7 @@ class InstrType(object):
                 "alloc"      : ALLOC,            "malloc"     : ALLOC,        "ALLOC"           : ALLOC,
                 "exit"       : EXIT,             "quit"       : EXIT,         "EXIT"            : EXIT,         "done" : EXIT,
                 "typecheck"  : TYPECHECK,        "typeassign" : TYPEASSIGN,   "typecheckassign" : TYPECHECKASSIGN, 
+                "typecall"   : TYPECALL,         "typereturn" : TYPERETURN,
                 "nop"        : NOP,              ""           : NOP,          "NOP"             : NOP
               }
 
@@ -78,6 +79,8 @@ class InstrType(object):
     def is_TYPECHECK(self)       : return self.instrType == InstrType.TYPECHECK
     def is_TYPEASSIGN(self)      : return self.instrType == InstrType.TYPEASSIGN
     def is_TYPECHECKASSIGN(self) : return self.instrType == InstrType.TYPECHECKASSIGN 
+    def is_TYPECALL(self)        : return self.instrType == InstrType.TYPECALL
+    def is_TYPERETURN(self)      : return self.instrType == InstrType.TYPERETURN
     def is_NOP(self)             : return self.instrType == InstrType.NOP
 
     def is_JMP(self)     : return (self.instrType == InstrType.IFGOTO or
@@ -646,6 +649,18 @@ class Instr3AC(object):
 
             if len(inpTuple) == 6:
                 self.inp2 = Entity(str(inpTuple[5]))
+
+        elif self.instrType.is_TYPECALL():
+            # Line Number, typecall, dest
+            DEBUG.Assert(len(inpTuple) == 3, "Expected a 3-tuple for typecall")
+
+            self.dest = Entity(str(inpTuple[2]))
+
+        elif self.instrType.is_TYPERETURN():
+            # Line Number, typereturn, inp1
+            DEBUG.Assert(len(inpTuple) == 3, "Expected a 3-tuple for typereturn")
+
+            self.inp1 = Entity(str(inpTuple[2]))
             
     def __str__(self):
         return self.PrettyPrint()
@@ -780,6 +795,12 @@ class Instr3AC(object):
                 return "%s typecheckassign %s%s"%(self.dest, self.opType, self.inp1)
             else:
                 return "%s typecheckassign (%s %s %s)"%(self.dest, self.inp1, self.opType, self.inp2)
+
+        if self.instrType.is_TYPECALL():
+            return "%s = typecall"%(self.dest)
+
+        if self.instrType.is_TYPERETURN():
+            return "typereturn %s"%(self.inp1)
         
 def ConvertTarget(inpString):
     if inpString.isdigit():
