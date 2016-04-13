@@ -11,7 +11,7 @@ my $e = $a * $b;
 print ("%d\n",$e);
 
 my $f = $a / $b;
-print ("%d",$f);
+print ("%d\n", $f);
 
-my $g = $a % 10;
-print ("%d",$g);
+my $g = $a % $b;
+print ("%d\n", $g);

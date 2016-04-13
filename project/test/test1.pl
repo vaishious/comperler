@@ -8,4 +8,4 @@ $a = $a + 1;
 $a = $a + 1;
 $a = $a + 1;
 my @c = (10, 20, 30);
-print("Hola World %d %d %d %d\n", $a, $c[1], $c[0], $c[2]);
+print("Hola World %d %a\n", $a, @c);

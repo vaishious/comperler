@@ -544,11 +544,22 @@ def GenCode_2OPASSIGN(instr, regDest, regInp):
                                      "%s = ~%s"%(instr.dest, instr.inp1))
 
     elif instr.opType.is_MINUS():
-        G.AsmText.AddText(G.INDENT + "negu %s, %s"%(regDest, regInp),
-                                     "%s = -%s"%(instr.dest, instr.inp1))
+        #G.AsmText.AddText(G.INDENT + "negu %s, %s"%(regDest, regInp),
+                                     #"%s = -%s"%(instr.dest, instr.inp1))
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a0, regInp))
+        G.AsmText.AddText(G.INDENT + "lw %s, OPCONTROL"%(REG.a2))
+        G.AsmText.AddText(G.INDENT + "jalr %s"%(REG.a2))
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(regDest, REG.v0))
+        G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
+
     elif instr.opType.is_PLUS():
-        G.AsmText.AddText(G.INDENT + "move %s, %s"%(regDest, regInp),
-                                     "%s = +%s"%(instr.dest, instr.inp1))
+        #G.AsmText.AddText(G.INDENT + "move %s, %s"%(regDest, regInp),
+                                     #"%s = +%s"%(instr.dest, instr.inp1))
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(REG.a0, regInp))
+        G.AsmText.AddText(G.INDENT + "lw %s, OPCONTROL"%(REG.a2))
+        G.AsmText.AddText(G.INDENT + "jalr %s"%(REG.a2))
+        G.AsmText.AddText(G.INDENT + "move %s, %s"%(regDest, REG.v0))
+        G.AsmText.AddText(G.INDENT + "lw %s, 16($fp)"%(REG.a0))
 
     elif instr.opType.is_REFERENCE():
         G.AsmText.AddText(G.INDENT + "la %s, %s"%(regDest, ASM.GetVarAddr(instr.inp1)),
@@ -731,6 +742,10 @@ def Translate_TYPECHECK(instr):
             G.AsmText.AddText(G.INDENT + "jal typecheck_HASH_INDEX_CHECK")
         elif instr.opType.is_ARRAY_INDEX_CHECK(): 
             G.AsmText.AddText(G.INDENT + "jal typecheck_ARRAY_INDEX_CHECK")
+        elif instr.opType.is_PLUS():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_UNARY_INT_PLUS")
+        elif instr.opType.is_MINUS():
+            G.AsmText.AddText(G.INDENT + "jal typecheck_UNARY_INT_MINUS")
         else:
             raise Exception("%s : Instruction not recognized in Translate_TYPECHECK"%(instr))
             
