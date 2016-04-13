@@ -29,3 +29,4 @@ def Compile(fileName):
     except Exception as e:
         print "Encountered an error in Code Generation."
         errorFile.write(str(e));
+    errorFile.close()
