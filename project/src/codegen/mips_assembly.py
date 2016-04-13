@@ -62,7 +62,7 @@ class DataRegion(object):
                 G.StackSpaceMap[func] = record.tempOffset + 40; # Extra 16 bytes for callee arguments, 8 bytes for fp and ra, and 16 bytes for custom function arguments 
             else:
                 for var, pos in record.varLocationMap.items():
-                    self.varSet[var] = "%d($fp)"%(pos)
+                    self.varSet[var] = "%d($fp)"%(32 + pos)
 
                 for var, pos in record.tempVarMap.items():
                     self.varSet[var] = "%d($fp)"%(32 + record.varOffset + pos) # MIPS calling convention stores arguments in the first 16 bytes

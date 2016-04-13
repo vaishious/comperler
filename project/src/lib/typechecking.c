@@ -25,17 +25,17 @@ void * typecheck_GENERIC_INT_STRING_3OP(void *src1, void *src2, void *(*op)(void
     OPCONTROL = op;
 
     if (((type1 != TYPE_INT) && (type1 != TYPE_STRING)) && ((type2 != TYPE_INT) && (type2 != TYPE_STRING))) {
-        PrintfNormal("Line <%d> Atleast one argument of arithmetic operation has to be an INT/STRING", LINENUM);
+        PrintfNormal("Line <%d> Atleast one argument of arithmetic operation has to be an INT/STRING\n", LINENUM);
         Exit();
     }
 
     if ((type1 != TYPE_INT) && (type1 != TYPE_STRING)) {
-        PrintfNormal("Line <%d> Cannot perform arithmetic operation on %s with a INT/STRING", LINENUM, typeMaps[type1]);
+        PrintfNormal("Line <%d> Cannot perform arithmetic operation on %s with a INT/STRING\n", LINENUM, typeMaps[type1]);
         Exit();
     }
 
     if ((type2 != TYPE_INT) && (type2 != TYPE_STRING)) {
-        PrintfNormal("Line <%d> Cannot perform arithmetic operation on %s with a INT/STRING", LINENUM, typeMaps[type2]);
+        PrintfNormal("Line <%d> Cannot perform arithmetic operation on %s with a INT/STRING\n", LINENUM, typeMaps[type2]);
         Exit();
     }
 
@@ -84,17 +84,17 @@ void * typecheck_GENERIC_STRING_3OP(void *src1, void *src2, void *(*op)(void *, 
     OPCONTROL = op;
 
     if (((type1 != TYPE_INT) && (type1 != TYPE_STRING)) && ((type2 != TYPE_INT) && (type2 != TYPE_STRING))) {
-        PrintfNormal("Line <%d> Atleast one argument of string operation has to be an INT/STRING", LINENUM);
+        PrintfNormal("Line <%d> Atleast one argument of string operation has to be an INT/STRING\n", LINENUM);
         Exit();
     }
 
     if ((type1 != TYPE_INT) && (type1 != TYPE_STRING)) {
-        PrintfNormal("Line <%d> Cannot perform string operation on %s with a INT/STRING", LINENUM, typeMaps[type1]);
+        PrintfNormal("Line <%d> Cannot perform string operation on %s with a INT/STRING\n", LINENUM, typeMaps[type1]);
         Exit();
     }
 
     if ((type2 != TYPE_INT) && (type2 != TYPE_STRING)) {
-        PrintfNormal("Line <%d> Cannot perform string operation on %s with a INT/STRING", LINENUM, typeMaps[type2]);
+        PrintfNormal("Line <%d> Cannot perform string operation on %s with a INT/STRING\n", LINENUM, typeMaps[type2]);
         Exit();
     }
 
@@ -121,17 +121,17 @@ void * typecheck_STRING_REPEAT(void *src1, void *src2) {
     OPCONTROL = &op_STRING_REPEAT;
 
     if (((type1 != TYPE_INT) && (type1 != TYPE_STRING)) && ((type2 != TYPE_INT) && (type2 != TYPE_STRING))) {
-        PrintfNormal("Line <%d> Atleast one argument of string operation has to be an INT/STRING", LINENUM);
+        PrintfNormal("Line <%d> Atleast one argument of string operation has to be an INT/STRING\n", LINENUM);
         Exit();
     }
 
     if ((type1 != TYPE_INT) && (type1 != TYPE_STRING)) {
-        PrintfNormal("Line <%d> Cannot perform string operation on %s with a INT/STRING", LINENUM, typeMaps[type1]);
+        PrintfNormal("Line <%d> Cannot perform string operation on %s with a INT/STRING\n", LINENUM, typeMaps[type1]);
         Exit();
     }
 
     if ((type2 != TYPE_INT) && (type2 != TYPE_STRING)) {
-        PrintfNormal("Line <%d> Cannot perform string operation on %s with a INT/STRING", LINENUM, typeMaps[type2]);
+        PrintfNormal("Line <%d> Cannot perform string operation on %s with a INT/STRING\n", LINENUM, typeMaps[type2]);
         Exit();
     }
 
@@ -145,10 +145,12 @@ void * typecheck_HASH_INDEX_CHECK(void *typeIndex) {
 
     int type = (int) typeIndex;
 
-    if ((type != TYPE_STRING)) {
-        PrintfNormal("Line <%d> Hash index needs to be a STRING, not %s\n", LINENUM, typeMaps[type]);
+    if ((type != TYPE_STRING) && (type != TYPE_INT)) {
+        PrintfNormal("Line <%d> Hash index needs to be a STRING or an INT, not %s\n", LINENUM, typeMaps[type]);
         Exit();
     }
+
+    if (type == TYPE_INT) { OP1_TYPECAST = &convertINT_TO_STRING; }
 }
 
 void * typecheck_ARRAY_INDEX_CHECK(void *typeIndex) {

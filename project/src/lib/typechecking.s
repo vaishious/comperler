@@ -1134,11 +1134,11 @@ Exit:
 	.align	2
 $LC5:
 	.ascii	"Line <%d> Atleast one argument of arithmetic operation h"
-	.ascii	"as to be an INT/STRING\000"
+	.ascii	"as to be an INT/STRING\n\000"
 	.align	2
 $LC6:
 	.ascii	"Line <%d> Cannot perform arithmetic operation on %s with"
-	.ascii	" a INT/STRING\000"
+	.ascii	" a INT/STRING\n\000"
 	.text
 	.align	2
 	.globl	typecheck_GENERIC_INT_STRING_3OP
@@ -1374,11 +1374,11 @@ typecheck_INT_MOD:
 	.align	2
 $LC7:
 	.ascii	"Line <%d> Atleast one argument of string operation has t"
-	.ascii	"o be an INT/STRING\000"
+	.ascii	"o be an INT/STRING\n\000"
 	.align	2
 $LC8:
 	.ascii	"Line <%d> Cannot perform string operation on %s with a I"
-	.ascii	"NT/STRING\000"
+	.ascii	"NT/STRING\n\000"
 	.text
 	.align	2
 	.globl	typecheck_GENERIC_STRING_3OP
@@ -1612,7 +1612,8 @@ $L118:
 	.rdata
 	.align	2
 $LC9:
-	.ascii	"Line <%d> Hash index needs to be a STRING, not %s\n\000"
+	.ascii	"Line <%d> Hash index needs to be a STRING or an INT, not"
+	.ascii	" %s\n\000"
 	.text
 	.align	2
 	.globl	typecheck_HASH_INDEX_CHECK
@@ -1631,6 +1632,9 @@ typecheck_HASH_INDEX_CHECK:
 	lw	$3,16($fp)
 	li	$2,1			# 0x1
 	beq	$3,$2,$L120
+	lw	$3,16($fp)
+	li	$2,2			# 0x2
+	beq	$3,$2,$L120
 	lw	$2,16($fp)
 	sll	$3,$2,2
 	la	$2,typeMaps
@@ -1641,6 +1645,12 @@ typecheck_HASH_INDEX_CHECK:
 	jal	PrintfNormal
 	jal	Exit
 $L120:
+	lw	$3,16($fp)
+	li	$2,2			# 0x2
+	bne	$3,$2,$L121
+	la	$2,convertINT_TO_STRING
+	sw	$2,OP1_TYPECAST
+$L121:
 	move	$sp,$fp
 	lw	$31,28($sp)
 	lw	$fp,24($sp)
@@ -1668,7 +1678,7 @@ typecheck_ARRAY_INDEX_CHECK:
 	sw	$2,16($fp)
 	lw	$3,16($fp)
 	li	$2,2			# 0x2
-	beq	$3,$2,$L122
+	beq	$3,$2,$L123
 	lw	$2,16($fp)
 	sll	$3,$2,2
 	la	$2,typeMaps
@@ -1678,7 +1688,7 @@ typecheck_ARRAY_INDEX_CHECK:
 	lw	$6,0($2)
 	jal	PrintfNormal
 	jal	Exit
-$L122:
+$L123:
 	move	$sp,$fp
 	lw	$31,28($sp)
 	lw	$fp,24($sp)
@@ -1709,7 +1719,7 @@ typecheck_TYPE_EQUAL:
 	sw	$2,20($fp)
 	lw	$3,16($fp)
 	lw	$2,20($fp)
-	beq	$3,$2,$L124
+	beq	$3,$2,$L125
 	lw	$2,16($fp)
 	sll	$3,$2,2
 	la	$2,typeMaps
@@ -1724,7 +1734,7 @@ typecheck_TYPE_EQUAL:
 	lw	$7,0($2)
 	jal	PrintfNormal
 	jal	Exit
-$L124:
+$L125:
 	move	$sp,$fp
 	lw	$31,28($sp)
 	lw	$fp,24($sp)
@@ -1756,12 +1766,12 @@ typecheck_GENERIC_INT_3OP:
 	sw	$2,20($fp)
 	lw	$3,16($fp)
 	li	$2,2			# 0x2
-	bne	$3,$2,$L127
+	bne	$3,$2,$L128
 	lw	$3,20($fp)
 	li	$2,2			# 0x2
-	bne	$3,$2,$L127
-	j	$L126
-$L127:
+	bne	$3,$2,$L128
+	j	$L127
+$L128:
 	lw	$2,16($fp)
 	sll	$3,$2,2
 	la	$2,typeMaps
@@ -1776,7 +1786,7 @@ $L127:
 	lw	$7,0($2)
 	jal	PrintfNormal
 	jal	Exit
-$L126:
+$L127:
 	move	$sp,$fp
 	lw	$31,28($sp)
 	lw	$fp,24($sp)

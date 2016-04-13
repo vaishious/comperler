@@ -114,8 +114,8 @@ void *getHashValue(Hash *hashPtr, void *inpKey)
             return elemPtr->valRef;
 
     // Add an element yourself
-    addElement(hashPtr, inpKey, (void *)0); 
-    addElementType(hashPtr, inpKey, (void *)TYPE_INT);
+    addElement(hashPtr, key, (void *)0); 
+    addElementType(hashPtr, key, (void *)TYPE_INT);
 
     if((elemPtr = findMatch(hashPtr, key)))
             return elemPtr->valRef;
@@ -129,8 +129,8 @@ void *getHashValueType(Hash *hashPtr, void *inpKey)
             return elemPtr->type;
 
     // Add an element yourself
-    addElement(hashPtr, inpKey, (void *)0); 
-    addElementType(hashPtr, inpKey, (void *)TYPE_INT);
+    addElement(hashPtr, key, (void *)0); 
+    addElementType(hashPtr, key, (void *)TYPE_INT);
 
     if((elemPtr = findMatch(hashPtr, key)))
             return elemPtr->type;

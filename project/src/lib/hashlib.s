@@ -251,11 +251,11 @@ getHashValue:
 	j	$L16
 $L17:
 	lw	$4,40($fp)
-	lw	$5,44($fp)
+	lw	$5,16($fp)
 	move	$6,$0
 	jal	addElement
 	lw	$4,40($fp)
-	lw	$5,44($fp)
+	lw	$5,16($fp)
 	li	$6,2			# 0x2
 	jal	addElementType
 	lw	$4,40($fp)
@@ -306,11 +306,11 @@ getHashValueType:
 	j	$L19
 $L20:
 	lw	$4,40($fp)
-	lw	$5,44($fp)
+	lw	$5,16($fp)
 	move	$6,$0
 	jal	addElement
 	lw	$4,40($fp)
-	lw	$5,44($fp)
+	lw	$5,16($fp)
 	li	$6,2			# 0x2
 	jal	addElementType
 	lw	$4,40($fp)
