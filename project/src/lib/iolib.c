@@ -190,8 +190,11 @@ void PrintHash(Hash *hash) {
 
         if (type == TYPE_INT)
             PrintInt((int) val);
-        else if (type == TYPE_STRING)
+        else if (type == TYPE_STRING) {
+			PrintChar('"');
             PrintString((char *) val);
+			PrintChar('"');
+		}
         else if (type == TYPE_ARRAY)
             PrintArray((Array_t *) val);
         else if (type == TYPE_HASH)

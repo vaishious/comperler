@@ -1509,8 +1509,12 @@ $L129:
 	lw	$3,20($fp)
 	li	$2,1			# 0x1
 	bne	$3,$2,$L131
+	li	$4,34			# 0x22
+	jal	PrintChar
 	lw	$4,24($fp)
 	jal	PrintString
+	li	$4,34			# 0x22
+	jal	PrintChar
 	j	$L130
 $L131:
 	lw	$3,20($fp)
