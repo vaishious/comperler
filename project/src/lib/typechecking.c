@@ -66,7 +66,7 @@ void * typecheck_GENERIC_UNARY_INT_STRING_2OP(void *src, void *(*op)(void *)) {
     OPCONTROL = op;
 
     if ((type != TYPE_INT) && (type != TYPE_STRING)) {
-        PrintfNormal("Line <%d> Cannot perform arithmetic operation on %s", LINENUM, typeMaps[type]);
+        PrintfNormal("Line <%d> Cannot perform arithmetic operation on %s\n", LINENUM, typeMaps[type]);
         Exit();
     }
 

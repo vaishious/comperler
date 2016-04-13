@@ -1331,7 +1331,7 @@ $L101:
 	.rdata
 	.align	2
 $LC7:
-	.ascii	"Line <%d> Cannot perform arithmetic operation on %s\000"
+	.ascii	"Line <%d> Cannot perform arithmetic operation on %s\n\000"
 	.text
 	.align	2
 	.globl	typecheck_GENERIC_UNARY_INT_STRING_2OP
