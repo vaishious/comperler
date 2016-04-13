@@ -338,8 +338,8 @@ class Parser(object):
 
         p[0] = IR.Attributes()
 
-        p[0].place = TempVar()
-        p[0].typePlace = TempTypeVar()
+        p[0].place = IR.TempVar()
+        p[0].typePlace = IR.TempTypeVar()
         p[0].code = p[2].code | IR.GenCode("typecheck, %s, %s"%(p[1], p[2].typePlace)) | IR.GenCode("typeassign, %s, %d"%(p[0].typePlace, TYPE_INT)) | IR.GenCode("=, %s, %s, %s"%(p[1], p[0].place, p[2].place))
 
     def p_arith_increment_decrement(self, p):
