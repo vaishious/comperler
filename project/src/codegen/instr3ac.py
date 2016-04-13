@@ -32,7 +32,7 @@ class InstrType(object):
 
 
     # Enum for holding these values
-    ASSIGN, TYPECHECK, TYPEASSIGN, TYPECHECKASSIGN, IFGOTO, STRIFGOTO, GOTO, CALL, TYPECALL, RETURN, TYPERETURN, PRINT, KEYS, VALUES, READ, LABEL, DECLARE, EXIT, NOP, ALLOC = range(20)
+    ASSIGN, TYPECHECK, TYPEASSIGN, TYPECHECKASSIGN, IFGOTO, STRIFGOTO, GOTO, CALL, TYPECALL, RETURN, TYPERETURN, PRINT, KEYS, VALUES, READ, LABEL, DECLARE, EXIT, NOP, ALLOC, LINENUM = range(21)
 
     typeMap = { 
                 "="          : ASSIGN,           "assign"     : ASSIGN,       "ASSIGN"          : ASSIGN,
@@ -51,6 +51,7 @@ class InstrType(object):
                 "exit"       : EXIT,             "quit"       : EXIT,         "EXIT"            : EXIT,         "done" : EXIT,
                 "typecheck"  : TYPECHECK,        "typeassign" : TYPEASSIGN,   "typecheckassign" : TYPECHECKASSIGN, 
                 "typecall"   : TYPECALL,         "typereturn" : TYPERETURN,
+                "linenum"    : LINENUM, 
                 "nop"        : NOP,              ""           : NOP,          "NOP"             : NOP
               }
 
@@ -81,6 +82,7 @@ class InstrType(object):
     def is_TYPECHECKASSIGN(self) : return self.instrType == InstrType.TYPECHECKASSIGN 
     def is_TYPECALL(self)        : return self.instrType == InstrType.TYPECALL
     def is_TYPERETURN(self)      : return self.instrType == InstrType.TYPERETURN
+    def is_LINENUM(self)         : return self.instrType == InstrType.LINENUM
     def is_NOP(self)             : return self.instrType == InstrType.NOP
 
     def is_JMP(self)     : return (self.instrType == InstrType.IFGOTO or
@@ -608,8 +610,8 @@ class Instr3AC(object):
 
         elif self.instrType.is_TYPEASSIGN():
             # Line Number, typeassign, dest, inp1
-            # Line Number, typeassign, dest, ref, inp1
-            # Line Number, typeassign, dest, $, inp1
+            # Line Number, typeassign, ref, dest, inp1
+            # Line Number, typeassign, $, dest, inp1
             DEBUG.Assert(len(inpTuple) >= 4, "Expected a 4/5-tuple for typeassign")
             DEBUG.Assert(len(inpTuple) <= 5, "Expected a 4/5-tuple for typeassign")
 
@@ -617,8 +619,8 @@ class Instr3AC(object):
                 self.dest = Entity(str(inpTuple[2]))
                 self.inp1 = Entity(str(inpTuple[3]))
             else:
-                self.dest = Entity(str(inpTuple[2]))
-                self.opType = OperationType(str(inpTuple[3]))
+                self.opType = OperationType(str(inpTuple[2]))
+                self.dest = Entity(str(inpTuple[3]))
                 self.inp1 = Entity(str(inpTuple[4]))
 
                 DEBUG.Assert(self.opType.is_DEREFERENCE() or self.opType.is_REFERENCE(), "Only reference and dereference option allowed in typeassign")
@@ -658,6 +660,12 @@ class Instr3AC(object):
 
         elif self.instrType.is_TYPERETURN():
             # Line Number, typereturn, inp1
+            DEBUG.Assert(len(inpTuple) == 3, "Expected a 3-tuple for typereturn")
+
+            self.inp1 = Entity(str(inpTuple[2]))
+
+        elif self.instrType.is_LINENUM():
+            # Line Number, linenum, inp1
             DEBUG.Assert(len(inpTuple) == 3, "Expected a 3-tuple for typereturn")
 
             self.inp1 = Entity(str(inpTuple[2]))
@@ -801,6 +809,9 @@ class Instr3AC(object):
 
         if self.instrType.is_TYPERETURN():
             return "typereturn %s"%(self.inp1)
+
+        if self.instrType.is_LINENUM():
+            return "LINE NUM : %s"%(self.inp1)
         
 def ConvertTarget(inpString):
     if inpString.isdigit():

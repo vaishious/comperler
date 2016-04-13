@@ -4,6 +4,7 @@
 extern void *(*OP1_TYPECAST)(void *);
 extern void *(*OP2_TYPECAST)(void *);
 extern void (*OPCONTROL)(void *);
+extern int LINENUM;
 
 void *dummyFunc(void *arg) {
     return arg;

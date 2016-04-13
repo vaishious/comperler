@@ -136,19 +136,28 @@ class Parser(object):
                 p[0].loop_last_list = p[1].loop_last_list
 
 
- 
+    def p_statement_mark_line(self, p):
+        ''' MARK-statement-line : '''
+
+        p[0] = IR.Attributes()
+
+        if p.lineno(0) > IR.ProgLineNum:
+            IR.ProgLineNum = p.lineno(0)
+            p[0].code = IR.GenCode("linenum, %d"%(IR.ProgLineNum))
+
     def p_statement(self, p):
-        ''' statement : expression SEMICOLON
-                      | variable-strict-decl SEMICOLON
-                      | codeblock
-                      | function-def
-                      | function-ret SEMICOLON
-                      | branch 
-                      | labelled-loop
-                      | loop-control SEMICOLON
+        ''' statement : MARK-statement-line expression SEMICOLON
+                      | MARK-statement-line variable-strict-decl SEMICOLON
+                      | MARK-statement-line codeblock
+                      | MARK-statement-line function-def
+                      | MARK-statement-line function-ret SEMICOLON
+                      | MARK-statement-line branch 
+                      | MARK-statement-line labelled-loop
+                      | MARK-statement-line loop-control SEMICOLON
         '''
 
-        p[0] = p[1]
+        p[0] = p[2]
+        p[0].code = p[1].code | p[0].code
 
     def p_statement_error(self, p):
         ''' statement : error SEMICOLON
@@ -419,6 +428,7 @@ class Parser(object):
         p[0] = IR.Attributes()
 
         p[0].instr = IR.NextInstr
+        p[0].isBackPatchMark = True
 
     def p_mark_backpatch_special(self, p): # For use with AND/OR/NOT
         ''' MARK-backpatch-special : '''
@@ -1596,7 +1606,7 @@ class Parser(object):
         IR.FuncReturnMap[IR.CurFuncID] = False
         IR.CurActivationRecord = IR.FuncMap[IR.CurFuncID]
 
-        self.parser.parse(input)
+        self.parser.parse(input, tracking=True)
 
         # Return Symbol Tables and the Activation record data for consumption by codegen
         return self.symTabManager, IR.FuncMap

@@ -8,6 +8,7 @@ import debug as DEBUG
 INT_DATA_TYPE, STR_DATA_TYPE, UNKNOWN_DATA_TYPE = range(3)
 
 NextInstr = 0
+ProgLineNum = 0
 InstrMap = [0]
 FuncMap = {}
 FuncReturnMap = {}
@@ -148,6 +149,7 @@ class Attributes(object):
         self.isBooleanExpression = False
         self.isFunctionCall = False
         self.isFunctionDef = False
+        self.isBackPatchMark = False
 
     def DuplicateTo(self, other):
         other.place = self.place

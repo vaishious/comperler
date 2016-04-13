@@ -46,7 +46,7 @@ class DataRegion(object):
     def __init__(self, funcActRecords, symTabManager):
         self.varSet = {}
         self.globalVars = []
-        self.specialVars = ["OPCONTROL", "OP1_TYPECAST", "OP2_TYPECAST"]
+        self.specialVars = ["OPCONTROL", "OP1_TYPECAST", "OP2_TYPECAST", "LINENUM"]
         self.stringSet = {}
         self.stringCnt = 0
 
@@ -165,6 +165,7 @@ class TextRegion(object):
                 loadSegment += G.INDENT + "la $t9, %s\n"%("dummyFunc")
                 loadSegment += G.INDENT + "sw $t9, %s\n"%("OP1_TYPECAST")
                 loadSegment += G.INDENT + "sw $t9, %s\n"%("OP2_TYPECAST")
+                loadSegment += G.INDENT + "sw $0, %s\n"%("LINENUM")
 
             self.text = self.text.replace("%s:\n"%(func), loadSegment)
 

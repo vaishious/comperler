@@ -1133,12 +1133,12 @@ Exit:
 	.rdata
 	.align	2
 $LC5:
-	.ascii	"Atleast one argument of arithmetic operation has to be a"
-	.ascii	"n INT/STRING\000"
+	.ascii	"Line <%d> Atleast one argument of arithmetic operation h"
+	.ascii	"as to be an INT/STRING\000"
 	.align	2
 $LC6:
-	.ascii	"Cannot perform arithmetic operation on %s with a INT/STR"
-	.ascii	"ING\000"
+	.ascii	"Line <%d> Cannot perform arithmetic operation on %s with"
+	.ascii	" a INT/STRING\000"
 	.text
 	.align	2
 	.globl	typecheck_GENERIC_INT_STRING_3OP
@@ -1177,6 +1177,7 @@ typecheck_GENERIC_INT_STRING_3OP:
 	li	$2,1			# 0x1
 	beq	$3,$2,$L94
 	la	$4,$LC5
+	lw	$5,LINENUM
 	jal	PrintfNormal
 	jal	Exit
 $L94:
@@ -1191,7 +1192,8 @@ $L94:
 	la	$2,typeMaps
 	addu	$2,$3,$2
 	la	$4,$LC6
-	lw	$5,0($2)
+	lw	$5,LINENUM
+	lw	$6,0($2)
 	jal	PrintfNormal
 	jal	Exit
 $L95:
@@ -1206,7 +1208,8 @@ $L95:
 	la	$2,typeMaps
 	addu	$2,$3,$2
 	la	$4,$LC6
-	lw	$5,0($2)
+	lw	$5,LINENUM
+	lw	$6,0($2)
 	jal	PrintfNormal
 	jal	Exit
 $L96:
@@ -1370,11 +1373,12 @@ typecheck_INT_MOD:
 	.rdata
 	.align	2
 $LC7:
-	.ascii	"Atleast one argument of string operation has to be an IN"
-	.ascii	"T/STRING\000"
+	.ascii	"Line <%d> Atleast one argument of string operation has t"
+	.ascii	"o be an INT/STRING\000"
 	.align	2
 $LC8:
-	.ascii	"Cannot perform string operation on %s with a INT/STRING\000"
+	.ascii	"Line <%d> Cannot perform string operation on %s with a I"
+	.ascii	"NT/STRING\000"
 	.text
 	.align	2
 	.globl	typecheck_GENERIC_STRING_3OP
@@ -1413,6 +1417,7 @@ typecheck_GENERIC_STRING_3OP:
 	li	$2,1			# 0x1
 	beq	$3,$2,$L106
 	la	$4,$LC7
+	lw	$5,LINENUM
 	jal	PrintfNormal
 	jal	Exit
 $L106:
@@ -1427,7 +1432,8 @@ $L106:
 	la	$2,typeMaps
 	addu	$2,$3,$2
 	la	$4,$LC8
-	lw	$5,0($2)
+	lw	$5,LINENUM
+	lw	$6,0($2)
 	jal	PrintfNormal
 	jal	Exit
 $L107:
@@ -1442,7 +1448,8 @@ $L107:
 	la	$2,typeMaps
 	addu	$2,$3,$2
 	la	$4,$LC8
-	lw	$5,0($2)
+	lw	$5,LINENUM
+	lw	$6,0($2)
 	jal	PrintfNormal
 	jal	Exit
 $L108:
@@ -1547,6 +1554,7 @@ typecheck_STRING_REPEAT:
 	li	$2,1			# 0x1
 	beq	$3,$2,$L114
 	la	$4,$LC7
+	lw	$5,LINENUM
 	jal	PrintfNormal
 	jal	Exit
 $L114:
@@ -1561,7 +1569,8 @@ $L114:
 	la	$2,typeMaps
 	addu	$2,$3,$2
 	la	$4,$LC8
-	lw	$5,0($2)
+	lw	$5,LINENUM
+	lw	$6,0($2)
 	jal	PrintfNormal
 	jal	Exit
 $L115:
@@ -1576,7 +1585,8 @@ $L115:
 	la	$2,typeMaps
 	addu	$2,$3,$2
 	la	$4,$LC8
-	lw	$5,0($2)
+	lw	$5,LINENUM
+	lw	$6,0($2)
 	jal	PrintfNormal
 	jal	Exit
 $L116:
@@ -1602,7 +1612,7 @@ $L118:
 	.rdata
 	.align	2
 $LC9:
-	.ascii	"Hash index needs to be a STRING, not %s\n\000"
+	.ascii	"Line <%d> Hash index needs to be a STRING, not %s\n\000"
 	.text
 	.align	2
 	.globl	typecheck_HASH_INDEX_CHECK
@@ -1626,7 +1636,8 @@ typecheck_HASH_INDEX_CHECK:
 	la	$2,typeMaps
 	addu	$2,$3,$2
 	la	$4,$LC9
-	lw	$5,0($2)
+	lw	$5,LINENUM
+	lw	$6,0($2)
 	jal	PrintfNormal
 	jal	Exit
 $L120:
@@ -1639,7 +1650,7 @@ $L120:
 	.rdata
 	.align	2
 $LC10:
-	.ascii	"Array index needs to be an INT, not %s\n\000"
+	.ascii	"Line <%d> Array index needs to be an INT, not %s\n\000"
 	.text
 	.align	2
 	.globl	typecheck_ARRAY_INDEX_CHECK
@@ -1663,7 +1674,8 @@ typecheck_ARRAY_INDEX_CHECK:
 	la	$2,typeMaps
 	addu	$2,$3,$2
 	la	$4,$LC10
-	lw	$5,0($2)
+	lw	$5,LINENUM
+	lw	$6,0($2)
 	jal	PrintfNormal
 	jal	Exit
 $L122:
@@ -1676,7 +1688,7 @@ $L122:
 	.rdata
 	.align	2
 $LC11:
-	.ascii	"Need types %s and %s to be equal\n\000"
+	.ascii	"Line <%d> Need types %s and %s to be equal\n\000"
 	.text
 	.align	2
 	.globl	typecheck_TYPE_EQUAL
@@ -1701,14 +1713,15 @@ typecheck_TYPE_EQUAL:
 	lw	$2,16($fp)
 	sll	$3,$2,2
 	la	$2,typeMaps
-	addu	$5,$3,$2
+	addu	$6,$3,$2
 	lw	$2,20($fp)
 	sll	$3,$2,2
 	la	$2,typeMaps
 	addu	$2,$3,$2
 	la	$4,$LC11
-	lw	$5,0($5)
-	lw	$6,0($2)
+	lw	$5,LINENUM
+	lw	$6,0($6)
+	lw	$7,0($2)
 	jal	PrintfNormal
 	jal	Exit
 $L124:
@@ -1721,8 +1734,8 @@ $L124:
 	.rdata
 	.align	2
 $LC12:
-	.ascii	"Cannot perform the required arithmetic operation between"
-	.ascii	" types %s and %s\n\000"
+	.ascii	"Line <%d> Cannot perform the required arithmetic operati"
+	.ascii	"on between types %s and %s\n\000"
 	.text
 	.align	2
 	.globl	typecheck_GENERIC_INT_3OP
@@ -1752,14 +1765,15 @@ $L127:
 	lw	$2,16($fp)
 	sll	$3,$2,2
 	la	$2,typeMaps
-	addu	$5,$3,$2
+	addu	$6,$3,$2
 	lw	$2,20($fp)
 	sll	$3,$2,2
 	la	$2,typeMaps
 	addu	$2,$3,$2
 	la	$4,$LC12
-	lw	$5,0($5)
-	lw	$6,0($2)
+	lw	$5,LINENUM
+	lw	$6,0($6)
+	lw	$7,0($2)
 	jal	PrintfNormal
 	jal	Exit
 $L126:

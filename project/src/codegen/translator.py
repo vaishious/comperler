@@ -146,6 +146,10 @@ def Translate(instr):
 
         Translate_TYPECHECKASSIGN(instr)
 
+    elif instr.instrType.is_LINENUM():
+        G.AsmText.AddText(G.INDENT + "li %s, %s"%(REG.tmpUsageRegs[-1], instr.inp1), "Update Prog Line Number")
+        G.AsmText.AddText(G.INDENT + "sw %s, %s"%(REG.tmpUsageRegs[-1], "LINENUM"), "Update Prog Line Number")
+
 def SetupRegister(inp, regComp, tempReg=REG.t9, useImmediate=False, loadTypeVal=False):
     # Setup the input in a register, using regComp, if required
 
