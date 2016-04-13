@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
 my %data;
-%data = ("100" => 45, 1000 => 30, "Kumar" => 40);
-print("%d\n",$data{"1000"});
-print("%d\n",$data{100});
+%data = ("abcd" => 1000, 1000 => 30, "Kumar" => 40, "Pqrs" => "MNOP");
+print("%s\n",$data{"Pqrs"});
+#$data{"abcd"} = $data{"abcd"} * 16;
+print("%d\n",$data{"abcd"});
