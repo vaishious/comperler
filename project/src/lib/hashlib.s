@@ -332,3 +332,68 @@ $L19:
 	addu	$sp,$sp,40
 	j	$31
 	.end	getHashValueType
+	.align	2
+	.globl	getFirstKey
+	.ent	getFirstKey
+getFirstKey:
+	.frame	$fp,16,$31		# vars= 8, regs= 1/0, args= 0, extra= 0
+	.mask	0x40000000,-8
+	.fmask	0x00000000,0
+	subu	$sp,$sp,16
+	sw	$fp,8($sp)
+	move	$fp,$sp
+	sw	$4,16($fp)
+	lw	$2,16($fp)
+	lw	$2,0($2)
+	sw	$2,0($fp)
+	lw	$2,0($fp)
+	bne	$2,$0,$L23
+	sw	$0,4($fp)
+	j	$L22
+$L23:
+	lw	$2,0($fp)
+	lw	$2,0($2)
+	sw	$2,4($fp)
+$L22:
+	lw	$2,4($fp)
+	move	$sp,$fp
+	lw	$fp,8($sp)
+	addu	$sp,$sp,16
+	j	$31
+	.end	getFirstKey
+	.align	2
+	.globl	getNextKey
+	.ent	getNextKey
+getNextKey:
+	.frame	$fp,32,$31		# vars= 8, regs= 2/0, args= 16, extra= 0
+	.mask	0xc0000000,-4
+	.fmask	0x00000000,0
+	subu	$sp,$sp,32
+	sw	$31,28($sp)
+	sw	$fp,24($sp)
+	move	$fp,$sp
+	sw	$4,32($fp)
+	sw	$5,36($fp)
+	lw	$4,32($fp)
+	lw	$5,36($fp)
+	jal	findMatch
+	sw	$2,16($fp)
+	lw	$2,32($fp)
+	lw	$3,16($fp)
+	lw	$2,4($2)
+	bne	$3,$2,$L26
+	sw	$0,20($fp)
+	j	$L25
+$L26:
+	lw	$2,16($fp)
+	lw	$2,12($2)
+	lw	$2,0($2)
+	sw	$2,20($fp)
+$L25:
+	lw	$2,20($fp)
+	move	$sp,$fp
+	lw	$31,28($sp)
+	lw	$fp,24($sp)
+	addu	$sp,$sp,32
+	j	$31
+	.end	getNextKey

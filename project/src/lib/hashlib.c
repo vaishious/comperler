@@ -135,3 +135,24 @@ void *getHashValueType(Hash *hashPtr, void *inpKey)
     if((elemPtr = findMatch(hashPtr, key)))
             return elemPtr->type;
 }
+
+void *getFirstKey(Hash *hashPtr)
+{
+	Element *fstEl = (hashPtr->first);
+	if (fstEl == NULL) {
+		return NULL;
+	} else {
+		return (void *)(fstEl->key);
+	}
+}
+
+void *getNextKey(Hash *hashPtr, void *inpKey)
+{
+	Element *currEl = findMatch(hashPtr, (char *)inpKey);
+	if (currEl == hashPtr->last) {
+		return NULL;
+	}
+	else {
+		return (void *)((currEl->next)->key);
+	}
+}

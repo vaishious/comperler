@@ -101,6 +101,7 @@ def Translate_Printf(parameter):
     G.LibraryFunctionsUsed.add("PrintChar")
     G.LibraryFunctionsUsed.add("PrintString")
     G.LibraryFunctionsUsed.add("PrintArray")
+    G.LibraryFunctionsUsed.add("PrintHash")
     G.LibraryFunctionsUsed.add("accessIndex")
     G.LibraryFunctionsUsed.add("lengthOfArray")
 

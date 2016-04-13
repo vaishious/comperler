@@ -39,5 +39,5 @@ LIBSRC = ['../lib/hashlib.s', '../lib/iolib.s', '../lib/libstd.s', '../lib/libst
 # Debugging library functions
 
 #LibraryFunctionsUsed = set(['typecheck_INT_{PLUS,MINUS,MULT,DIV,MOD}', 'typecheck_HASH_INDEX_CHECK', 'typecheck_TYPE_EQUAL', 'PrintString', 'PrintfNormal', 'PrintChar', 'PrintInt', 'dummyFunc'])
-LibraryFunctionsUsed = set(['dummyFunc', 'PrintfNormal', 'PrintInt', 'PrintChar', 'PrintString', 'PrintArray'])
-EssentialLibraries = ['../lib/dynlib.s', '../lib/typechecking.s']
+LibraryFunctionsUsed = set(['dummyFunc', 'PrintfNormal', 'PrintInt', 'PrintChar', 'PrintString', 'PrintArray', 'PrintHash'])
+EssentialLibraries = ['../lib/dynlib.s', '../lib/typechecking.s', '../lib/hashlib.s']

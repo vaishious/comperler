@@ -7,7 +7,7 @@
  * 3. Now the .s file will run on SPIM
  */
 
-/*#include "arraylib.c"*/
+#include "dynlib.c"
 
 #define TYPE_UNKNOWN 0
 #define TYPE_STRING 1
@@ -15,10 +15,26 @@
 #define TYPE_ARRAY 3
 #define TYPE_HASH 4
 
+#define NULL 0
+
+extern void *(*OP1_TYPECAST)(void *);
+/*
 typedef struct structArray {
     int length;
     int *addr;
 } Array_t;
+*/
+typedef struct Element {
+    char *key;  // Should be NULL terminated
+    void *valRef;
+    int type;
+    struct Element *next;
+} Element;
+
+typedef struct Hash {
+    Element *first,*last;
+    int length;
+} Hash;
 
 void PrintInt(signed int outNum) { 
     asm("
@@ -128,9 +144,12 @@ void PrintfNormal(char *formatSpecifier, ...) {
     }
 }
 
+void PrintHash(Hash *hash);							//Declaring function for use in PrintArray
+
 void PrintArray(Array_t *array) {
     int len = lengthOfArray(array);
     int i;
+	PrintChar('(');
 
     for (i = 0; i < len; i++) {
         int type = *((int *) accessIndexType(array, i));
@@ -142,12 +161,50 @@ void PrintArray(Array_t *array) {
             PrintString((char *) val);
         else if (type == TYPE_ARRAY)
             PrintArray((Array_t *) val);
+        else if (type == TYPE_HASH)
+            PrintHash((Hash *) val);
 
         if (i != (len - 1)) {
             PrintChar(',');
             PrintChar(' ');
         }
     }
+	PrintChar(')');
+}
+
+void PrintHash(Hash *hash) {
+	char *key = (char *)getFirstKey(hash);
+	PrintChar('{');
+	while (key != NULL) {
+		PrintChar('"');
+		PrintString((char *) key);
+		PrintChar('"');
+		PrintChar(':');
+		PrintChar(' ');
+
+		OP1_TYPECAST = &dummyFunc;
+		int type = (int)getHashValueType(hash, key);
+
+		OP1_TYPECAST = &dummyFunc;
+		void *val = (void *)getHashValue(hash, key);
+
+        if (type == TYPE_INT)
+            PrintInt((int) val);
+        else if (type == TYPE_STRING)
+            PrintString((char *) val);
+        else if (type == TYPE_ARRAY)
+            PrintArray((Array_t *) val);
+        else if (type == TYPE_HASH)
+            PrintHash((Hash *) val);
+
+		key = (char *)getNextKey(hash, key);
+		if (key != NULL) {
+			PrintChar(',');
+			PrintChar(' ');
+		}
+
+	}
+	PrintChar('}');
 }
 
 void Printf(Array_t *parameters) {
@@ -160,6 +217,7 @@ void Printf(Array_t *parameters) {
     char argChar;
     char *argStr;
     Array_t *argArray;
+    Hash *argHash;
 
     while((*formatSpecifier) != '\0') {
         if ((*formatSpecifier) == '%') {
@@ -183,6 +241,11 @@ void Printf(Array_t *parameters) {
             } else if ((*formatSpecifier) == 'a') { 
                 argArray = (Array_t *) *((int *) accessIndex(parameters, argIndex));
                 PrintArray(argArray);
+                argIndex++;
+
+            } else if ((*formatSpecifier) == 'h') { 
+                argHash = (Hash *) *((int *) accessIndex(parameters, argIndex));
+                PrintHash(argHash);
                 argIndex++;
 
             } else {
