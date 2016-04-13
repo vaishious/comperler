@@ -488,6 +488,56 @@ $L37:
 	j	$31
 	.end	convertINT_TO_STRING
 	.align	2
+	.globl	op_UNARY_PLUS
+	.ent	op_UNARY_PLUS
+op_UNARY_PLUS:
+	.frame	$fp,24,$31		# vars= 0, regs= 2/0, args= 16, extra= 0
+	.mask	0xc0000000,-4
+	.fmask	0x00000000,0
+	subu	$sp,$sp,24
+	sw	$31,20($sp)
+	sw	$fp,16($sp)
+	move	$fp,$sp
+	sw	$4,24($fp)
+	lw	$2,OP1_TYPECAST
+	lw	$4,24($fp)
+	jal	$31,$2
+	sw	$2,24($fp)
+	lw	$2,24($fp)
+	move	$sp,$fp
+	lw	$31,20($sp)
+	lw	$fp,16($sp)
+	addu	$sp,$sp,24
+	j	$31
+	.end	op_UNARY_PLUS
+	.align	2
+	.globl	op_UNARY_MINUS
+	.ent	op_UNARY_MINUS
+op_UNARY_MINUS:
+	.frame	$fp,32,$31		# vars= 8, regs= 2/0, args= 16, extra= 0
+	.mask	0xc0000000,-4
+	.fmask	0x00000000,0
+	subu	$sp,$sp,32
+	sw	$31,28($sp)
+	sw	$fp,24($sp)
+	move	$fp,$sp
+	sw	$4,32($fp)
+	lw	$2,OP1_TYPECAST
+	lw	$4,32($fp)
+	jal	$31,$2
+	sw	$2,32($fp)
+	lw	$2,32($fp)
+	sw	$2,16($fp)
+	lw	$3,16($fp)
+	move	$2,$0
+	subu	$2,$2,$3
+	move	$sp,$fp
+	lw	$31,28($sp)
+	lw	$fp,24($sp)
+	addu	$sp,$sp,32
+	j	$31
+	.end	op_UNARY_MINUS
+	.align	2
 	.globl	op_PLUS
 	.ent	op_PLUS
 op_PLUS:
@@ -696,19 +746,19 @@ op_STRING_CMP:
 	jal	$31,$2
 	sw	$2,20($fp)
 	sw	$0,24($fp)
-$L45:
+$L47:
 	lw	$3,16($fp)
 	lw	$2,24($fp)
 	addu	$2,$3,$2
 	lb	$2,0($2)
-	bne	$2,$0,$L48
+	bne	$2,$0,$L50
 	lw	$3,20($fp)
 	lw	$2,24($fp)
 	addu	$2,$3,$2
 	lb	$2,0($2)
-	bne	$2,$0,$L48
-	j	$L46
-$L48:
+	bne	$2,$0,$L50
+	j	$L48
+$L50:
 	lw	$3,16($fp)
 	lw	$2,24($fp)
 	addu	$4,$3,$2
@@ -718,11 +768,11 @@ $L48:
 	lb	$3,0($4)
 	lb	$2,0($2)
 	slt	$2,$2,$3
-	beq	$2,$0,$L49
+	beq	$2,$0,$L51
 	li	$2,1			# 0x1
 	sw	$2,28($fp)
-	j	$L44
-$L49:
+	j	$L46
+$L51:
 	lw	$3,16($fp)
 	lw	$2,24($fp)
 	addu	$4,$3,$2
@@ -732,18 +782,18 @@ $L49:
 	lb	$3,0($4)
 	lb	$2,0($2)
 	slt	$2,$3,$2
-	beq	$2,$0,$L47
+	beq	$2,$0,$L49
 	li	$2,-1			# 0xffffffffffffffff
 	sw	$2,28($fp)
-	j	$L44
-$L47:
+	j	$L46
+$L49:
 	lw	$2,24($fp)
 	addu	$2,$2,1
 	sw	$2,24($fp)
-	j	$L45
-$L46:
+	j	$L47
+$L48:
 	sw	$0,28($fp)
-$L44:
+$L46:
 	lw	$2,28($fp)
 	move	$sp,$fp
 	lw	$31,36($sp)
@@ -775,33 +825,33 @@ op_STRING_DOT:
 	sw	$0,24($fp)
 	sw	$0,28($fp)
 	sw	$0,24($fp)
-$L53:
+$L55:
 	lw	$3,16($fp)
 	lw	$2,24($fp)
 	addu	$2,$3,$2
 	lb	$2,0($2)
-	bne	$2,$0,$L55
-	j	$L54
-$L55:
+	bne	$2,$0,$L57
+	j	$L56
+$L57:
 	lw	$2,24($fp)
 	addu	$2,$2,1
 	sw	$2,24($fp)
-	j	$L53
-$L54:
+	j	$L55
+$L56:
 	sw	$0,28($fp)
-$L57:
+$L59:
 	lw	$3,20($fp)
 	lw	$2,28($fp)
 	addu	$2,$3,$2
 	lb	$2,0($2)
-	bne	$2,$0,$L59
-	j	$L58
-$L59:
+	bne	$2,$0,$L61
+	j	$L60
+$L61:
 	lw	$2,28($fp)
 	addu	$2,$2,1
 	sw	$2,28($fp)
-	j	$L57
-$L58:
+	j	$L59
+$L60:
 	lw	$3,24($fp)
 	lw	$2,28($fp)
 	addu	$2,$3,$2
@@ -810,13 +860,13 @@ $L58:
 	jal	alloc
 	sw	$2,32($fp)
 	sw	$0,36($fp)
-$L61:
+$L63:
 	lw	$2,36($fp)
 	lw	$3,24($fp)
 	slt	$2,$2,$3
-	bne	$2,$0,$L64
-	j	$L62
-$L64:
+	bne	$2,$0,$L66
+	j	$L64
+$L66:
 	lw	$3,32($fp)
 	lw	$2,36($fp)
 	addu	$4,$3,$2
@@ -828,16 +878,16 @@ $L64:
 	lw	$2,36($fp)
 	addu	$2,$2,1
 	sw	$2,36($fp)
-	j	$L61
-$L62:
+	j	$L63
+$L64:
 	sw	$0,36($fp)
-$L65:
+$L67:
 	lw	$2,36($fp)
 	lw	$3,28($fp)
 	slt	$2,$2,$3
-	bne	$2,$0,$L68
-	j	$L66
-$L68:
+	bne	$2,$0,$L70
+	j	$L68
+$L70:
 	lw	$3,24($fp)
 	lw	$2,36($fp)
 	addu	$3,$3,$2
@@ -851,8 +901,8 @@ $L68:
 	lw	$2,36($fp)
 	addu	$2,$2,1
 	sw	$2,36($fp)
-	j	$L65
-$L66:
+	j	$L67
+$L68:
 	lw	$3,24($fp)
 	lw	$2,28($fp)
 	addu	$3,$3,$2
@@ -888,7 +938,7 @@ op_STRING_REPEAT:
 	jal	$31,$2
 	sw	$2,20($fp)
 	lw	$2,20($fp)
-	bgtz	$2,$L70
+	bgtz	$2,$L72
 	li	$4,1			# 0x1
 	jal	alloc
 	sw	$2,24($fp)
@@ -896,23 +946,23 @@ op_STRING_REPEAT:
 	sb	$0,0($2)
 	lw	$2,24($fp)
 	sw	$2,40($fp)
-	j	$L69
-$L70:
+	j	$L71
+$L72:
 	sw	$0,24($fp)
 	sw	$0,24($fp)
-$L71:
+$L73:
 	lw	$3,16($fp)
 	lw	$2,24($fp)
 	addu	$2,$3,$2
 	lb	$2,0($2)
-	bne	$2,$0,$L73
-	j	$L72
-$L73:
+	bne	$2,$0,$L75
+	j	$L74
+$L75:
 	lw	$2,24($fp)
 	addu	$2,$2,1
 	sw	$2,24($fp)
-	j	$L71
-$L72:
+	j	$L73
+$L74:
 	lw	$3,24($fp)
 	lw	$2,20($fp)
 	mult	$3,$2
@@ -922,21 +972,21 @@ $L72:
 	jal	alloc
 	sw	$2,28($fp)
 	sw	$0,32($fp)
-$L75:
+$L77:
 	lw	$2,32($fp)
 	lw	$3,20($fp)
 	slt	$2,$2,$3
-	bne	$2,$0,$L78
-	j	$L76
-$L78:
+	bne	$2,$0,$L80
+	j	$L78
+$L80:
 	sw	$0,36($fp)
-$L79:
+$L81:
 	lw	$2,36($fp)
 	lw	$3,24($fp)
 	slt	$2,$2,$3
-	bne	$2,$0,$L82
-	j	$L77
-$L82:
+	bne	$2,$0,$L84
+	j	$L79
+$L84:
 	lw	$3,32($fp)
 	lw	$2,24($fp)
 	mult	$3,$2
@@ -953,13 +1003,13 @@ $L82:
 	lw	$2,36($fp)
 	addu	$2,$2,1
 	sw	$2,36($fp)
-	j	$L79
-$L77:
+	j	$L81
+$L79:
 	lw	$2,32($fp)
 	addu	$2,$2,1
 	sw	$2,32($fp)
-	j	$L75
-$L76:
+	j	$L77
+$L78:
 	lw	$3,20($fp)
 	lw	$2,24($fp)
 	mult	$3,$2
@@ -969,7 +1019,7 @@ $L76:
 	sb	$0,0($2)
 	lw	$2,28($fp)
 	sw	$2,40($fp)
-$L69:
+$L71:
 	lw	$2,40($fp)
 	move	$sp,$fp
 	lw	$31,52($sp)
@@ -1008,13 +1058,13 @@ op_ARRAY_CONCAT:
 	jal	initArray
 	sw	$2,32($fp)
 	sw	$0,36($fp)
-$L84:
+$L86:
 	lw	$2,36($fp)
 	lw	$3,24($fp)
 	slt	$2,$2,$3
-	bne	$2,$0,$L87
-	j	$L85
-$L87:
+	bne	$2,$0,$L89
+	j	$L87
+$L89:
 	lw	$4,32($fp)
 	lw	$5,36($fp)
 	jal	accessIndex
@@ -1036,16 +1086,16 @@ $L87:
 	lw	$2,36($fp)
 	addu	$2,$2,1
 	sw	$2,36($fp)
-	j	$L84
-$L85:
+	j	$L86
+$L87:
 	sw	$0,36($fp)
-$L88:
+$L90:
 	lw	$2,36($fp)
 	lw	$3,28($fp)
 	slt	$2,$2,$3
-	bne	$2,$0,$L91
-	j	$L89
-$L91:
+	bne	$2,$0,$L93
+	j	$L91
+$L93:
 	lw	$3,24($fp)
 	lw	$2,36($fp)
 	addu	$2,$3,$2
@@ -1073,8 +1123,8 @@ $L91:
 	lw	$2,36($fp)
 	addu	$2,$2,1
 	sw	$2,36($fp)
-	j	$L88
-$L89:
+	j	$L90
+$L91:
 	lw	$2,32($fp)
 	move	$sp,$fp
 	lw	$31,48($sp)

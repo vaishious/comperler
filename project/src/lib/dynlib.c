@@ -67,6 +67,22 @@ void * convertINT_TO_STRING(void *arg) {
     return (void *) buffer;
 }
 
+void * op_UNARY_PLUS (void *inp) {
+
+    inp = OP1_TYPECAST(inp);
+
+    return inp;
+}
+
+void * op_UNARY_MINUS (void *inp) {
+
+    inp = OP1_TYPECAST(inp);
+
+    int operand = (int)inp;
+
+    return (void *)(-1 * operand);
+}
+
 void * op_PLUS (void *inp1, void *inp2) {
 
     inp1 = OP1_TYPECAST(inp1);

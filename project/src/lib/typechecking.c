@@ -59,6 +59,30 @@ void * typecheck_INT_PLUS(void *src1, void *src2) {
     return (void *)typecheck_GENERIC_INT_STRING_3OP(src1, src2, &op_PLUS);
 }
 
+void * typecheck_GENERIC_UNARY_INT_STRING_2OP(void *src, void *(*op)(void *)) {
+    int type = (int) src;
+
+    OP1_TYPECAST = &dummyFunc;
+    OPCONTROL = op;
+
+    if ((type != TYPE_INT) && (type != TYPE_STRING)) {
+        PrintfNormal("Line <%d> Cannot perform arithmetic operation on %s", LINENUM, typeMaps[type]);
+        Exit();
+    }
+
+    if (type == TYPE_STRING) { OP1_TYPECAST = &convertSTRING_TO_INT; }
+
+    return (void *)TYPE_INT;
+}
+
+void * typecheck_UNARY_INT_PLUS(void *src) {
+    return (void *)typecheck_GENERIC_UNARY_INT_STRING_2OP(src, &op_UNARY_PLUS);
+}
+
+void * typecheck_UNARY_INT_MINUS(void *src) {
+    return (void *)typecheck_GENERIC_UNARY_INT_STRING_2OP(src, &op_UNARY_MINUS);
+}
+
 void * typecheck_INT_MINUS(void *src1, void *src2) {
     return (void *)typecheck_GENERIC_INT_STRING_3OP(src1, src2, &op_MINUS);
 }
