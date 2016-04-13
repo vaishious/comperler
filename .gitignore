@@ -27,7 +27,7 @@ mips-x86.linux-xgcc/iolib.s
 *.pyc
 
 # Parsing
-parser.out
+*.out
 parsetab.py
 *.html
 *.ir
